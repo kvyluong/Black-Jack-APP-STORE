@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blackjack Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: one phone-width column on a casino-felt ground, so desktop testing matches the mobile app. */
+/* Deliberately single-theme: the felt table is the identity, in either host theme. */
+:root {
+  color-scheme: dark;
+  --felt: #0b5d3b;
+  --felt-deep: #073f28;
+  --felt-lift: #127a4f;
+  --rail: #2a1a10;
+  --gold: #e8c547;
+  --ink: #f4f1e8;
+  --muted: #b7c9be;
+  --paper: #ffffff;
+  --card-ink: #1a1a1a;
+  --card-red: #c8323c;
+  --card-back: #8e1b2c;
+  --good: #4ade80;
+  --bad: #ff8a8a;
+  --warn: #fbbf24;
+  --shade: rgba(0, 0, 0, 0.28);
+  --font-display: "Cinzel", "Georgia", "Times New Roman", serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(120% 80% at 50% 0%, var(--felt-lift) 0%, var(--felt) 45%, var(--felt-deep) 100%) fixed, var(--felt);
+  color: var(--ink);
+  font: 16px/1.5 var(--font-body);
+}
+a { color: var(--gold); }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--rail);
+  border-bottom: 3px solid var(--gold);
+  box-shadow: 0 2px 10px var(--shade);
+}
+.bar-inner { max-width: 560px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.bar h1 { margin: 0; font: 800 18px/1.2 var(--font-display); letter-spacing: 0.06em; color: var(--ink); text-wrap: balance; }
+#back { color: var(--gold); text-decoration: none; font-size: 26px; line-height: 1; padding: 0 4px; }
+
+main { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 96px; display: flex; flex-direction: column; gap: 14px; }
+main > * { margin: 0; }
+h2 { font: 800 17px/1.3 var(--font-display); letter-spacing: 0.05em; color: var(--gold); margin: 10px 0 0; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.center { text-align: center; }
+.fine { color: var(--muted); font-size: 12px; text-align: center; }
+.good { color: var(--good); font-weight: 700; }
+.bad { color: var(--bad); font-weight: 700; }
+kbd { font: 600 11px var(--font-body); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 6px; opacity: 0.7; }
+
+/* Home */
+.hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-block: 8px; }
+.hero h1 { margin: 0; font: 800 32px/1.1 var(--font-display); letter-spacing: 0.04em; text-wrap: balance; }
+.hero-cards { display: flex; margin-bottom: 4px; }
+.hero-cards .card-wrap:first-child { transform: rotate(-8deg); }
+.hero-cards .card-wrap:last-child { transform: rotate(8deg); margin-left: -10px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--shade); border-radius: 12px; padding: 14px 8px; }
+.stats div { display: flex; flex-direction: column; align-items: center; }
+.stats b { color: var(--gold); font-size: 22px; font-variant-numeric: tabular-nums; }
+.stats span { color: var(--muted); font-size: 13px; }
+
+.tiles, .list { display: flex; flex-direction: column; gap: 10px; }
+.tile {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--felt-deep); border: 1px solid transparent; border-radius: 12px;
+  padding: 14px 16px; color: var(--ink); text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tile:hover { border-color: var(--gold); transform: translateY(-1px); }
+.tile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tile-text b { font-size: 17px; }
+.tile-text span { color: var(--muted); font-size: 14px; }
+.chev { color: var(--muted); font-size: 26px; }
+.badge { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 2px solid var(--gold); color: var(--gold); display: grid; place-items: center; font-weight: 800; }
+.badge.done { background: var(--gold); color: var(--card-ink); }
+
+/* Panels and buttons */
+.panel { background: var(--shade); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.panel.complete { border: 1px solid var(--gold); }
+.done { color: var(--gold); font: 800 18px var(--font-display); text-align: center; }
+.q, .prompt { font-weight: 700; font-size: 17px; }
+.prompt { text-align: center; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-row .btn { flex: 1 1 90px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 700 16px var(--font-body); color: var(--ink); text-decoration: none; text-align: center;
+  padding: 11px 14px; border-radius: 12px; border: 2px solid transparent; cursor: pointer;
+  transition: transform 0.08s, opacity 0.15s, box-shadow 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn.primary { background: var(--gold); color: var(--card-ink); }
+.btn.secondary { background: var(--felt-lift); }
+.btn.ghost { background: transparent; border-color: var(--muted); }
+.btn.danger { background: #7a1f2b; }
+.btn.glow { border-color: var(--gold); box-shadow: 0 0 14px var(--gold); }
+.hint { color: var(--gold); font-weight: 700; text-align: center; }
+.keys { color: var(--muted); font-size: 12px; text-align: center; }
+.feedback { border-radius: 12px; padding: 12px 14px; background: var(--shade); border-left: 4px solid; font-weight: 600; }
+.feedback.ok { border-color: var(--good); color: var(--good); }
+.feedback.no { border-color: var(--bad); color: var(--bad); }
+
+/* Lesson */
+.lesson { display: flex; flex-direction: column; gap: 14px; }
+.lesson section { display: flex; flex-direction: column; gap: 8px; }
+.lesson p { max-width: 65ch; }
+.card-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Cards */
+.card-wrap { display: inline-flex; flex-direction: column; align-items: center; }
+.card {
+  position: relative; background: var(--paper); color: var(--card-ink);
+  border-radius: 7px; box-shadow: 0 2px 5px var(--shade);
+  display: grid; place-items: center; flex: none;
+}
+.card.red { color: var(--card-red); }
+.card.md { width: 64px; height: 92px; }
+.card.sm { width: 46px; height: 66px; }
+.card.lg { width: 110px; height: 158px; }
+.card .idx { position: absolute; top: 4px; left: 6px; font-weight: 700; line-height: 1; text-align: center; font-size: 15px; }
+.card .idx.flip { top: auto; left: auto; bottom: 4px; right: 6px; transform: rotate(180deg); }
+.card .pip { font-size: 28px; }
+.card.sm .idx { font-size: 12px; top: 3px; left: 4px; }
+.card.sm .idx.flip { bottom: 3px; right: 4px; top: auto; left: auto; }
+.card.sm .pip { font-size: 20px; }
+.card.lg .idx { font-size: 22px; }
+.card.lg .pip { font-size: 52px; }
+.card.back { background: repeating-linear-gradient(45deg, var(--card-back) 0 6px, #a3263a 6px 12px); border: 4px solid var(--paper); }
+.tag { margin-top: 4px; font-weight: 800; font-size: 14px; color: var(--muted); }
+.tag.plus { color: var(--good); }
+.tag.minus { color: var(--bad); }
+
+/* Table */
+.topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+.bankroll { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+.count { background: var(--shade); color: var(--ink); border: 1px solid var(--felt-lift); border-radius: 999px; padding: 4px 12px; font: 600 14px var(--font-body); font-variant-numeric: tabular-nums; cursor: pointer; }
+.shuffle { color: var(--warn); text-align: center; font-size: 13px; }
+.felt { border: 2px solid rgba(232, 197, 71, 0.35); border-radius: 120px 120px 18px 18px; padding: 18px 10px; background: rgba(0, 0, 0, 0.08); display: flex; flex-direction: column; gap: 10px; }
+.felt.drill { border-radius: 18px; align-items: center; }
+.area { min-height: 132px; display: flex; align-items: center; justify-content: center; }
+.players { flex-wrap: wrap; gap: 8px; }
+.rules-line { color: var(--muted); text-align: center; font-size: 14px; }
+.hand { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px; border: 2px solid transparent; border-radius: 10px; }
+.hand.active { border-color: var(--gold); }
+.hand-cards { display: flex; }
+.hand-cards > * + * { margin-left: -16px; }
+.hand-label { font-size: 14px; }
+.actions .btn { flex: 1 1 96px; }
+
+/* Drills */
+.score-row { display: flex; justify-content: space-between; color: var(--gold); font-weight: 700; flex-wrap: wrap; gap: 6px; }
+.flash { display: flex; gap: 16px; justify-content: center; min-height: 170px; align-items: center; padding-top: 20px; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.guess { font-size: 26px; font-weight: 800; min-width: 60px; text-align: center; font-variant-numeric: tabular-nums; }
+.guess.big, .big { font-size: 26px; font-weight: 800; }
+.lbl { color: var(--muted); font-weight: 600; font-size: 14px; }
+.seg { display: flex; background: var(--felt-deep); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg button { flex: 1; border: 0; background: transparent; color: var(--ink); font: 600 14px var(--font-body); padding: 8px 4px; border-radius: 9px; cursor: pointer; }
+.seg button.on { background: var(--gold); color: var(--card-ink); }
+
+/* Chart */
+.chart-wrap { overflow-x: auto; }
+.chart { border-collapse: separate; border-spacing: 2px; width: 100%; min-width: 340px; font-variant-numeric: tabular-nums; }
+.chart th { color: var(--gold); font-size: 13px; padding: 2px; }
+.chart td { text-align: center; font-weight: 700; font-size: 12px; color: var(--card-ink); border-radius: 3px; height: 28px; }
+.c-H { background: #d9d9d9; color: var(--card-ink); }
+.c-S { background: #f2c94c; color: var(--card-ink); }
+.c-D { background: #6fcf97; color: var(--card-ink); }
+.c-P { background: #56ccf2; color: var(--card-ink); }
+.c-R { background: #eb8b8b; color: var(--card-ink); }
+.legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.legend li { display: flex; align-items: center; gap: 10px; }
+.legend span { width: 34px; text-align: center; font-weight: 700; font-size: 12px; border-radius: 3px; padding: 2px 0; }
+
+/* Settings */
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; cursor: pointer; }
+.toggle span { display: flex; flex-direction: column; min-width: 0; }
+.toggle small { color: var(--muted); font-size: 13px; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--gold); flex: none; }
+
+/* Ad placeholders (real ads only run in the mobile app) */
+.ad-strip {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 4;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #111; color: #9aa; border-top: 1px dashed #555;
+  text-align: center; font-size: 12px; line-height: 50px; letter-spacing: 0.04em;
+}
+.ad-overlay { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.85); display: grid; place-items: center; padding: 16px; }
+.ad-box { background: #1b1b1b; color: #ddd; border: 1px dashed #666; border-radius: 12px; padding: 28px 20px; max-width: 360px; text-align: center; display: flex; flex-direction: column; gap: 14px; }
+.ad-box b { color: #fff; font-size: 18px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<header class="bar"><div class="bar-inner"><a id="back" href="#home" aria-label="Back" hidden>‹</a><h1 id="screen-title">Blackjack Coach</h1></div></header>
+<main id="app"></main>
+<div class="ad-strip" aria-hidden="true">AD BANNER PREVIEW · real ads run in the mobile app</div>
+<div class="ad-overlay" id="ad-overlay" role="dialog" aria-label="Ad preview" hidden>
+  <div class="ad-box">
+    <b>Interstitial ad preview</b>
+    <p>In the mobile app, a full-screen ad appears here between hands, at most every 10 hands and every 3 minutes.</p>
+    <button class="btn primary" id="ad-close">Close</button>
+  </div>
+</div>
+<script>"use strict";(()=>{var H=[{id:"rules",unit:"Basics",title:"How Blackjack Works",summary:"The goal, card values, and how a round plays out.",sections:[{body:'You play against the dealer, not the other players. The goal is to finish with a higher total than the dealer without going over 21. Going over is a "bust" and you lose right away, even if the dealer busts later.'},{heading:"Card values",body:"Cards 2\u201310 are worth their number. Jacks, Queens and Kings are worth 10. An Ace is worth 1 or 11, whichever helps you more.",cards:["7","K","A"]},{heading:"Blackjack",body:'An Ace plus any 10-value card as your first two cards is a "blackjack" (or "natural"). It usually pays 3 to 2: bet $10, win $15. Avoid tables that pay 6 to 5; that small change more than triples the house edge.',cards:["A","Q"]},{heading:"How a round goes",body:`1. Place your bet.
+2. You get two cards face up. The dealer gets one face up (the "upcard") and one face down (the "hole card").
+3. If the dealer shows an Ace or 10, they check for blackjack.
+4. You play your hand.
+5. The dealer reveals the hole card and must hit until reaching 17 or more. The dealer has no choices; the rules decide every move.`}],quiz:[{question:"You have K and 7. What is your total?",options:["7","17","27"],answer:1,explanation:"Face cards are worth 10, so K + 7 = 17."},{question:"You bust with 23, then the dealer busts with 24. What happens?",options:["Push (tie)","You win","You lose"],answer:2,explanation:"You act first, so your bust loses immediately. This is where the house gets its edge."}],practice:{label:"Play a few hands",href:"/play"}},{id:"soft-hard",unit:"Basics",title:"Soft and Hard Hands",summary:"Why an Ace changes how you play.",sections:[{body:`A hand with an Ace counted as 11 is "soft". It can't bust on the next card, because the Ace can drop back to 1.`,cards:["A","6"]},{body:`A + 6 is "soft 17". If you hit and draw a 9, the Ace becomes 1 and you have a hard 16. You didn't bust.`,cards:["A","6","9"]},{heading:"Hard hands",body:'Any hand without an Ace, or where the Ace has to count as 1, is "hard". Hard 12\u201316 are the "stiff" hands: one card can bust you, and they are the hardest hands to play well.',cards:["10","6"]}],quiz:[{question:"What is A + 5 + 10?",options:["Soft 16","Hard 16","Bust (26)"],answer:1,explanation:"Counting the Ace as 11 would make 26, so it counts as 1: a hard 16."},{question:"Can a soft 18 bust by taking one card?",options:["Yes","No"],answer:1,explanation:"The Ace can always drop from 11 to 1, so a single card never busts a soft hand."}]},{id:"actions",unit:"Basics",title:"Your Options",summary:"Hit, stand, double, split and surrender.",sections:[{heading:"Hit",body:"Take another card. You can keep hitting until you stand or bust."},{heading:"Stand",body:"Keep your total and end your turn."},{heading:"Double down",body:"Double your bet and take exactly one more card. You can only do this on your first two cards. Use it when you're likely to win, like 11 against a dealer 6.",cards:["6","5"]},{heading:"Split",body:"With a pair, put up a second bet and play each card as its own hand. Each hand gets a second card.",cards:["8","8"]},{heading:"Surrender",body:"Some casinos let you give up your first two cards and get half your bet back. It's the right play for a few hands that lose very often, like 16 against a 10."},{heading:"Insurance",body:"When the dealer shows an Ace, you can bet half your wager that they have blackjack. Without counting cards, it's a bad bet: always decline it. Card counters take it when the count is high enough."}],quiz:[{question:"When are you allowed to double down?",options:["Any time","Only on your first two cards","Only with a pair"],answer:1,explanation:"Doubling is only offered on your first two cards (and on split hands at most casinos)."},{question:"Should a basic strategy player take insurance?",options:["Yes, always","Only with a good hand","No, never"],answer:2,explanation:"Insurance has a big house edge unless you know the deck is rich in 10s, which takes counting."}]},{id:"basic-strategy",unit:"Strategy",title:"Basic Strategy: The Big Ideas",summary:"The mathematically best play for every hand, explained simply.",sections:[{body:"Basic strategy is the best play for every combination of your hand and the dealer's upcard, worked out by computer. Played perfectly, it cuts the house edge to about 0.5%. You can memorise it from a few simple ideas."},{heading:"1. Assume the hole card is a 10",body:'About 4 in every 13 cards are worth 10. So when the dealer shows a 7, think "probably 17". Showing a 10, think "probably 20".'},{heading:'2. Dealer 2\u20136 are "bust cards"',body:"With a 4, 5 or 6 up, the dealer will probably end up with a stiff hand and have to hit it. Against these cards, stand on 12\u201316 and let the dealer bust. (Against a 2 or 3, hit 12.)",cards:["5"]},{heading:"3. Against 7 through Ace, hit until 17",body:"The dealer probably has a strong hand. Standing on 12\u201316 usually loses, so keep hitting until you reach 17.",cards:["10"]},{heading:"4. Double when you have the edge",body:"Double 11 against everything but an Ace, 10 against 2\u20139, and 9 against 3\u20136. Double soft hands (like A-7) against weak dealer cards."},{heading:"5. Always and never",body:"Always split Aces and 8s. Never split 10s or 5s. Never take insurance.",cards:["A","A"]}],quiz:[{question:"You have 14. The dealer shows a 6. What do you do?",options:["Hit","Stand","Double"],answer:1,explanation:"6 is a bust card. Stand and let the dealer take the risk."},{question:"You have 15. The dealer shows a 9. What do you do?",options:["Hit","Stand","Surrender"],answer:0,explanation:"The dealer probably has 19. Standing on 15 almost always loses, so hit."},{question:"You have 10, 10. The dealer shows a 6. What do you do?",options:["Split","Stand","Double"],answer:1,explanation:"20 is a great hand. Never break it up (unless you're counting and the count is very high)."}],practice:{label:"Drill basic strategy",href:"/drills/strategy"}},{id:"why-counting",unit:"Counting",title:"Why Card Counting Works",summary:"High cards help you; low cards help the dealer.",sections:[{body:"Cards that have been played don't come back until the shuffle. So the cards left in the shoe change as the game goes on, and so do your odds."},{heading:"When lots of 10s and Aces remain",body:`\u2022 You get more blackjacks, which pay 3 to 2. The dealer gets them too but only wins even money.
+\u2022 The dealer busts more often, because they must hit stiff hands.
+\u2022 Your double downs win more often.`,cards:["10","A","K"]},{heading:"When lots of small cards remain",body:"Small cards help the dealer make hands without busting. The game gets worse for you.",cards:["4","5","6"]},{heading:"The plan",body:"Counting tracks whether the remaining cards are rich in high cards or low cards. Bet small when they're low, bet bigger when they're high. No memorising every card, and it is not illegal. It just takes practice."}],quiz:[{question:"Which shoe is better for the player?",options:["Rich in small cards","Rich in 10s and Aces","It doesn't matter"],answer:1,explanation:"High cards mean more blackjacks for you and more dealer busts."}]},{id:"hi-lo",unit:"Counting",title:"The Hi-Lo Count",summary:"The most popular counting system: +1, 0, \u22121.",sections:[{body:'Hi-Lo gives every card a tag. Add up the tags of every card you see to get the "running count".'},{heading:"2 through 6: +1",body:"Low cards leaving the shoe are good for you.",cards:["2","3","4","5","6"],showTags:!0},{heading:"7, 8, 9: 0",body:"Neutral cards. Ignore them.",cards:["7","8","9"],showTags:!0},{heading:"10s and Aces: \u22121",body:"High cards leaving the shoe are bad for you.",cards:["10","J","Q","K","A"],showTags:!0},{heading:"Balanced count",body:"There are 5 plus-cards and 5 minus-cards per suit, so a full deck counts to exactly 0. A great way to practice: count down a real deck and check you finish at 0."}],quiz:[{question:"What is the Hi-Lo tag for a 9?",options:["+1","0","\u22121"],answer:1,explanation:"7, 8 and 9 are neutral."},{question:"You see K, 5, 3, A, 6. What is the running count?",options:["+1","0","+3"],answer:0,explanation:"K \u22121, 5 +1, 3 +1, A \u22121, 6 +1. Total: +1."}],practice:{label:"Practice the running count",href:"/drills/count"}},{id:"running-count",unit:"Counting",title:"Keeping the Running Count",summary:"Tricks to count fast and accurately.",sections:[{heading:"Cancel pairs",body:"A high card and a low card cancel out. Don't add them one by one. Spot pairs that cancel and only count what's left.",cards:["K","5","9","4"],showTags:!0},{body:"Above: K and 5 cancel, 9 is zero, so the whole group is just +1 from the 4."},{heading:"Count every card you see",body:"Include other players' cards, the dealer's hole card once it's turned over, and every hit card. Keep the count going from hand to hand until the shuffle, then start again at 0."},{heading:"Speed goal",body:"Practice until you can count down a full deck in under 30 seconds and finish on 0. Then add distractions, like talking or music."}],quiz:[{question:"The dealer shuffles. What is the running count now?",options:["Keep the old count","0","+1"],answer:1,explanation:"A new shoe resets the count to 0."}],practice:{label:"Practice the running count",href:"/drills/count"}},{id:"true-count",unit:"Counting",title:"The True Count",summary:"Adjusting for how many decks are left.",sections:[{body:"A running count of +6 is huge with one deck left, but not much with five decks left. The true count fixes this."},{heading:"The formula",body:`True count = running count \xF7 decks remaining.
+
+Running count +6 with 3 decks left \u2192 true count +2.
+Running count +6 with 1.5 decks left \u2192 true count +4.`},{heading:"Estimating decks remaining",body:"Look at the discard tray, estimate how many decks have been played, and subtract that from the total. Half-deck accuracy is good enough. In this app, the table shows the decks remaining so you can practice the math."},{heading:"Rounding",body:"For betting, most counters round the true count down (+2.7 becomes +2). That keeps you careful with your bets."}],quiz:[{question:"Running count +8, 4 decks left. True count?",options:["+2","+4","+8"],answer:0,explanation:"8 \xF7 4 = +2."},{question:"Running count \u22123, 1 deck left. True count?",options:["\u22121","\u22123","0"],answer:1,explanation:"\u22123 \xF7 1 = \u22123. Bet the minimum."}],practice:{label:"Practice true count conversions",href:"/drills/true-count"}},{id:"betting",unit:"Counting",title:"Betting With the Count",summary:"Turn the count into an edge.",sections:[{body:"Each +1 of true count is worth about +0.5% to you. In a typical game you start around \u22120.5%, so you have the edge from about +1 or +2."},{heading:"A simple bet spread",body:`True count +1 or less: 1 unit
+True count +2: 2 units
+True count +3: 4 units
+True count +4: 6 units
+True count +5 or more: 8 units`},{heading:"Bankroll",body:"Even with an edge, swings are big. Counters keep a bankroll of hundreds of betting units to avoid going broke during losing streaks. Never bet money you can't afford to lose."},{heading:"Reality check",body:"Counting is legal, but casinos can refuse your action or ask you to stop playing. Big, obvious bet jumps attract attention. Use this app to learn the skill and the math."}],quiz:[{question:"True count is +3. Using the spread above, how many units do you bet?",options:["1","4","8"],answer:1,explanation:"+3 \u2192 4 units."}],practice:{label:"Play with the count shown",href:"/play"}},{id:"deviations",unit:"Counting",title:"Insurance and Index Plays",summary:"When the count changes how you play your hand.",sections:[{heading:"Insurance at +3",body:"Insurance pays 2 to 1. It becomes a good bet when more than 1 in 3 remaining cards is a 10. That happens at a Hi-Lo true count of about +3. Take insurance at +3 or higher, never below."},{heading:"Index plays",body:`Some basic-strategy plays change with the count. Each one has an "index", the true count at which you switch. The most important ones:
+
+\u2022 16 vs 10: stand at 0 or higher (hit when negative)
+\u2022 15 vs 10: stand at +4
+\u2022 10,10 vs 5: split at +5; vs 6: split at +4
+\u2022 10 vs 10: double at +4
+\u2022 12 vs 3: stand at +2; 12 vs 2: stand at +3
+\u2022 11 vs A: double at +1`},{body:'Turn on "Count-based advice" in Settings and the coach will use these plays at the table.'}],quiz:[{question:"Dealer shows an Ace. True count is +4. Insurance?",options:["Take it","Decline"],answer:0,explanation:"At +3 or higher there are enough 10s left to make insurance profitable."},{question:"16 vs dealer 10, no surrender, true count +1. Play?",options:["Hit","Stand"],answer:1,explanation:"The index for 16 vs 10 is 0. At 0 or above, stand."}],practice:{label:"Play with count-based advice",href:"/play"}}];function me(e){return H.find(t=>t.id===e)}var Q=["\u2660","\u2665","\u2666","\u2663"],_=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];function Ve(){let e=[];for(let t of Q)for(let a of _)e.push({rank:a,suit:t});return e}function F(e,t=Math.random){let a=e.slice();for(let n=a.length-1;n>0;n--){let s=Math.floor(t()*(n+1));[a[n],a[s]]=[a[s],a[n]]}return a}function E(e,t=Math.random){let a=[];for(let n=0;n<e;n++)a.push(...Ve());return F(a,t)}function m(e){return e==="A"?1:e==="J"||e==="Q"||e==="K"?10:Number(e)}function ye(e){return m(e)===10}function ke(e){return e.suit==="\u2665"||e.suit==="\u2666"}function B(e){let t=m(e);return t>=2&&t<=6?1:t>=7&&t<=9?0:-1}function J(e){return e.reduce((t,a)=>t+B(a.rank),0)}function X(e){return Math.max(.5,Math.round(e/52*2)/2)}function Z(e,t){return e/X(t)}function ve(e,t){return Math.floor(Z(e,t))}var We=3;function ee(e){return e>=We}function we(e){return e<=1?1:e===2?2:e===3?4:e===4?6:8}var Qe=e=>Q[Math.floor(e()*4)],$e=(e,t)=>({rank:e,suit:Qe(t)}),M=(e,t)=>e[Math.floor(t()*e.length)],te=e=>M(_,e);function ne(e=Math.random){let t=$e(te(e),e),a=e(),n;if(a<.25){let s=M(["A","2","3","4","5","6","7","8","9","10"],e);n=[s,s==="10"?M(["10","J","Q","K"],e):s]}else if(a<.5)n=["A",M(["2","3","4","5","6","7","8","9"],e)];else for(;;){let s=te(e),o=te(e),r=m(s)+m(o);if(s!=="A"&&o!=="A"&&m(s)!==m(o)&&r>=8&&r<=17){n=[s,o];break}}return e()<.5&&n.reverse(),{cards:n.map(s=>$e(s,e)),dealerUp:t}}function Se(e,t=Math.random){return E(Math.ceil(e/52),t).slice(0,e)}function ae(e,t=Math.random){let a=[];for(let n=1;n<=Math.max(1,e);n+=.5)a.push(n);for(;;){let n=M(a,t),s=Math.floor(t()*13)-5,o=s*n;if(Number.isInteger(o)&&o!==0){let r=F([s-2,s-1,s+1,s+2],t),i=new Set([s,o,...r]);return{running:o,decks:n,answer:s,options:[...i].slice(0,4).sort((c,b)=>c-b)}}}}function S(e){let t=0,a=0;for(let n of e)t+=m(n.rank),n.rank==="A"&&a++;return a>0&&t+10<=21?{total:t+10,soft:!0}:{total:t,soft:!1}}function P(e){return e.length===2&&S(e).total===21}function Ce(e){return S(e).total>21}function C(e){return e.length===2&&m(e[0].rank)===m(e[1].rank)}function Ae(e){if(P(e))return"Blackjack";let{total:t,soft:a}=S(e);return t>21?`Bust (${t})`:a?`Soft ${t}`:`${t}`}function oe(e,t,a=Math.random){let n=E(e.decks,a);return{rules:e,shoe:n,shoeSize:n.length,runningCount:0,justShuffled:!0,bankroll:t,phase:"betting",dealer:[],holeRevealed:!1,hands:[],active:0,insuranceBet:0,lastNet:0,roundStartBankroll:t}}function _e(e){return e.shoeSize-e.shoe.length>=e.shoeSize*e.rules.penetration}function G(e){return Z(e.runningCount,e.shoe.length)}function R(e,t,a){e.shoe.length===0&&(e.shoe=E(e.rules.decks,a),e.shoeSize=e.shoe.length,e.runningCount=0,e.justShuffled=!0);let n=e.shoe.pop();return t&&(e.runningCount+=B(n.rank)),n}function ie(e){return{...e,shoe:e.shoe.slice(),dealer:e.dealer.slice(),hands:e.hands.map(t=>({...t,cards:t.cards.slice()}))}}function xe(e,t,a=!1){return{cards:e,bet:t,doubled:!1,done:!1,fromSplit:a,splitAces:!1,surrendered:!1}}function Te(e,t,a=Math.random){if(e.phase!=="betting"&&e.phase!=="roundOver")throw new Error("Round in progress");if(t<=0||t>e.bankroll)throw new Error("Invalid bet");let n=ie(e);n.justShuffled=!1,_e(n)&&(n.shoe=E(n.rules.decks,a),n.shoeSize=n.shoe.length,n.runningCount=0,n.justShuffled=!0),n.roundStartBankroll=n.bankroll,n.bankroll-=t,n.insuranceBet=0,n.lastNet=0,n.holeRevealed=!1,n.active=0;let s=R(n,!0,a),o=R(n,!0,a),r=R(n,!0,a),i=R(n,!1,a);return n.hands=[xe([s,r],t)],n.dealer=[o,i],o.rank==="A"?(n.phase="insurance",n):De(n,a)}function Re(e,t,a=Math.random){if(e.phase!=="insurance")throw new Error("Insurance not offered");let n=ie(e);if(t){let s=Math.min(n.hands[0].bet/2,n.bankroll);n.insuranceBet=s,n.bankroll-=s}return De(n,a)}function se(e){e.holeRevealed||(e.holeRevealed=!0,e.runningCount+=B(e.dealer[1].rank))}function De(e,t){let a=e.dealer[0].rank;if((a==="A"||ye(a))&&P(e.dealer)){se(e),e.bankroll+=e.insuranceBet*3;for(let s of e.hands)s.done=!0;return re(e)}return P(e.hands[0].cards)?(e.hands[0].done=!0,se(e),re(e)):(e.phase="playing",e)}function N(e){let t={hit:!1,stand:!1,double:!1,split:!1,surrender:!1};if(e.phase!=="playing")return t;let a=e.hands[e.active];if(!a||a.done)return t;let n=a.cards.length===2,s=e.bankroll>=a.bet;return{hit:!0,stand:!0,double:n&&s&&(!a.fromSplit||e.rules.doubleAfterSplit),split:n&&C(a.cards)&&s&&e.hands.length<e.rules.maxHands&&!a.splitAces,surrender:e.rules.lateSurrender&&n&&e.hands.length===1&&!a.fromSplit}}function le(e,t){if(e.phase!=="playing")return null;let a=N(e);return{cards:e.hands[e.active].cards,dealerUp:e.dealer[0].rank,rules:e.rules,canDouble:a.double,canSplit:a.split,canSurrender:a.surrender,trueCount:t?G(e):void 0}}function He(e,t,a=Math.random){if(!N(e)[t])throw new Error(`Illegal action: ${t}`);let s=ie(e),o=s.hands[s.active];switch(t){case"hit":o.cards.push(R(s,!0,a)),S(o.cards).total>=21&&(o.done=!0);break;case"stand":o.done=!0;break;case"double":s.bankroll-=o.bet,o.bet*=2,o.doubled=!0,o.cards.push(R(s,!0,a)),o.done=!0;break;case"surrender":o.surrendered=!0,o.done=!0;break;case"split":{s.bankroll-=o.bet;let r=o.cards[0].rank==="A",i=xe([o.cards[1]],o.bet,!0);if(o.cards=[o.cards[0],R(s,!0,a)],o.fromSplit=!0,i.cards.push(R(s,!0,a)),s.hands.splice(s.active+1,0,i),r)for(let c of[o,i])c.splitAces=!0,c.done=!0;else for(let c of[o,i])S(c.cards).total===21&&(c.done=!0);break}}return Fe(s,a)}function Fe(e,t){for(;e.active<e.hands.length&&e.hands[e.active].done;)e.active++;if(e.active<e.hands.length)return e;if(e.active=e.hands.length-1,se(e),e.hands.some(n=>!n.surrendered&&!Ce(n.cards)))for(;Je(e.dealer,e.rules);)e.dealer.push(R(e,!0,t));return re(e)}function Je(e,t){let{total:a,soft:n}=S(e);return a<17?!0:a===17&&n&&t.dealerHitsSoft17}function re(e){let t=P(e.dealer),a=S(e.dealer).total,n=a>21;for(let s of e.hands){let o=P(s.cards)&&!s.fromSplit,r=S(s.cards).total,i,c;s.surrendered?(i="surrender",c=s.bet/2):t?(i=o?"push":"lose",c=o?s.bet:0):o?(i="blackjack",c=s.bet+s.bet*e.rules.blackjackPayout):r>21?(i="lose",c=0):n||r>a?(i="win",c=s.bet*2):r===a?(i="push",c=s.bet):(i="lose",c=0),s.outcome=i,s.payout=c,s.done=!0,e.bankroll+=c}return e.lastNet=e.bankroll-e.roundStartBankroll,e.phase="roundOver",e}var ue={decks:6,dealerHitsSoft17:!1,doubleAfterSplit:!0,lateSurrender:!0,blackjackPayout:1.5,maxHands:4,penetration:.75};var I={hit:"Hit",stand:"Stand",double:"Double",split:"Split",surrender:"Surrender"};function ce(e){return e==="A"?11:m(e)}function U(e,t,a){let n=a.dealerHitsSoft17;return e<=8?"H":e===9?t>=3&&t<=6?"D":"H":e===10?t<=9?"D":"H":e===11?t<=10||n?"D":"H":e===12?t>=4&&t<=6?"S":"H":e<=14?t<=6?"S":"H":e===15?t===10||n&&t===11?"Rh":t<=6?"S":"H":e===16?t>=9?"Rh":t<=6?"S":"H":e===17&&n&&t===11?"Rs":"S"}function de(e,t,a){let n=a.dealerHitsSoft17;return e<=12?"H":e<=14?t===5||t===6?"D":"H":e<=16?t>=4&&t<=6?"D":"H":e===17?t>=3&&t<=6?"D":"H":e===18?t>=3&&t<=6?"Ds":t===2?n?"Ds":"S":t===7||t===8?"S":"H":e===19&&n&&t===6?"Ds":"S"}function he(e,t,a){let n=a.doubleAfterSplit;switch(e){case 1:return"P";case 10:return null;case 9:return t===7||t>=10?null:"P";case 8:return a.dealerHitsSoft17&&t===11?"Rp":"P";case 7:return t<=7?"P":null;case 6:return t<=6&&(n||t>=3)?"P":null;case 5:return null;case 4:return n&&(t===5||t===6)?"P":null;default:return t<=7&&(n||t>=4)?"P":null}}var v=e=>{let t=S(e);return t.soft?-1:t.total},Le=e=>C(e)&&m(e[0].rank)===10,Xe=[{id:"16v10",label:"16 vs 10",index:0,atOrAbove:"stand",below:"hit",match:(e,t)=>t===10&&v(e)===16&&!C(e)},{id:"15v10",label:"15 vs 10",index:4,atOrAbove:"stand",below:"hit",match:(e,t)=>t===10&&v(e)===15},{id:"TTv5",label:"10,10 vs 5",index:5,atOrAbove:"split",below:"stand",match:(e,t)=>t===5&&Le(e)},{id:"TTv6",label:"10,10 vs 6",index:4,atOrAbove:"split",below:"stand",match:(e,t)=>t===6&&Le(e)},{id:"10v10",label:"10 vs 10",index:4,atOrAbove:"double",below:"hit",match:(e,t)=>t===10&&v(e)===10},{id:"12v3",label:"12 vs 3",index:2,atOrAbove:"stand",below:"hit",match:(e,t)=>t===3&&v(e)===12&&!C(e)},{id:"12v2",label:"12 vs 2",index:3,atOrAbove:"stand",below:"hit",match:(e,t)=>t===2&&v(e)===12&&!C(e)},{id:"11vA",label:"11 vs A",index:1,atOrAbove:"double",below:"hit",match:(e,t)=>t===11&&v(e)===11},{id:"9v2",label:"9 vs 2",index:1,atOrAbove:"double",below:"hit",match:(e,t)=>t===2&&v(e)===9},{id:"10vA",label:"10 vs A",index:4,atOrAbove:"double",below:"hit",match:(e,t)=>t===11&&v(e)===10},{id:"9v7",label:"9 vs 7",index:3,atOrAbove:"double",below:"hit",match:(e,t)=>t===7&&v(e)===9},{id:"16v9",label:"16 vs 9",index:5,atOrAbove:"stand",below:"hit",match:(e,t)=>t===9&&v(e)===16&&!C(e)},{id:"13v2",label:"13 vs 2",index:-1,atOrAbove:"stand",below:"hit",match:(e,t)=>t===2&&v(e)===13},{id:"12v4",label:"12 vs 4",index:0,atOrAbove:"stand",below:"hit",match:(e,t)=>t===4&&v(e)===12&&!C(e)},{id:"12v5",label:"12 vs 5",index:-2,atOrAbove:"stand",below:"hit",match:(e,t)=>t===5&&v(e)===12&&!C(e)},{id:"12v6",label:"12 vs 6",index:-1,atOrAbove:"stand",below:"hit",match:(e,t)=>t===6&&v(e)===12&&!C(e)},{id:"13v3",label:"13 vs 3",index:-2,atOrAbove:"stand",below:"hit",match:(e,t)=>t===3&&v(e)===13}];function Ee(e,t){switch(e){case"H":return"hit";case"S":return"stand";case"D":return t.canDouble?"double":"hit";case"Ds":return t.canDouble?"double":"stand";case"P":return"split";case"Rh":return t.canSurrender?"surrender":"hit";case"Rs":return t.canSurrender?"surrender":"stand";case"Rp":return t.canSurrender?"surrender":"split"}}function Ze(e){let t=ce(e.dealerUp),{cards:a,rules:n}=e;if(e.canSplit&&C(a)){let r=he(m(a[0].rank),t,n);if(r)return Ee(r,e)}let{total:s,soft:o}=S(a);return Ee(o?de(s,t,n):U(s,t,n),e)}function et(e,t){return e==="double"?t.canDouble:e==="split"?t.canSplit:e==="surrender"?t.canSurrender:!0}function Y(e){let t=Ze(e),a=ce(e.dealerUp);if(e.trueCount!==void 0&&t!=="surrender"){let n=Xe.find(s=>s.match(e.cards,a));if(n){let s=e.trueCount>=n.index?n.atOrAbove:n.below;if(s!==t&&et(s,e)){let o=V(e.trueCount);return{action:s,deviation:n,reason:`Count play: ${n.label} changes at a true count of ${n.index>=0?"+":""}${n.index}. The true count is ${o}, so ${s} instead of the usual ${t}.`}}}}return{action:t,reason:nt(t,e)}}function V(e){let t=Math.round(e*2)/2;return`${t>0?"+":""}${t}`}function tt(e){return e==="A"?"an Ace":e==="8"?"an 8":`a ${m(e)}`}function nt(e,t){let a=ce(t.dealerUp),n=tt(t.dealerUp),{total:s,soft:o}=S(t.cards),r=a>=2&&a<=6,i=C(t.cards)?m(t.cards[0].rank):0;switch(e){case"split":return i===1?"Always split Aces. Two hands starting at 11 beat one soft 12.":i===8?"Always split 8s. 16 is the worst total in blackjack; two hands starting at 8 do much better.":`Split: the dealer shows ${n}, so two hands starting with a ${i} are worth more than one hand of ${s}.`;case"surrender":return`Surrender: ${s} against ${n} loses so often that giving up half your bet costs less over time.`;case"double":return o?`Double: soft ${s} can't bust with one card, and the dealer's ${n} is weak. Get more money out while you have the edge.`:`Double: ${s} is a strong starting total and the dealer shows ${n}. You're the favorite, so double your bet.`;case"stand":return s>=17&&!o?`Stand: ${s} is strong enough. Hitting would bust you too often.`:o?`Stand: soft ${s} is a good hand against ${n}.`:r?`Stand: the dealer shows ${n}, a "bust card". Don't risk busting; make the dealer draw and possibly bust.`:`Stand on ${s}.`;case"hit":return o?`Hit: soft ${s} can't bust with one card, so take a free shot at improving.`:s<=11?`Hit: you can't bust with ${s}, so always take a card.`:r?`Hit: ${s} is too weak to stand here, even against ${n}.`:`Hit: the dealer shows ${n}, a strong card. Assume a 10 underneath, so ${s} probably loses if you stand.`}}var O=1e3,Me={rules:ue,showHints:!0,correctMistakes:!0,showCount:!0,countQuizzes:!1,useDeviations:!1,bankroll:O,baseBet:10},ge={handsPlayed:0,decisions:0,correctDecisions:0,countDrillsPassed:0,bestStrategyStreak:0,lessonsCompleted:[]},Ne="blackjack-coach/v1",h=Me,A=ge,qe,ze;try{let e=JSON.parse((qe=localStorage.getItem(Ne))!=null?qe:"null");e&&(h={...Me,...e.settings,rules:{...ue,...(ze=e.settings)==null?void 0:ze.rules}},A={...ge,...e.stats})}catch{}function Oe(){try{localStorage.setItem(Ne,JSON.stringify({settings:h,stats:A}))}catch{}}function q(e){h={...h,...e},Oe()}function z(e){A=e(A),Oe()}var $=document.getElementById("app"),at=document.getElementById("screen-title"),Be=document.getElementById("back"),w=e=>e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"),st=e=>w(e).replace(/\n/g,"<br>"),T=e=>`${e>0?"+":""}${e}`,j=e=>`$${e%1?e.toFixed(2):e}`,rt={"\u2660":"spades","\u2665":"hearts","\u2666":"diamonds","\u2663":"clubs"};function L(e,t={}){var o;let a=(o=t.size)!=null?o:"md";if(!e)return`<div class="card back ${a}" aria-label="Face-down card"></div>`;let n=B(e.rank),s=t.tag?`<span class="tag ${n>0?"plus":n<0?"minus":""}">${n>0?"+1":n<0?"\u22121":"0"}</span>`:"";return`<div class="card-wrap"><div class="card ${a} ${ke(e)?"red":""}" aria-label="${e.rank} of ${rt[e.suit]}">
+    <span class="idx">${e.rank}<br>${e.suit}</span><span class="pip">${e.suit}</span><span class="idx flip">${e.rank}<br>${e.suit}</span>
+  </div>${s}</div>`}function pe(e,t){let a=e.map((s,o)=>L(t.hideHole&&o===1?null:s,{size:t.size})).join(""),n=t.hideHole?`showing ${e[0].rank}`:Ae(e);return`<div class="hand ${t.active?"active":""}">
+    <div class="hand-cards">${a}</div>
+    <div class="hand-label">${w(t.label)}: <b>${w(n)}</b>${t.result?` \xB7 ${w(t.result)}`:""}</div>
+  </div>`}function d(e,t,a){$.querySelectorAll(e).forEach(n=>n.addEventListener(t,s=>a(n,s)))}var x=null;function ot(){var a;let e=location.hash.replace(/^#/,"")||"home";if(e.startsWith("lesson-")){let n=me(e.slice(7));if(n)return{title:n.title,back:"learn",render:()=>ct(n)}}let t={home:{title:"Blackjack Coach",render:it},learn:{title:"Lessons",back:"home",render:lt},play:{title:"Practice Table",back:"home",render:D},drills:{title:"Drills",back:"home",render:mt},"drill-strategy":{title:"Strategy Drill",back:"drills",render:yt},"drill-count":{title:"Running Count Drill",back:"drills",render:kt},"drill-true-count":{title:"True Count Drill",back:"drills",render:vt},chart:{title:"Strategy Chart",back:"home",render:wt},settings:{title:"Settings",back:"home",render:$t}};return(a=t[e])!=null?a:t.home}function Ke(){var t;x==null||x(),x=null;let e=ot();at.textContent=e.title,Be.hidden=!e.back,Be.href=`#${(t=e.back)!=null?t:"home"}`,e.render(),window.scrollTo(0,0)}window.addEventListener("hashchange",Ke);function it(){let e=A.decisions?`${Math.round(A.correctDecisions/A.decisions*100)}%`:"\u2014",t=[["learn","Learn","Step-by-step lessons from the rules to card counting","01"],["play","Practice Table","Play with a coach that explains every decision","02"],["drills","Drills","Basic strategy, running count and true count drills","03"],["chart","Strategy Chart","The full basic strategy chart for your table rules","04"],["settings","Settings","Table rules, coaching options and progress","05"]];$.innerHTML=`
+    <section class="hero">
+      <div class="hero-cards">${L({rank:"A",suit:"\u2660"},{size:"sm"})}${L({rank:"K",suit:"\u2665"},{size:"sm"})}</div>
+      <h1>Blackjack Coach</h1>
+      <p class="muted">Learn to play every hand correctly, then learn to count cards.</p>
+    </section>
+    <div class="stats">
+      <div><b>${A.lessonsCompleted.length}/${H.length}</b><span>Lessons</span></div>
+      <div><b>${A.handsPlayed}</b><span>Hands</span></div>
+      <div><b>${e}</b><span>Accuracy</span></div>
+    </div>
+    <nav class="tiles">
+      ${t.map(([a,n,s])=>`<a class="tile" href="#${a}">
+            <span class="tile-text"><b>${n}</b><span>${s}</span></span><span class="chev" aria-hidden="true">\u203A</span></a>`).join("")}
+    </nav>
+    <p class="fine">For entertainment and education only. Play money, no real-money gambling.</p>`}function lt(){let e=["Basics","Strategy","Counting"];$.innerHTML='<p class="muted">Work through the lessons in order. Each one ends with a short quiz.</p>'+e.map(t=>`<h2>${t}</h2><div class="list">${H.filter(a=>a.unit===t).map(a=>{let n=A.lessonsCompleted.includes(a.id);return`<a class="tile" href="#lesson-${a.id}">
+              <span class="badge ${n?"done":""}">${n?"\u2713":H.indexOf(a)+1}</span>
+              <span class="tile-text"><b>${w(a.title)}</b><span>${w(a.summary)}</span></span></a>`}).join("")}</div>`).join("")}var ut={"/play":"play","/drills/strategy":"drill-strategy","/drills/count":"drill-count","/drills/true-count":"drill-true-count","/chart":"chart"};function ct(e){let t={},a=["\u2660","\u2665","\u2663","\u2666"],n=H[H.indexOf(e)+1],s=()=>{let o=e.quiz.every((r,i)=>t[i]===r.answer);$.innerHTML=`
+      <article class="lesson">
+        ${e.sections.map(r=>`<section>
+              ${r.heading?`<h2>${w(r.heading)}</h2>`:""}
+              <p>${st(r.body)}</p>
+              ${r.cards?`<div class="card-row">${r.cards.map((i,c)=>L({rank:i,suit:a[c%4]},{size:"sm",tag:r.showTags})).join("")}</div>`:""}
+            </section>`).join("")}
+      </article>
+      <h2>Quiz</h2>
+      ${e.quiz.map((r,i)=>{let c=t[i],b=c!==void 0,g=c===r.answer;return`<div class="panel">
+            <p class="q">${w(r.question)}</p>
+            <div class="btn-row">${r.options.map((p,u)=>`<button class="btn ${b&&u===c?g?"primary":"danger":"secondary"}" data-q="${i}" data-o="${u}">${w(p)}</button>`).join("")}</div>
+            ${b?`<p class="${g?"good":"bad"}">${g?`\u2713 Correct. ${w(r.explanation)}`:"\u2717 Not quite. Try again."}</p>`:""}
+          </div>`}).join("")}
+      ${o?`<div class="panel complete"><p class="done">Lesson complete</p>
+            ${e.practice?`<a class="btn primary" href="#${ut[e.practice.href]}">${w(e.practice.label)}</a>`:""}
+            ${n?`<a class="btn secondary" href="#lesson-${n.id}">Next: ${w(n.title)}</a>`:""}</div>`:""}`,d("[data-q]","click",r=>{let i=Number(r.dataset.q);if(t[i]===e.quiz[i].answer)return;t[i]=Number(r.dataset.o),e.quiz.every((b,g)=>t[g]===b.answer)&&!A.lessonsCompleted.includes(e.id)&&z(b=>({...b,lessonsCompleted:[...b.lessonsCompleted,e.id]}));let c=window.scrollY;s(),window.scrollTo(0,c)})};s()}var dt={win:"Win",lose:"Lose",push:"Push",blackjack:"Blackjack!",surrender:"Surrendered"},ht=["hit","stand","double","split","surrender"],bt=10,pt=180*1e3,l={game:oe(h.rules,h.bankroll),bet:h.baseBet,feedback:null,countVisible:h.showCount,quiz:null,streak:0,roundsSinceAd:0,lastAd:Date.now()};function Ge(){l.game=oe(h.rules,h.bankroll),l.feedback=null,l.quiz=null}function D(){x==null||x();let e=l.game,t=e.rules,a=N(e),n=G(e),s=le(e,h.useDeviations),o=s?Y(s):null,r=h.baseBet,i=we(ve(e.runningCount,e.shoe.length)),c=!e.holeRevealed&&e.dealer.length>0,b=l.countVisible?`<button class="count" id="count-toggle" title="Hide the count">RC ${T(e.runningCount)} \xB7 Decks ${X(e.shoe.length)} \xB7 TC ${V(n)}</button>`:'<button class="count" id="count-toggle">Show count</button>',g="";if(e.phase==="playing")g=`
+      ${h.showHints&&o?`<p class="hint">Coach: ${I[o.action]}${o.deviation?" (count play)":""}</p>`:""}
+      <div class="btn-row actions">${ht.filter(u=>u!=="surrender"||t.lateSurrender).map(u=>`<button class="btn secondary ${h.showHints&&(o==null?void 0:o.action)===u?"glow":""}" data-act="${u}" ${a[u]?"":"disabled"}>${I[u]}</button>`).join("")}</div>
+      <p class="keys">Keys: H hit \xB7 S stand \xB7 D double \xB7 P split \xB7 R surrender</p>`;else if(e.phase==="insurance")g=`<div class="panel">
+      <p class="prompt">Dealer shows an Ace. Insurance?</p>
+      ${h.showHints?`<p class="hint">Coach: ${h.useDeviations&&ee(n)?"Take it (TC +3 or higher)":"Decline"}</p>`:""}
+      <div class="btn-row"><button class="btn secondary" data-ins="1">Take insurance</button><button class="btn secondary" data-ins="0">No insurance</button></div>
+    </div>`;else if(e.phase==="roundOver"){let u=l.quiz;g=`<div class="panel">
+      <p class="prompt ${e.lastNet>0?"good":e.lastNet<0?"bad":""}">${e.lastNet>0?`You won ${j(e.lastNet)}`:e.lastNet<0?`You lost ${j(-e.lastNet)}`:"Push"}</p>
+      ${u?`<p class="prompt">Pop quiz: what's the running count?</p>
+        <div class="stepper"><button class="btn ghost" id="q-minus" ${u.revealed?"disabled":""}>\u2212</button><span class="guess">${T(u.guess)}</span><button class="btn ghost" id="q-plus" ${u.revealed?"disabled":""}>+</button>
+        ${u.revealed?"":'<button class="btn secondary" id="q-check">Check</button>'}</div>
+        ${u.revealed?`<p class="${u.guess===e.runningCount?"good":"bad"}">${u.guess===e.runningCount?"\u2713 Spot on!":`\u2717 It was ${T(e.runningCount)}.`}</p>`:""}`:""}
+      <button class="btn primary" id="next-hand">Next hand <kbd>Enter</kbd></button>
+    </div>`}else g=`<div class="panel">
+      <p class="prompt">Place your bet: ${j(l.bet)}</p>
+      ${l.countVisible?`<p class="hint">Count suggests ${i} unit${i>1?"s":""} (${j(i*r)})</p>`:""}
+      <div class="btn-row">${[-r,r,r*5].map(u=>`<button class="btn ghost" data-bet="${u}" ${l.bet+u<r||l.bet+u>e.bankroll?"disabled":""}>${u<0?`\u2212$${-u}`:`+$${u}`}</button>`).join("")}</div>
+      ${e.bankroll>=r?'<button class="btn primary" id="deal">Deal <kbd>Enter</kbd></button>':`<button class="btn primary" id="reset-bankroll">Out of chips: reset to $${O}</button>`}
+    </div>`;$.innerHTML=`
+    <div class="topbar"><span class="bankroll">Bankroll ${j(e.bankroll)}</span>${b}</div>
+    ${e.justShuffled&&e.phase!=="betting"?'<p class="shuffle">New shoe shuffled. The count resets to 0.</p>':""}
+    <div class="felt">
+      <div class="area">${e.dealer.length?pe(e.dealer,{label:"Dealer",hideHole:c}):`<p class="rules-line">${t.decks} deck${t.decks>1?"s":""} \xB7 Dealer ${t.dealerHitsSoft17?"hits soft 17":"stands on all 17s"} \xB7 Blackjack pays ${t.blackjackPayout===1.5?"3:2":"6:5"}</p>`}</div>
+      <div class="area players">${e.hands.map((u,y)=>pe(u.cards,{label:e.hands.length>1?`Hand ${y+1}`:"You",active:e.phase==="playing"&&y===e.active&&e.hands.length>1,result:u.outcome?dt[u.outcome]:j(u.bet),size:e.hands.length>2?"sm":"md"})).join("")}</div>
+    </div>
+    ${l.feedback?`<div class="feedback ${l.feedback.ok?"ok":"no"}">${l.feedback.ok?"\u2713":"\u2717"} ${w(l.feedback.text)}</div>`:""}
+    ${g}`,d("#count-toggle","click",()=>{l.countVisible=!l.countVisible,D()}),d("[data-act]","click",u=>Pe(u.dataset.act)),d("[data-ins]","click",u=>gt(u.dataset.ins==="1")),d("[data-bet]","click",u=>{l.bet+=Number(u.dataset.bet),D()}),d("#deal","click",Ie),d("#next-hand","click",je),d("#reset-bankroll","click",()=>{l.game={...l.game,bankroll:O},q({bankroll:O}),D()}),d("#q-minus","click",()=>{l.quiz.guess--,D()}),d("#q-plus","click",()=>{l.quiz.guess++,D()}),d("#q-check","click",()=>{l.quiz.revealed=!0,l.quiz.guess===l.game.runningCount&&z(u=>({...u,countDrillsPassed:u.countDrillsPassed+1})),D()});let p=u=>{if(u.target instanceof HTMLInputElement||u.metaKey||u.ctrlKey||u.altKey)return;let y=u.key.toLowerCase(),f={h:"hit",s:"stand",d:"double",p:"split",r:"surrender"},k=l.game.phase;if(k==="playing"&&f[y]&&N(l.game)[f[y]])Pe(f[y]);else if(y==="enter"&&k==="betting"&&l.game.bankroll>=h.baseBet)Ie();else if(y==="enter"&&k==="roundOver")je();else return;u.preventDefault()};document.addEventListener("keydown",p),x=()=>document.removeEventListener("keydown",p)}function Ue(e,t){l.streak=e?l.streak+1:0,z(a=>({...a,decisions:a.decisions+1,correctDecisions:a.correctDecisions+(e?1:0)})),e?l.feedback={ok:e,text:l.streak>=5?`Correct! ${l.streak} in a row.`:"Correct!"}:l.feedback=h.correctMistakes?{ok:e,text:t}:null}function fe(e){l.game=e,e.phase==="roundOver"&&(q({bankroll:e.bankroll}),z(t=>({...t,handsPlayed:t.handsPlayed+1})),h.countQuizzes&&Math.random()<.25&&(l.quiz={guess:0,revealed:!1},l.countVisible=!1)),D()}function Pe(e){let t=le(l.game,h.useDeviations);if(t){let a=Y(t);Ue(e===a.action,`Best play: ${I[a.action]}. ${a.reason}`)}fe(He(l.game,e))}function gt(e){let t=G(l.game),a=h.useDeviations&&ee(t);Ue(e===a,a?`Take insurance: the true count is ${V(t)} (+3 or more), so over a third of the remaining cards are 10s.`:"Decline insurance. It loses money in the long run unless the true count is +3 or higher."),fe(Re(l.game,e))}function Ie(){l.feedback=null,l.quiz=null,fe(Te(l.game,Math.min(l.bet,l.game.bankroll)))}function je(){l.feedback=null,l.quiz=null,l.game={...l.game,phase:"betting",hands:[],dealer:[]},l.roundsSinceAd++,l.roundsSinceAd>=bt&&Date.now()-l.lastAd>=pt&&(l.roundsSinceAd=0,l.lastAd=Date.now(),ft()),D()}function ft(){let e=document.getElementById("ad-overlay");e.hidden=!1,e.querySelector("button").focus()}document.getElementById("ad-close").addEventListener("click",()=>{document.getElementById("ad-overlay").hidden=!0});function mt(){let e=[["drill-strategy","Basic Strategy","Random hands vs a dealer upcard. Choose the best play and see why."],["drill-count","Running Count","Cards flash by. Keep the Hi-Lo count and enter it at the end."],["drill-true-count","True Count","Convert a running count to a true count using the decks remaining."]];$.innerHTML='<p class="muted">Short, repeatable practice. A few minutes a day builds real speed.</p><div class="list">'+e.map(([t,a,n])=>`<a class="tile" href="#${t}"><span class="tile-text"><b>${a}</b><span>${n}</span></span><span class="chev" aria-hidden="true">\u203A</span></a>`).join("")+"</div>"}function yt(){let e=ne(),t=null,a={right:0,total:0,streak:0},n=h.rules,s=["hit","stand","double","split",...n.lateSurrender?["surrender"]:[]],o=()=>{let c=Y({cards:e.cards,dealerUp:e.dealerUp.rank,rules:n,canDouble:!0,canSplit:!0,canSurrender:n.lateSurrender}),b=t===c.action;$.innerHTML=`
+      <div class="score-row"><span>${a.right}/${a.total} correct</span><span>Streak ${a.streak} \xB7 Best ${Math.max(A.bestStrategyStreak,a.streak)}</span></div>
+      <div class="felt drill">
+        <p class="muted">Dealer shows</p>${L(e.dealerUp)}
+        ${pe(e.cards,{label:"You"})}
+      </div>
+      <div class="btn-row actions">${s.map(p=>`<button class="btn ${t&&p===c.action?"primary":t===p?"danger":"secondary"}" data-a="${p}">${I[p]}</button>`).join("")}</div>
+      ${t?`<div class="feedback ${b?"ok":"no"}"><b>${b?"\u2713 Correct":`\u2717 The best play is ${I[c.action]}`}</b><br>${w(c.reason)}</div>
+             <button class="btn primary" id="next">Next hand <kbd>Enter</kbd></button>`:'<p class="keys">Keys: H hit \xB7 S stand \xB7 D double \xB7 P split \xB7 R surrender</p>'}`,d("[data-a]","click",p=>g(p.dataset.a)),d("#next","click",r);function g(p){if(t)return;t=p;let u=p===c.action;a.total++,a.right+=u?1:0,a.streak=u?a.streak+1:0,z(y=>({...y,decisions:y.decisions+1,correctDecisions:y.correctDecisions+(u?1:0),bestStrategyStreak:Math.max(y.bestStrategyStreak,a.streak)})),o()}},r=()=>{t=null,e=ne(),o()},i=c=>{let b={h:"hit",s:"stand",d:"double",p:"split",r:"surrender"},g=c.key.toLowerCase();t&&g==="enter"?r():!t&&b[g]&&s.includes(b[g])&&$.querySelector(`[data-a="${b[g]}"]`).click()};document.addEventListener("keydown",i),x=()=>document.removeEventListener("keydown",i),o()}function kt(){let e=1e3,t=20,a=1,n=[],s=0,o=0,r="setup",i=null,c=()=>{i&&clearInterval(i),i=null};x=c;let b=(f,k,K)=>`<div class="seg" role="group" id="${f}">${k.map(([Ye,W])=>`<button class="${W===K?"on":""}" data-v="${W}" aria-pressed="${W===K}">${Ye}</button>`).join("")}</div>`,g=()=>{n=Se(t),s=0,o=0,r="running",c(),i=setInterval(()=>{s+=a,s>=n.length&&(c(),r="answer"),p()},e),p()},p=()=>{let f=J(n);if(r==="setup")$.innerHTML=`
+        <p>Keep the Hi-Lo running count as the cards flash by: +1 for 2\u20136, 0 for 7\u20139, \u22121 for 10s and Aces.</p>
+        <div class="panel">
+          <label class="lbl">Speed</label>${b("speed",[["Slow",1500],["Medium",1e3],["Fast",600],["Pro",350]],e)}
+          <label class="lbl">Length</label>${b("length",[["10 cards",10],["20 cards",20],["Full deck",52]],t)}
+          <label class="lbl">Cards at a time</label>${b("per",[["One",1],["Two (cancel pairs)",2]],a)}
+        </div>
+        <button class="btn primary" id="start">Start</button>`,d("#speed button","click",k=>(e=Number(k.dataset.v),p())),d("#length button","click",k=>(t=Number(k.dataset.v),p())),d("#per button","click",k=>(a=Number(k.dataset.v),p())),d("#start","click",g);else if(r==="running")$.innerHTML=`<div class="flash">${n.slice(s,s+a).map(k=>L(k,{size:"lg"})).join("")}</div>
+        <p class="muted center">${Math.min(s+a,n.length)} / ${n.length}</p>
+        <button class="btn ghost" id="stop">Stop</button>`,d("#stop","click",()=>{c(),r="setup",p()});else{let k=o===f;$.innerHTML=`
+        <div class="panel">
+          <p class="prompt">What's the running count?</p>
+          <div class="stepper"><button class="btn ghost" id="minus" ${r==="result"?"disabled":""}>\u2212</button><span class="guess big">${T(o)}</span><button class="btn ghost" id="plus" ${r==="result"?"disabled":""}>+</button></div>
+          ${r==="answer"?'<button class="btn primary" id="check">Check</button><p class="keys">Arrow keys or +/\u2212 to change, Enter to check</p>':""}
+        </div>
+        ${r==="result"?`<div class="feedback ${k?"ok":"no"}"><b>${k?"\u2713 Perfect count!":`\u2717 The count was ${T(f)}`}</b></div>
+          <div class="panel"><p class="muted">Every card with its tag:</p><div class="card-row">${n.map(K=>L(K,{size:"sm",tag:!0})).join("")}</div></div>
+          <div class="btn-row"><button class="btn primary" id="again">Try again</button><button class="btn ghost" id="setup">Change settings</button></div>`:""}`,d("#minus","click",()=>(o--,p())),d("#plus","click",()=>(o++,p())),d("#check","click",u),d("#again","click",g),d("#setup","click",()=>(r="setup",p()))}},u=()=>{r="result",o===J(n)&&z(f=>({...f,countDrillsPassed:f.countDrillsPassed+1})),p()},y=f=>{if(r==="answer"){if(f.key==="ArrowUp"||f.key==="ArrowRight"||f.key==="+"||f.key==="=")o++;else if(f.key==="ArrowDown"||f.key==="ArrowLeft"||f.key==="-")o--;else return f.key==="Enter"?u():void 0;f.preventDefault(),p()}};document.addEventListener("keydown",y),x=()=>{c(),document.removeEventListener("keydown",y)},p()}function vt(){let e=Math.max(2,h.rules.decks),t=ae(e),a=null,n={right:0,total:0},s=()=>{let o=a===t.answer;$.innerHTML=`
+      <p class="muted">True count = running count \xF7 decks remaining.</p>
+      <div class="score-row"><span>${n.right}/${n.total} correct</span></div>
+      <div class="panel center"><p class="big">Running count ${T(t.running)}</p><p class="big">${t.decks} deck${t.decks===1?"":"s"} left</p><p class="muted">What's the true count?</p></div>
+      <div class="btn-row">${t.options.map(r=>`<button class="btn ${a!==null&&r===t.answer?"primary":a===r?"danger":"secondary"}" data-n="${r}">${T(r)}</button>`).join("")}</div>
+      ${a!==null?`<div class="feedback ${o?"ok":"no"}"><b>${o?"\u2713 Correct":`\u2717 It's ${T(t.answer)}`}</b><br>${T(t.running)} \xF7 ${t.decks} = ${T(t.answer)}</div><button class="btn primary" id="next">Next</button>`:""}`,d("[data-n]","click",r=>{a===null&&(a=Number(r.dataset.n),n.total++,n.right+=a===t.answer?1:0,s())}),d("#next","click",()=>{a=null,t=ae(e),s()})};s()}function wt(){let e=h.rules,t=[2,3,4,5,6,7,8,9,10,11],a="hard",n=[["H","Hit"],["S","Stand"],["D","Double, otherwise hit"],["Ds","Double, otherwise stand"],["P","Split"],["Rh","Surrender, otherwise hit"],["Rs","Surrender, otherwise stand"],["Rp","Surrender, otherwise split"]],s=()=>{let o;a==="hard"?o=[8,9,10,11,12,13,14,15,16,17].map(r=>({label:r===8?"\u22648":r===17?"17+":String(r),cells:t.map(i=>U(r,i,e))})):a==="soft"?o=[13,14,15,16,17,18,19,20].map(r=>({label:`A,${r-11}`,cells:t.map(i=>de(r,i,e))})):o=[1,10,9,8,7,6,5,4,3,2].map(r=>{let i=r===1?"A":String(r);return{label:`${i},${i}`,cells:t.map(c=>{var b;return(b=he(r,c,e))!=null?b:r===1?"P":r===10?"S":U(r*2,c,e)})}}),$.innerHTML=`
+      <p class="muted">${e.decks} deck${e.decks>1?"s":""}, dealer ${e.dealerHitsSoft17?"hits":"stands on"} soft 17, ${e.doubleAfterSplit?"double after split":"no double after split"}${e.lateSurrender?", late surrender":""}. Change rules in <a href="#settings">Settings</a>.</p>
+      <div class="seg" id="tabs">${["hard","soft","pairs"].map(r=>`<button class="${r===a?"on":""}" data-t="${r}" aria-pressed="${r===a}">${r[0].toUpperCase()+r.slice(1)}</button>`).join("")}</div>
+      <div class="chart-wrap"><table class="chart">
+        <thead><tr><th scope="col">You</th>${t.map(r=>`<th scope="col">${r===11?"A":r}</th>`).join("")}</tr></thead>
+        <tbody>${o.map(r=>`<tr><th scope="row">${r.label}</th>${r.cells.map(i=>`<td class="c-${i[0]}">${i}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table></div>
+      <ul class="legend">${n.filter(([r])=>e.lateSurrender||!r.startsWith("R")).map(([r,i])=>`<li><span class="c-${r[0]}">${r}</span>${i}</li>`).join("")}</ul>`,d("#tabs button","click",r=>{a=r.dataset.t,s()})};s()}function $t(){let e=!1,t=(o,r,i)=>`<label class="toggle" for="${o}"><span><b>${r}</b><small>${i}</small></span><input type="checkbox" id="${o}" ${h[o]?"checked":""}></label>`,a=(o,r)=>`<label class="toggle" for="rule-${o}"><span><b>${r}</b></span><input type="checkbox" id="rule-${o}" ${h.rules[o]?"checked":""}></label>`,n=(o,r,i)=>`<div class="seg" id="${o}">${r.map(([c,b])=>`<button class="${b===i?"on":""}" data-v="${b}" aria-pressed="${b===i}">${c}</button>`).join("")}</div>`,s=()=>{let o=h.rules;$.innerHTML=`
+      <h2>Coaching</h2>
+      <div class="panel">
+        ${t("showHints","Show hints","Highlight the best play before you act")}
+        ${t("correctMistakes","Explain mistakes","After a wrong play, show the correct one and why")}
+        ${t("showCount","Show the count","Display running count, decks left and true count at the table")}
+        ${t("countQuizzes","Count pop quizzes","Sometimes ask for the running count between hands")}
+        ${t("useDeviations","Count-based advice","Coach uses Hi-Lo index plays and insurance at +3")}
+        <span class="lbl">Betting unit</span>${n("unit",[["$5",5],["$10",10],["$25",25]],h.baseBet)}
+      </div>
+      <h2>Table rules</h2>
+      <div class="panel">
+        <span class="lbl">Decks</span>${n("decks",[["1",1],["2",2],["6",6],["8",8]],o.decks)}
+        <span class="lbl">Blackjack pays</span>${n("payout",[["3:2",1.5],["6:5",1.2]],o.blackjackPayout)}
+        ${a("dealerHitsSoft17","Dealer hits soft 17")}
+        ${a("doubleAfterSplit","Double after split")}
+        ${a("lateSurrender","Late surrender")}
+        <p class="muted small">The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.</p>
+      </div>
+      <h2>Data</h2>
+      <div class="panel">
+        ${e?'<p>This clears your stats, lesson progress and bankroll.</p><div class="btn-row"><button class="btn danger" id="reset-yes">Reset everything</button><button class="btn ghost" id="reset-no">Cancel</button></div>':'<button class="btn danger" id="reset">Reset progress and bankroll</button>'}
+      </div>
+      <h2>About</h2>
+      <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`,["showHints","correctMistakes","showCount","countQuizzes","useDeviations"].forEach(r=>d(`#${r}`,"change",i=>{q({[r]:i.checked}),r==="showCount"&&(l.countVisible=h.showCount)})),["dealerHitsSoft17","doubleAfterSplit","lateSurrender"].forEach(r=>d(`#rule-${r}`,"change",i=>be({[r]:i.checked}))),d("#unit button","click",r=>{q({baseBet:Number(r.dataset.v)}),l.bet=h.baseBet,s()}),d("#decks button","click",r=>(be({decks:Number(r.dataset.v)}),s())),d("#payout button","click",r=>(be({blackjackPayout:Number(r.dataset.v)}),s())),d("#reset","click",()=>(e=!0,s())),d("#reset-no","click",()=>(e=!1,s())),d("#reset-yes","click",()=>{A=ge,q({bankroll:O}),Ge(),e=!1,s()})};s()}function be(e){q({rules:{...h.rules,...e}}),Ge()}Ke();})();
+</script>
+</body>
+</html>

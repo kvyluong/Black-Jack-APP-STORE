@@ -1,0 +1,885 @@
+// Single-file HTML build of Blackjack Coach for quick testing in any desktop browser.
+// It reuses the app's engine and lesson content; only the UI layer is separate.
+import { LESSONS, Lesson, getLesson } from '../src/content/lessons';
+import { Card, isRed } from '../src/engine/cards';
+import {
+  decksRemaining,
+  flooredTrueCount,
+  hiLoValue,
+  runningCount,
+  shouldTakeInsurance,
+  suggestedBetUnits,
+} from '../src/engine/counting';
+import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/engine/drills';
+import {
+  GameState,
+  Outcome,
+  act,
+  currentTrueCount,
+  decisionContext,
+  legalActions,
+  newGame,
+  resolveInsurance,
+  startRound,
+} from '../src/engine/game';
+import { describeHand } from '../src/engine/hand';
+import { DEFAULT_RULES, Rules } from '../src/engine/rules';
+import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
+
+// ---------- Saved settings and progress ----------
+
+interface Stats {
+  handsPlayed: number;
+  decisions: number;
+  correctDecisions: number;
+  countDrillsPassed: number;
+  bestStrategyStreak: number;
+  lessonsCompleted: string[];
+}
+
+interface Settings {
+  rules: Rules;
+  showHints: boolean;
+  correctMistakes: boolean;
+  showCount: boolean;
+  countQuizzes: boolean;
+  useDeviations: boolean;
+  bankroll: number;
+  baseBet: number;
+}
+
+const STARTING_BANKROLL = 1000;
+const DEFAULT_SETTINGS: Settings = {
+  rules: DEFAULT_RULES,
+  showHints: true,
+  correctMistakes: true,
+  showCount: true,
+  countQuizzes: false,
+  useDeviations: false,
+  bankroll: STARTING_BANKROLL,
+  baseBet: 10,
+};
+const DEFAULT_STATS: Stats = {
+  handsPlayed: 0,
+  decisions: 0,
+  correctDecisions: 0,
+  countDrillsPassed: 0,
+  bestStrategyStreak: 0,
+  lessonsCompleted: [],
+};
+const STORAGE_KEY = 'blackjack-coach/v1';
+
+let settings: Settings = DEFAULT_SETTINGS;
+let stats: Stats = DEFAULT_STATS;
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+  if (saved) {
+    settings = { ...DEFAULT_SETTINGS, ...saved.settings, rules: { ...DEFAULT_RULES, ...saved.settings?.rules } };
+    stats = { ...DEFAULT_STATS, ...saved.stats };
+  }
+} catch {
+  // Storage unavailable (private window, file:// restrictions): run without saving.
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, stats }));
+  } catch {
+    // Ignore; progress just won't persist.
+  }
+}
+
+function updateSettings(patch: Partial<Settings>) {
+  settings = { ...settings, ...patch };
+  save();
+}
+
+function updateStats(fn: (s: Stats) => Stats) {
+  stats = fn(stats);
+  save();
+}
+
+// ---------- Helpers ----------
+
+const app = document.getElementById('app')!;
+const titleEl = document.getElementById('screen-title')!;
+const backEl = document.getElementById('back') as HTMLAnchorElement;
+
+const esc = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const text = (s: string) => esc(s).replace(/\n/g, '<br>');
+const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
+const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`;
+const SUIT_NAME: Record<Card['suit'], string> = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
+
+function cardHtml(card: Card | null, opts: { size?: 'sm' | 'md' | 'lg'; tag?: boolean } = {}) {
+  const size = opts.size ?? 'md';
+  if (!card) return `<div class="card back ${size}" aria-label="Face-down card"></div>`;
+  const t = hiLoValue(card.rank);
+  const tag = opts.tag
+    ? `<span class="tag ${t > 0 ? 'plus' : t < 0 ? 'minus' : ''}">${t > 0 ? '+1' : t < 0 ? '−1' : '0'}</span>`
+    : '';
+  return `<div class="card-wrap"><div class="card ${size} ${isRed(card) ? 'red' : ''}" aria-label="${card.rank} of ${SUIT_NAME[card.suit]}">
+    <span class="idx">${card.rank}<br>${card.suit}</span><span class="pip">${card.suit}</span><span class="idx flip">${card.rank}<br>${card.suit}</span>
+  </div>${tag}</div>`;
+}
+
+function handHtml(cards: Card[], o: { label: string; hideHole?: boolean; active?: boolean; result?: string; size?: 'sm' | 'md' }) {
+  const cardsHtml = cards.map((c, i) => cardHtml(o.hideHole && i === 1 ? null : c, { size: o.size })).join('');
+  const desc = o.hideHole ? `showing ${cards[0].rank}` : describeHand(cards);
+  return `<div class="hand ${o.active ? 'active' : ''}">
+    <div class="hand-cards">${cardsHtml}</div>
+    <div class="hand-label">${esc(o.label)}: <b>${esc(desc)}</b>${o.result ? ` · ${esc(o.result)}` : ''}</div>
+  </div>`;
+}
+
+function on(selector: string, event: string, fn: (el: HTMLElement, e: Event) => void) {
+  app.querySelectorAll<HTMLElement>(selector).forEach((el) => el.addEventListener(event, (e) => fn(el, e)));
+}
+
+let cleanup: (() => void) | null = null;
+
+// ---------- Router ----------
+
+type View = { title: string; back?: string; render: () => void };
+
+function route(): View {
+  const hash = location.hash.replace(/^#/, '') || 'home';
+  if (hash.startsWith('lesson-')) {
+    const lesson = getLesson(hash.slice(7));
+    if (lesson) return { title: lesson.title, back: 'learn', render: () => renderLesson(lesson) };
+  }
+  const views: Record<string, View> = {
+    home: { title: 'Blackjack Coach', render: renderHome },
+    learn: { title: 'Lessons', back: 'home', render: renderLearn },
+    play: { title: 'Practice Table', back: 'home', render: renderPlay },
+    drills: { title: 'Drills', back: 'home', render: renderDrills },
+    'drill-strategy': { title: 'Strategy Drill', back: 'drills', render: renderStrategyDrill },
+    'drill-count': { title: 'Running Count Drill', back: 'drills', render: renderCountDrill },
+    'drill-true-count': { title: 'True Count Drill', back: 'drills', render: renderTrueCountDrill },
+    chart: { title: 'Strategy Chart', back: 'home', render: renderChart },
+    settings: { title: 'Settings', back: 'home', render: renderSettings },
+  };
+  return views[hash] ?? views.home;
+}
+
+function navigate() {
+  cleanup?.();
+  cleanup = null;
+  const view = route();
+  titleEl.textContent = view.title;
+  backEl.hidden = !view.back;
+  backEl.href = `#${view.back ?? 'home'}`;
+  view.render();
+  window.scrollTo(0, 0);
+}
+
+window.addEventListener('hashchange', navigate);
+
+// ---------- Home ----------
+
+function renderHome() {
+  const accuracy = stats.decisions ? `${Math.round((stats.correctDecisions / stats.decisions) * 100)}%` : '—';
+  const tiles = [
+    ['learn', 'Learn', 'Step-by-step lessons from the rules to card counting', '01'],
+    ['play', 'Practice Table', 'Play with a coach that explains every decision', '02'],
+    ['drills', 'Drills', 'Basic strategy, running count and true count drills', '03'],
+    ['chart', 'Strategy Chart', 'The full basic strategy chart for your table rules', '04'],
+    ['settings', 'Settings', 'Table rules, coaching options and progress', '05'],
+  ];
+  app.innerHTML = `
+    <section class="hero">
+      <div class="hero-cards">${cardHtml({ rank: 'A', suit: '♠' }, { size: 'sm' })}${cardHtml({ rank: 'K', suit: '♥' }, { size: 'sm' })}</div>
+      <h1>Blackjack Coach</h1>
+      <p class="muted">Learn to play every hand correctly, then learn to count cards.</p>
+    </section>
+    <div class="stats">
+      <div><b>${stats.lessonsCompleted.length}/${LESSONS.length}</b><span>Lessons</span></div>
+      <div><b>${stats.handsPlayed}</b><span>Hands</span></div>
+      <div><b>${accuracy}</b><span>Accuracy</span></div>
+    </div>
+    <nav class="tiles">
+      ${tiles
+        .map(
+          ([href, title, sub]) => `<a class="tile" href="#${href}">
+            <span class="tile-text"><b>${title}</b><span>${sub}</span></span><span class="chev" aria-hidden="true">›</span></a>`,
+        )
+        .join('')}
+    </nav>
+    <p class="fine">For entertainment and education only. Play money, no real-money gambling.</p>`;
+}
+
+// ---------- Lessons ----------
+
+function renderLearn() {
+  const units: Lesson['unit'][] = ['Basics', 'Strategy', 'Counting'];
+  app.innerHTML =
+    `<p class="muted">Work through the lessons in order. Each one ends with a short quiz.</p>` +
+    units
+      .map(
+        (unit) => `<h2>${unit}</h2><div class="list">${LESSONS.filter((l) => l.unit === unit)
+          .map((l) => {
+            const done = stats.lessonsCompleted.includes(l.id);
+            return `<a class="tile" href="#lesson-${l.id}">
+              <span class="badge ${done ? 'done' : ''}">${done ? '✓' : LESSONS.indexOf(l) + 1}</span>
+              <span class="tile-text"><b>${esc(l.title)}</b><span>${esc(l.summary)}</span></span></a>`;
+          })
+          .join('')}</div>`,
+      )
+      .join('');
+}
+
+const PRACTICE_HASH: Record<string, string> = {
+  '/play': 'play',
+  '/drills/strategy': 'drill-strategy',
+  '/drills/count': 'drill-count',
+  '/drills/true-count': 'drill-true-count',
+  '/chart': 'chart',
+};
+
+function renderLesson(lesson: Lesson) {
+  const answers: Record<number, number> = {};
+  const suits = ['♠', '♥', '♣', '♦'] as const;
+  const next = LESSONS[LESSONS.indexOf(lesson) + 1];
+
+  const draw = () => {
+    const allCorrect = lesson.quiz.every((q, i) => answers[i] === q.answer);
+    app.innerHTML = `
+      <article class="lesson">
+        ${lesson.sections
+          .map(
+            (s) => `<section>
+              ${s.heading ? `<h2>${esc(s.heading)}</h2>` : ''}
+              <p>${text(s.body)}</p>
+              ${s.cards ? `<div class="card-row">${s.cards.map((rank, j) => cardHtml({ rank, suit: suits[j % 4] }, { size: 'sm', tag: s.showTags })).join('')}</div>` : ''}
+            </section>`,
+          )
+          .join('')}
+      </article>
+      <h2>Quiz</h2>
+      ${lesson.quiz
+        .map((q, qi) => {
+          const picked = answers[qi];
+          const answered = picked !== undefined;
+          const ok = picked === q.answer;
+          return `<div class="panel">
+            <p class="q">${esc(q.question)}</p>
+            <div class="btn-row">${q.options
+              .map(
+                (opt, oi) =>
+                  `<button class="btn ${answered && oi === picked ? (ok ? 'primary' : 'danger') : 'secondary'}" data-q="${qi}" data-o="${oi}">${esc(opt)}</button>`,
+              )
+              .join('')}</div>
+            ${answered ? `<p class="${ok ? 'good' : 'bad'}">${ok ? `✓ Correct. ${esc(q.explanation)}` : '✗ Not quite. Try again.'}</p>` : ''}
+          </div>`;
+        })
+        .join('')}
+      ${
+        allCorrect
+          ? `<div class="panel complete"><p class="done">Lesson complete</p>
+            ${lesson.practice ? `<a class="btn primary" href="#${PRACTICE_HASH[lesson.practice.href]}">${esc(lesson.practice.label)}</a>` : ''}
+            ${next ? `<a class="btn secondary" href="#lesson-${next.id}">Next: ${esc(next.title)}</a>` : ''}</div>`
+          : ''
+      }`;
+    on('[data-q]', 'click', (el) => {
+      const qi = Number(el.dataset.q);
+      if (answers[qi] === lesson.quiz[qi].answer) return;
+      answers[qi] = Number(el.dataset.o);
+      if (lesson.quiz.every((q, i) => answers[i] === q.answer) && !stats.lessonsCompleted.includes(lesson.id)) {
+        updateStats((s) => ({ ...s, lessonsCompleted: [...s.lessonsCompleted, lesson.id] }));
+      }
+      const y = window.scrollY;
+      draw();
+      window.scrollTo(0, y);
+    });
+  };
+  draw();
+}
+
+// ---------- Practice table ----------
+
+const OUTCOME_LABEL: Record<Outcome, string> = {
+  win: 'Win',
+  lose: 'Lose',
+  push: 'Push',
+  blackjack: 'Blackjack!',
+  surrender: 'Surrendered',
+};
+const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
+// Mirrors the mobile app's interstitial caps (src/ads/config.ts).
+const AD_EVERY_N_ROUNDS = 10;
+const AD_MIN_INTERVAL_MS = 3 * 60 * 1000;
+
+const table = {
+  game: newGame(settings.rules, settings.bankroll),
+  bet: settings.baseBet,
+  feedback: null as { ok: boolean; text: string } | null,
+  countVisible: settings.showCount,
+  quiz: null as { guess: number; revealed: boolean } | null,
+  streak: 0,
+  roundsSinceAd: 0,
+  lastAd: Date.now(),
+};
+
+function resetTable() {
+  table.game = newGame(settings.rules, settings.bankroll);
+  table.feedback = null;
+  table.quiz = null;
+}
+
+function renderPlay() {
+  cleanup?.();
+  const g = table.game;
+  const rules = g.rules;
+  const legal = legalActions(g);
+  const tc = currentTrueCount(g);
+  const ctx = decisionContext(g, settings.useDeviations);
+  const advice = ctx ? recommend(ctx) : null;
+  const unit = settings.baseBet;
+  const units = suggestedBetUnits(flooredTrueCount(g.runningCount, g.shoe.length));
+  const hideHole = !g.holeRevealed && g.dealer.length > 0;
+
+  const countHtml = table.countVisible
+    ? `<button class="count" id="count-toggle" title="Hide the count">RC ${signed(g.runningCount)} · Decks ${decksRemaining(g.shoe.length)} · TC ${formatTrueCount(tc)}</button>`
+    : `<button class="count" id="count-toggle">Show count</button>`;
+
+  let controls = '';
+  if (g.phase === 'playing') {
+    controls = `
+      ${settings.showHints && advice ? `<p class="hint">Coach: ${ACTION_LABEL[advice.action]}${advice.deviation ? ' (count play)' : ''}</p>` : ''}
+      <div class="btn-row actions">${ACTIONS.filter((a) => a !== 'surrender' || rules.lateSurrender)
+        .map(
+          (a) =>
+            `<button class="btn secondary ${settings.showHints && advice?.action === a ? 'glow' : ''}" data-act="${a}" ${legal[a] ? '' : 'disabled'}>${ACTION_LABEL[a]}</button>`,
+        )
+        .join('')}</div>
+      <p class="keys">Keys: H hit · S stand · D double · P split · R surrender</p>`;
+  } else if (g.phase === 'insurance') {
+    controls = `<div class="panel">
+      <p class="prompt">Dealer shows an Ace. Insurance?</p>
+      ${settings.showHints ? `<p class="hint">Coach: ${settings.useDeviations && shouldTakeInsurance(tc) ? 'Take it (TC +3 or higher)' : 'Decline'}</p>` : ''}
+      <div class="btn-row"><button class="btn secondary" data-ins="1">Take insurance</button><button class="btn secondary" data-ins="0">No insurance</button></div>
+    </div>`;
+  } else if (g.phase === 'roundOver') {
+    const q = table.quiz;
+    controls = `<div class="panel">
+      <p class="prompt ${g.lastNet > 0 ? 'good' : g.lastNet < 0 ? 'bad' : ''}">${g.lastNet > 0 ? `You won ${money(g.lastNet)}` : g.lastNet < 0 ? `You lost ${money(-g.lastNet)}` : 'Push'}</p>
+      ${
+        q
+          ? `<p class="prompt">Pop quiz: what's the running count?</p>
+        <div class="stepper"><button class="btn ghost" id="q-minus" ${q.revealed ? 'disabled' : ''}>−</button><span class="guess">${signed(q.guess)}</span><button class="btn ghost" id="q-plus" ${q.revealed ? 'disabled' : ''}>+</button>
+        ${q.revealed ? '' : '<button class="btn secondary" id="q-check">Check</button>'}</div>
+        ${q.revealed ? `<p class="${q.guess === g.runningCount ? 'good' : 'bad'}">${q.guess === g.runningCount ? '✓ Spot on!' : `✗ It was ${signed(g.runningCount)}.`}</p>` : ''}`
+          : ''
+      }
+      <button class="btn primary" id="next-hand">Next hand <kbd>Enter</kbd></button>
+    </div>`;
+  } else {
+    controls = `<div class="panel">
+      <p class="prompt">Place your bet: ${money(table.bet)}</p>
+      ${table.countVisible ? `<p class="hint">Count suggests ${units} unit${units > 1 ? 's' : ''} (${money(units * unit)})</p>` : ''}
+      <div class="btn-row">${[-unit, unit, unit * 5]
+        .map(
+          (d) =>
+            `<button class="btn ghost" data-bet="${d}" ${table.bet + d < unit || table.bet + d > g.bankroll ? 'disabled' : ''}>${d < 0 ? `−$${-d}` : `+$${d}`}</button>`,
+        )
+        .join('')}</div>
+      ${
+        g.bankroll >= unit
+          ? `<button class="btn primary" id="deal">Deal <kbd>Enter</kbd></button>`
+          : `<button class="btn primary" id="reset-bankroll">Out of chips: reset to $${STARTING_BANKROLL}</button>`
+      }
+    </div>`;
+  }
+
+  app.innerHTML = `
+    <div class="topbar"><span class="bankroll">Bankroll ${money(g.bankroll)}</span>${countHtml}</div>
+    ${g.justShuffled && g.phase !== 'betting' ? '<p class="shuffle">New shoe shuffled. The count resets to 0.</p>' : ''}
+    <div class="felt">
+      <div class="area">${
+        g.dealer.length
+          ? handHtml(g.dealer, { label: 'Dealer', hideHole })
+          : `<p class="rules-line">${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
+      }</div>
+      <div class="area players">${g.hands
+        .map((h, i) =>
+          handHtml(h.cards, {
+            label: g.hands.length > 1 ? `Hand ${i + 1}` : 'You',
+            active: g.phase === 'playing' && i === g.active && g.hands.length > 1,
+            result: h.outcome ? OUTCOME_LABEL[h.outcome] : money(h.bet),
+            size: g.hands.length > 2 ? 'sm' : 'md',
+          }),
+        )
+        .join('')}</div>
+    </div>
+    ${table.feedback ? `<div class="feedback ${table.feedback.ok ? 'ok' : 'no'}">${table.feedback.ok ? '✓' : '✗'} ${esc(table.feedback.text)}</div>` : ''}
+    ${controls}`;
+
+  on('#count-toggle', 'click', () => {
+    table.countVisible = !table.countVisible;
+    renderPlay();
+  });
+  on('[data-act]', 'click', (el) => playerAction(el.dataset.act as Action));
+  on('[data-ins]', 'click', (el) => insurance(el.dataset.ins === '1'));
+  on('[data-bet]', 'click', (el) => {
+    table.bet += Number(el.dataset.bet);
+    renderPlay();
+  });
+  on('#deal', 'click', deal);
+  on('#next-hand', 'click', nextHand);
+  on('#reset-bankroll', 'click', () => {
+    table.game = { ...table.game, bankroll: STARTING_BANKROLL };
+    updateSettings({ bankroll: STARTING_BANKROLL });
+    renderPlay();
+  });
+  on('#q-minus', 'click', () => {
+    table.quiz!.guess--;
+    renderPlay();
+  });
+  on('#q-plus', 'click', () => {
+    table.quiz!.guess++;
+    renderPlay();
+  });
+  on('#q-check', 'click', () => {
+    table.quiz!.revealed = true;
+    if (table.quiz!.guess === table.game.runningCount) updateStats((s) => ({ ...s, countDrillsPassed: s.countDrillsPassed + 1 }));
+    renderPlay();
+  });
+
+  const keys = (e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    const map: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split', r: 'surrender' };
+    const ph = table.game.phase;
+    if (ph === 'playing' && map[k] && legalActions(table.game)[map[k]]) playerAction(map[k]);
+    else if (k === 'enter' && ph === 'betting' && table.game.bankroll >= settings.baseBet) deal();
+    else if (k === 'enter' && ph === 'roundOver') nextHand();
+    else return;
+    e.preventDefault();
+  };
+  document.addEventListener('keydown', keys);
+  cleanup = () => document.removeEventListener('keydown', keys);
+}
+
+function grade(ok: boolean, explanation: string) {
+  table.streak = ok ? table.streak + 1 : 0;
+  updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
+  if (!ok) table.feedback = settings.correctMistakes ? { ok, text: explanation } : null;
+  else table.feedback = { ok, text: table.streak >= 5 ? `Correct! ${table.streak} in a row.` : 'Correct!' };
+}
+
+function afterChange(next: GameState) {
+  table.game = next;
+  if (next.phase === 'roundOver') {
+    updateSettings({ bankroll: next.bankroll });
+    updateStats((s) => ({ ...s, handsPlayed: s.handsPlayed + 1 }));
+    if (settings.countQuizzes && Math.random() < 0.25) {
+      table.quiz = { guess: 0, revealed: false };
+      table.countVisible = false;
+    }
+  }
+  renderPlay();
+}
+
+function playerAction(action: Action) {
+  const ctx = decisionContext(table.game, settings.useDeviations);
+  if (ctx) {
+    const advice = recommend(ctx);
+    grade(action === advice.action, `Best play: ${ACTION_LABEL[advice.action]}. ${advice.reason}`);
+  }
+  afterChange(act(table.game, action));
+}
+
+function insurance(take: boolean) {
+  const tc = currentTrueCount(table.game);
+  const best = settings.useDeviations && shouldTakeInsurance(tc);
+  grade(
+    take === best,
+    best
+      ? `Take insurance: the true count is ${formatTrueCount(tc)} (+3 or more), so over a third of the remaining cards are 10s.`
+      : 'Decline insurance. It loses money in the long run unless the true count is +3 or higher.',
+  );
+  afterChange(resolveInsurance(table.game, take));
+}
+
+function deal() {
+  table.feedback = null;
+  table.quiz = null;
+  afterChange(startRound(table.game, Math.min(table.bet, table.game.bankroll)));
+}
+
+function nextHand() {
+  table.feedback = null;
+  table.quiz = null;
+  table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
+  table.roundsSinceAd++;
+  if (table.roundsSinceAd >= AD_EVERY_N_ROUNDS && Date.now() - table.lastAd >= AD_MIN_INTERVAL_MS) {
+    table.roundsSinceAd = 0;
+    table.lastAd = Date.now();
+    showAdPreview();
+  }
+  renderPlay();
+}
+
+function showAdPreview() {
+  const overlay = document.getElementById('ad-overlay')!;
+  overlay.hidden = false;
+  (overlay.querySelector('button') as HTMLButtonElement).focus();
+}
+
+document.getElementById('ad-close')!.addEventListener('click', () => {
+  document.getElementById('ad-overlay')!.hidden = true;
+});
+
+// ---------- Drills ----------
+
+function renderDrills() {
+  const drills = [
+    ['drill-strategy', 'Basic Strategy', 'Random hands vs a dealer upcard. Choose the best play and see why.'],
+    ['drill-count', 'Running Count', 'Cards flash by. Keep the Hi-Lo count and enter it at the end.'],
+    ['drill-true-count', 'True Count', 'Convert a running count to a true count using the decks remaining.'],
+  ];
+  app.innerHTML =
+    `<p class="muted">Short, repeatable practice. A few minutes a day builds real speed.</p><div class="list">` +
+    drills
+      .map(([h, t, d]) => `<a class="tile" href="#${h}"><span class="tile-text"><b>${t}</b><span>${d}</span></span><span class="chev" aria-hidden="true">›</span></a>`)
+      .join('') +
+    '</div>';
+}
+
+function renderStrategyDrill() {
+  let q = strategyQuestion();
+  let picked: Action | null = null;
+  const score = { right: 0, total: 0, streak: 0 };
+  const rules = settings.rules;
+  const actions: Action[] = ['hit', 'stand', 'double', 'split', ...(rules.lateSurrender ? (['surrender'] as Action[]) : [])];
+
+  const draw = () => {
+    const advice = recommend({ cards: q.cards, dealerUp: q.dealerUp.rank, rules, canDouble: true, canSplit: true, canSurrender: rules.lateSurrender });
+    const ok = picked === advice.action;
+    app.innerHTML = `
+      <div class="score-row"><span>${score.right}/${score.total} correct</span><span>Streak ${score.streak} · Best ${Math.max(stats.bestStrategyStreak, score.streak)}</span></div>
+      <div class="felt drill">
+        <p class="muted">Dealer shows</p>${cardHtml(q.dealerUp)}
+        ${handHtml(q.cards, { label: 'You' })}
+      </div>
+      <div class="btn-row actions">${actions
+        .map(
+          (a) =>
+            `<button class="btn ${picked && a === advice.action ? 'primary' : picked === a ? 'danger' : 'secondary'}" data-a="${a}">${ACTION_LABEL[a]}</button>`,
+        )
+        .join('')}</div>
+      ${
+        picked
+          ? `<div class="feedback ${ok ? 'ok' : 'no'}"><b>${ok ? '✓ Correct' : `✗ The best play is ${ACTION_LABEL[advice.action]}`}</b><br>${esc(advice.reason)}</div>
+             <button class="btn primary" id="next">Next hand <kbd>Enter</kbd></button>`
+          : '<p class="keys">Keys: H hit · S stand · D double · P split · R surrender</p>'
+      }`;
+    on('[data-a]', 'click', (el) => choose(el.dataset.a as Action));
+    on('#next', 'click', next);
+
+    function choose(a: Action) {
+      if (picked) return;
+      picked = a;
+      const correct = a === advice.action;
+      score.total++;
+      score.right += correct ? 1 : 0;
+      score.streak = correct ? score.streak + 1 : 0;
+      updateStats((s) => ({
+        ...s,
+        decisions: s.decisions + 1,
+        correctDecisions: s.correctDecisions + (correct ? 1 : 0),
+        bestStrategyStreak: Math.max(s.bestStrategyStreak, score.streak),
+      }));
+      draw();
+    }
+  };
+  const next = () => {
+    picked = null;
+    q = strategyQuestion();
+    draw();
+  };
+  const keys = (e: KeyboardEvent) => {
+    const map: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split', r: 'surrender' };
+    const k = e.key.toLowerCase();
+    if (picked && k === 'enter') next();
+    else if (!picked && map[k] && actions.includes(map[k])) (app.querySelector(`[data-a="${map[k]}"]`) as HTMLButtonElement).click();
+  };
+  document.addEventListener('keydown', keys);
+  cleanup = () => document.removeEventListener('keydown', keys);
+  draw();
+}
+
+function renderCountDrill() {
+  let speed = 1000;
+  let length = 20;
+  let perFlash = 1;
+  let cards: Card[] = [];
+  let index = 0;
+  let guess = 0;
+  let phase: 'setup' | 'running' | 'answer' | 'result' = 'setup';
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const stop = () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+  };
+  cleanup = stop;
+
+  const seg = <T extends number>(id: string, opts: [string, T][], value: T) =>
+    `<div class="seg" role="group" id="${id}">${opts
+      .map(([l, v]) => `<button class="${v === value ? 'on' : ''}" data-v="${v}" aria-pressed="${v === value}">${l}</button>`)
+      .join('')}</div>`;
+
+  const start = () => {
+    cards = countDrillCards(length);
+    index = 0;
+    guess = 0;
+    phase = 'running';
+    stop();
+    timer = setInterval(() => {
+      index += perFlash;
+      if (index >= cards.length) {
+        stop();
+        phase = 'answer';
+      }
+      draw();
+    }, speed);
+    draw();
+  };
+
+  const draw = () => {
+    const actual = runningCount(cards);
+    if (phase === 'setup') {
+      app.innerHTML = `
+        <p>Keep the Hi-Lo running count as the cards flash by: +1 for 2–6, 0 for 7–9, −1 for 10s and Aces.</p>
+        <div class="panel">
+          <label class="lbl">Speed</label>${seg('speed', [['Slow', 1500], ['Medium', 1000], ['Fast', 600], ['Pro', 350]], speed)}
+          <label class="lbl">Length</label>${seg('length', [['10 cards', 10], ['20 cards', 20], ['Full deck', 52]], length)}
+          <label class="lbl">Cards at a time</label>${seg('per', [['One', 1], ['Two (cancel pairs)', 2]], perFlash)}
+        </div>
+        <button class="btn primary" id="start">Start</button>`;
+      on('#speed button', 'click', (el) => ((speed = Number(el.dataset.v)), draw()));
+      on('#length button', 'click', (el) => ((length = Number(el.dataset.v)), draw()));
+      on('#per button', 'click', (el) => ((perFlash = Number(el.dataset.v)), draw()));
+      on('#start', 'click', start);
+    } else if (phase === 'running') {
+      app.innerHTML = `<div class="flash">${cards.slice(index, index + perFlash).map((c) => cardHtml(c, { size: 'lg' })).join('')}</div>
+        <p class="muted center">${Math.min(index + perFlash, cards.length)} / ${cards.length}</p>
+        <button class="btn ghost" id="stop">Stop</button>`;
+      on('#stop', 'click', () => {
+        stop();
+        phase = 'setup';
+        draw();
+      });
+    } else {
+      const ok = guess === actual;
+      app.innerHTML = `
+        <div class="panel">
+          <p class="prompt">What's the running count?</p>
+          <div class="stepper"><button class="btn ghost" id="minus" ${phase === 'result' ? 'disabled' : ''}>−</button><span class="guess big">${signed(guess)}</span><button class="btn ghost" id="plus" ${phase === 'result' ? 'disabled' : ''}>+</button></div>
+          ${phase === 'answer' ? '<button class="btn primary" id="check">Check</button><p class="keys">Arrow keys or +/− to change, Enter to check</p>' : ''}
+        </div>
+        ${
+          phase === 'result'
+            ? `<div class="feedback ${ok ? 'ok' : 'no'}"><b>${ok ? '✓ Perfect count!' : `✗ The count was ${signed(actual)}`}</b></div>
+          <div class="panel"><p class="muted">Every card with its tag:</p><div class="card-row">${cards.map((c) => cardHtml(c, { size: 'sm', tag: true })).join('')}</div></div>
+          <div class="btn-row"><button class="btn primary" id="again">Try again</button><button class="btn ghost" id="setup">Change settings</button></div>`
+            : ''
+        }`;
+      on('#minus', 'click', () => ((guess--), draw()));
+      on('#plus', 'click', () => ((guess++), draw()));
+      on('#check', 'click', check);
+      on('#again', 'click', start);
+      on('#setup', 'click', () => ((phase = 'setup'), draw()));
+    }
+  };
+
+  const check = () => {
+    phase = 'result';
+    if (guess === runningCount(cards)) updateStats((s) => ({ ...s, countDrillsPassed: s.countDrillsPassed + 1 }));
+    draw();
+  };
+
+  const keys = (e: KeyboardEvent) => {
+    if (phase !== 'answer') return;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === '+' || e.key === '=') guess++;
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === '-') guess--;
+    else if (e.key === 'Enter') return check();
+    else return;
+    e.preventDefault();
+    draw();
+  };
+  document.addEventListener('keydown', keys);
+  cleanup = () => {
+    stop();
+    document.removeEventListener('keydown', keys);
+  };
+  draw();
+}
+
+function renderTrueCountDrill() {
+  const maxDecks = Math.max(2, settings.rules.decks);
+  let q = trueCountQuestion(maxDecks);
+  let picked: number | null = null;
+  const score = { right: 0, total: 0 };
+  const draw = () => {
+    const ok = picked === q.answer;
+    app.innerHTML = `
+      <p class="muted">True count = running count ÷ decks remaining.</p>
+      <div class="score-row"><span>${score.right}/${score.total} correct</span></div>
+      <div class="panel center"><p class="big">Running count ${signed(q.running)}</p><p class="big">${q.decks} deck${q.decks === 1 ? '' : 's'} left</p><p class="muted">What's the true count?</p></div>
+      <div class="btn-row">${q.options
+        .map((n) => `<button class="btn ${picked !== null && n === q.answer ? 'primary' : picked === n ? 'danger' : 'secondary'}" data-n="${n}">${signed(n)}</button>`)
+        .join('')}</div>
+      ${
+        picked !== null
+          ? `<div class="feedback ${ok ? 'ok' : 'no'}"><b>${ok ? '✓ Correct' : `✗ It's ${signed(q.answer)}`}</b><br>${signed(q.running)} ÷ ${q.decks} = ${signed(q.answer)}</div><button class="btn primary" id="next">Next</button>`
+          : ''
+      }`;
+    on('[data-n]', 'click', (el) => {
+      if (picked !== null) return;
+      picked = Number(el.dataset.n);
+      score.total++;
+      score.right += picked === q.answer ? 1 : 0;
+      draw();
+    });
+    on('#next', 'click', () => {
+      picked = null;
+      q = trueCountQuestion(maxDecks);
+      draw();
+    });
+  };
+  draw();
+}
+
+// ---------- Chart ----------
+
+function renderChart() {
+  const rules = settings.rules;
+  const ups = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  let tab: 'hard' | 'soft' | 'pairs' = 'hard';
+  const legend: [Cell, string][] = [
+    ['H', 'Hit'],
+    ['S', 'Stand'],
+    ['D', 'Double, otherwise hit'],
+    ['Ds', 'Double, otherwise stand'],
+    ['P', 'Split'],
+    ['Rh', 'Surrender, otherwise hit'],
+    ['Rs', 'Surrender, otherwise stand'],
+    ['Rp', 'Surrender, otherwise split'],
+  ];
+  const draw = () => {
+    let rows: { label: string; cells: Cell[] }[];
+    if (tab === 'hard') {
+      rows = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map((t) => ({
+        label: t === 8 ? '≤8' : t === 17 ? '17+' : String(t),
+        cells: ups.map((u) => hardCell(t, u, rules)),
+      }));
+    } else if (tab === 'soft') {
+      rows = [13, 14, 15, 16, 17, 18, 19, 20].map((t) => ({ label: `A,${t - 11}`, cells: ups.map((u) => softCell(t, u, rules)) }));
+    } else {
+      rows = [1, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((p) => {
+        const n = p === 1 ? 'A' : String(p);
+        return {
+          label: `${n},${n}`,
+          cells: ups.map((u) => pairCell(p, u, rules) ?? (p === 1 ? 'P' : p === 10 ? 'S' : hardCell(p * 2, u, rules))),
+        };
+      });
+    }
+    app.innerHTML = `
+      <p class="muted">${rules.decks} deck${rules.decks > 1 ? 's' : ''}, dealer ${rules.dealerHitsSoft17 ? 'hits' : 'stands on'} soft 17, ${rules.doubleAfterSplit ? 'double after split' : 'no double after split'}${rules.lateSurrender ? ', late surrender' : ''}. Change rules in <a href="#settings">Settings</a>.</p>
+      <div class="seg" id="tabs">${(['hard', 'soft', 'pairs'] as const).map((t) => `<button class="${t === tab ? 'on' : ''}" data-t="${t}" aria-pressed="${t === tab}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div>
+      <div class="chart-wrap"><table class="chart">
+        <thead><tr><th scope="col">You</th>${ups.map((u) => `<th scope="col">${u === 11 ? 'A' : u}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map((r) => `<tr><th scope="row">${r.label}</th>${r.cells.map((c) => `<td class="c-${c[0]}">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div>
+      <ul class="legend">${legend
+        .filter(([k]) => rules.lateSurrender || !k.startsWith('R'))
+        .map(([k, v]) => `<li><span class="c-${k[0]}">${k}</span>${v}</li>`)
+        .join('')}</ul>`;
+    on('#tabs button', 'click', (el) => {
+      tab = el.dataset.t as typeof tab;
+      draw();
+    });
+  };
+  draw();
+}
+
+// ---------- Settings ----------
+
+function renderSettings() {
+  let confirmReset = false;
+  const toggle = (id: keyof Settings, label: string, hint: string) =>
+    `<label class="toggle" for="${id}"><span><b>${label}</b><small>${hint}</small></span><input type="checkbox" id="${id}" ${settings[id] ? 'checked' : ''}></label>`;
+  const ruleToggle = (id: keyof Rules, label: string) =>
+    `<label class="toggle" for="rule-${id}"><span><b>${label}</b></span><input type="checkbox" id="rule-${id}" ${settings.rules[id] ? 'checked' : ''}></label>`;
+  const seg = (id: string, opts: [string, number][], value: number) =>
+    `<div class="seg" id="${id}">${opts.map(([l, v]) => `<button class="${v === value ? 'on' : ''}" data-v="${v}" aria-pressed="${v === value}">${l}</button>`).join('')}</div>`;
+
+  const draw = () => {
+    const r = settings.rules;
+    app.innerHTML = `
+      <h2>Coaching</h2>
+      <div class="panel">
+        ${toggle('showHints', 'Show hints', 'Highlight the best play before you act')}
+        ${toggle('correctMistakes', 'Explain mistakes', 'After a wrong play, show the correct one and why')}
+        ${toggle('showCount', 'Show the count', 'Display running count, decks left and true count at the table')}
+        ${toggle('countQuizzes', 'Count pop quizzes', 'Sometimes ask for the running count between hands')}
+        ${toggle('useDeviations', 'Count-based advice', 'Coach uses Hi-Lo index plays and insurance at +3')}
+        <span class="lbl">Betting unit</span>${seg('unit', [['$5', 5], ['$10', 10], ['$25', 25]], settings.baseBet)}
+      </div>
+      <h2>Table rules</h2>
+      <div class="panel">
+        <span class="lbl">Decks</span>${seg('decks', [['1', 1], ['2', 2], ['6', 6], ['8', 8]], r.decks)}
+        <span class="lbl">Blackjack pays</span>${seg('payout', [['3:2', 1.5], ['6:5', 1.2]], r.blackjackPayout)}
+        ${ruleToggle('dealerHitsSoft17', 'Dealer hits soft 17')}
+        ${ruleToggle('doubleAfterSplit', 'Double after split')}
+        ${ruleToggle('lateSurrender', 'Late surrender')}
+        <p class="muted small">The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.</p>
+      </div>
+      <h2>Data</h2>
+      <div class="panel">
+        ${
+          confirmReset
+            ? `<p>This clears your stats, lesson progress and bankroll.</p><div class="btn-row"><button class="btn danger" id="reset-yes">Reset everything</button><button class="btn ghost" id="reset-no">Cancel</button></div>`
+            : `<button class="btn danger" id="reset">Reset progress and bankroll</button>`
+        }
+      </div>
+      <h2>About</h2>
+      <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
+
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations'] as const).forEach((id) =>
+      on(`#${id}`, 'change', (el) => {
+        updateSettings({ [id]: (el as HTMLInputElement).checked });
+        if (id === 'showCount') table.countVisible = settings.showCount;
+      }),
+    );
+    (['dealerHitsSoft17', 'doubleAfterSplit', 'lateSurrender'] as const).forEach((id) =>
+      on(`#rule-${id}`, 'change', (el) => setRules({ [id]: (el as HTMLInputElement).checked })),
+    );
+    on('#unit button', 'click', (el) => {
+      updateSettings({ baseBet: Number(el.dataset.v) });
+      table.bet = settings.baseBet;
+      draw();
+    });
+    on('#decks button', 'click', (el) => (setRules({ decks: Number(el.dataset.v) }), draw()));
+    on('#payout button', 'click', (el) => (setRules({ blackjackPayout: Number(el.dataset.v) }), draw()));
+    on('#reset', 'click', () => ((confirmReset = true), draw()));
+    on('#reset-no', 'click', () => ((confirmReset = false), draw()));
+    on('#reset-yes', 'click', () => {
+      stats = DEFAULT_STATS;
+      updateSettings({ bankroll: STARTING_BANKROLL });
+      resetTable();
+      confirmReset = false;
+      draw();
+    });
+  };
+  draw();
+}
+
+function setRules(patch: Partial<Rules>) {
+  updateSettings({ rules: { ...settings.rules, ...patch } });
+  resetTable();
+}
+
+navigate();

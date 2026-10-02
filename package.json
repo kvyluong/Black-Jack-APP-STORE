@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
+    "esbuild": "^0.28.2",
     "jest": "^29.7.0",
     "jest-expo": "~57.0.0",
     "typescript": "~6.0.3"
@@ -31,7 +32,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:html": "node scripts/build-html.mjs"
   },
   "private": true,
   "jest": {

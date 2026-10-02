@@ -18,6 +18,18 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
 - **Ads**: an anchored adaptive banner, plus an interstitial shown only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
 
+## Test it in a browser (Windows, Mac, anything)
+
+`html/blackjack-coach.html` is the whole app in one file. Download it and double-click it: no install, no server. It has every lesson, the practice table, drills, chart and settings, and saves progress in your browser. Ads appear as labelled placeholders (a banner strip, and an interstitial preview every 10 hands / 3 minutes) so you can judge how they feel.
+
+Desktop extras: keyboard shortcuts at the table and in the strategy drill (H hit, S stand, D double, P split, R surrender, Enter to deal / next hand).
+
+It is built from the same `src/engine` and `src/content` code as the phone app, so advice and rules always match. After changing either, rebuild it with:
+
+```bash
+npm run build:html
+```
+
 ## Project layout
 
 ```
@@ -29,6 +41,9 @@ src/
   components/     Cards, hands, buttons and layout
   ads/            AdMob setup, banner, interstitial frequency cap (web stub for previews)
   state/          Saved settings, bankroll and progress (AsyncStorage)
+web-html/         UI for the single-file HTML build (reuses src/engine and src/content)
+scripts/          build-html.mjs bundles web-html into html/blackjack-coach.html
+html/             The built single-file HTML app
 ```
 
 The engine has no React dependencies, so it is easy to test and reuse.
