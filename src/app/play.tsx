@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useInterstitial } from '../ads/useInterstitial';
+import { playSound, preloadSounds } from '../audio/sounds';
 import { HandView } from '../components/HandView';
 import { Button, Panel, Screen } from '../components/ui';
+import { useReduceMotion } from '../components/useReduceMotion';
 import { decksRemaining, flooredTrueCount, shouldTakeInsurance, suggestedBetUnits } from '../engine/counting';
+import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../engine/dealSchedule';
 import {
   GameState,
   Outcome,
@@ -42,10 +45,48 @@ export default function Play() {
   const [quiz, setQuiz] = useState<{ guess: number; revealed: boolean } | null>(null);
   const roundBreak = useInterstitial();
   const streak = useRef(0);
+  const reduceMotion = useReduceMotion();
+  // What changed in the last move, so cards deal in one by one; controls wait until it's done.
+  const [schedule, setSchedule] = useState<DealSchedule | null>(null);
+  const [settled, setSettled] = useState(true);
+  const [countSource, setCountSource] = useState<GameState>(game);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    preloadSounds();
+    return () => timers.current.forEach(clearTimeout);
+  }, []);
+
+  /** Moves the game to `next`, playing its deal animation and sounds. */
+  const commit = (next: GameState) => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    const s = dealSchedule(game, next, reduceMotion ? 0 : DEAL_STEP_MS);
+    if (settings.soundEffects) {
+      for (const sound of s.sounds) timers.current.push(setTimeout(() => playSound(sound.name), sound.at));
+    }
+    setSchedule(s);
+    setGame(next);
+    if (s.doneAt > 0) {
+      setSettled(false);
+      timers.current.push(
+        setTimeout(() => {
+          setSettled(true);
+          setCountSource(next);
+        }, s.doneAt),
+      );
+    } else {
+      setSettled(true);
+      setCountSource(next);
+    }
+  };
 
   // Start a fresh shoe once saved settings load or the table rules change.
   useEffect(() => {
-    if (ready) setGame(newGame(rules, settings.bankroll));
+    if (!ready) return;
+    const fresh = newGame(rules, settings.bankroll);
+    setGame(fresh);
+    setCountSource(fresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, rules]);
 
@@ -53,6 +94,8 @@ export default function Play() {
 
   const legal = legalActions(game);
   const tc = currentTrueCount(game);
+  // The count on screen only includes cards that have landed.
+  const shownTc = currentTrueCount(countSource);
   const advice = useMemo(() => {
     const ctx = decisionContext(game, useDeviations);
     return ctx ? recommend(ctx) : null;
@@ -81,7 +124,7 @@ export default function Play() {
       grade(ok, `Best play: ${ACTION_LABEL[advice.action]}. ${advice.reason}`);
     }
     const next = act(game, action);
-    setGame(next);
+    commit(next);
     recordRoundEnd(next);
   };
 
@@ -94,7 +137,7 @@ export default function Play() {
         : 'Decline insurance. It loses money in the long run unless the true count is +3 or higher.',
     );
     const next = resolveInsurance(game, take);
-    setGame(next);
+    commit(next);
     recordRoundEnd(next);
   };
 
@@ -102,7 +145,7 @@ export default function Play() {
     setFeedback(null);
     setQuiz(null);
     const next = startRound(game, Math.min(bet, game.bankroll));
-    setGame(next);
+    commit(next);
     recordRoundEnd(next);
   };
 
@@ -110,11 +153,13 @@ export default function Play() {
     roundBreak();
     setFeedback(null);
     setQuiz(null);
+    setSchedule(null);
     setGame((g) => ({ ...g, phase: 'betting', hands: [], dealer: [] }));
   };
 
   const resetBankroll = () => {
     setGame((g) => ({ ...g, bankroll: STARTING_BANKROLL }));
+    setCountSource((g) => ({ ...g, bankroll: STARTING_BANKROLL }));
     updateSettings({ bankroll: STARTING_BANKROLL });
   };
 
@@ -126,11 +171,11 @@ export default function Play() {
     <Screen>
       {/* Status bar: bankroll and count */}
       <View style={styles.topBar}>
-        <Text style={styles.bankroll}>Bankroll ${game.bankroll.toFixed(game.bankroll % 1 ? 2 : 0)}</Text>
+        <Text style={styles.bankroll}>Bankroll ${countSource.bankroll.toFixed(countSource.bankroll % 1 ? 2 : 0)}</Text>
         {countVisible ? (
           <Text style={styles.count} onPress={() => setCountVisible(false)} accessibilityRole="button">
-            RC {game.runningCount >= 0 ? '+' : ''}
-            {game.runningCount} · Decks {decksRemaining(game.shoe.length)} · TC {formatTrueCount(tc)}
+            RC {countSource.runningCount >= 0 ? '+' : ''}
+            {countSource.runningCount} · Decks {decksRemaining(countSource.shoe.length)} · TC {formatTrueCount(shownTc)}
           </Text>
         ) : (
           <Text style={styles.count} onPress={() => setCountVisible(true)} accessibilityRole="button">
@@ -143,7 +188,15 @@ export default function Play() {
       {/* Dealer */}
       <View style={styles.area}>
         {game.dealer.length > 0 ? (
-          <HandView cards={game.dealer} hideHole={hideHole} label="Dealer" />
+          <HandView
+            cards={game.dealer}
+            hideHole={hideHole}
+            label="Dealer"
+            dealDelay={(i) => cardDelay(schedule, 'dealer', i)}
+            flipDelay={schedule?.holeFlipAt ?? 0}
+            settling={!settled && game.holeRevealed}
+            instant={reduceMotion}
+          />
         ) : (
           <Text style={styles.placeholder}>{rules.decks} deck{rules.decks > 1 ? 's' : ''} · Dealer {rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays {rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</Text>
         )}
@@ -159,6 +212,9 @@ export default function Play() {
             active={game.phase === 'playing' && i === game.active && game.hands.length > 1}
             label={game.hands.length > 1 ? `Hand ${i + 1}` : 'You'}
             result={h.outcome ? `${OUTCOME_LABEL[h.outcome]}` : `$${h.bet}`}
+            dealDelay={(c) => cardDelay(schedule, i, c)}
+            settling={!settled}
+            instant={reduceMotion}
           />
         ))}
       </View>
@@ -173,7 +229,7 @@ export default function Play() {
       )}
 
       {/* Controls */}
-      {game.phase === 'playing' && (
+      {settled && game.phase === 'playing' && (
         <>
           {showHints && advice && (
             <Text style={styles.hint}>
@@ -197,7 +253,7 @@ export default function Play() {
         </>
       )}
 
-      {game.phase === 'insurance' && (
+      {settled && game.phase === 'insurance' && (
         <Panel>
           <Text style={styles.prompt}>Dealer shows an Ace. Insurance?</Text>
           {showHints && (
@@ -212,7 +268,7 @@ export default function Play() {
         </Panel>
       )}
 
-      {game.phase === 'roundOver' && (
+      {settled && game.phase === 'roundOver' && (
         <Panel>
           <Text style={[styles.prompt, { color: game.lastNet > 0 ? colors.good : game.lastNet < 0 ? colors.bad : colors.text }]}>
             {game.lastNet > 0 ? `You won $${game.lastNet}` : game.lastNet < 0 ? `You lost $${-game.lastNet}` : 'Push'}

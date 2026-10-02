@@ -15,6 +15,7 @@ const result = await build({
   minify: true,
   write: false,
   logLevel: 'warning',
+  loader: { '.wav': 'binary' },
 });
 const js = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 

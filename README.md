@@ -14,6 +14,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
   - can quiz you on the running count between hands
   - can switch to count-based advice (Hi-Lo index plays, insurance at +3)
 - **Drills**: basic strategy flash cards, running count (adjustable speed, 1 or 2 cards at a time), true count conversion.
+- **Deal animations and sound effects**: cards slide out of the shoe one at a time in casino order, the hole card flips over, and chip, card, shuffle and win/lose sounds play in time. Totals, results and buttons wait until the cards land so nothing is spoiled. Sound can be turned off in Settings and follows the iPhone silent switch; animations turn off when the phone's Reduce Motion setting is on.
 - **Strategy chart**: generated from the same engine as the coach, so it always matches your table rules.
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
 - **Ads**: an anchored adaptive banner, plus an interstitial shown only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
@@ -39,10 +40,12 @@ src/
   engine/__tests__  Unit tests, including a 20,000-hand basic strategy simulation
   content/        Lesson text and quizzes
   components/     Cards, hands, buttons and layout
+  audio/          Sound effect playback (expo-audio)
   ads/            AdMob setup, banner, interstitial frequency cap (web stub for previews)
   state/          Saved settings, bankroll and progress (AsyncStorage)
 web-html/         UI for the single-file HTML build (reuses src/engine and src/content)
-scripts/          build-html.mjs bundles web-html into html/blackjack-coach.html
+scripts/          build-html.mjs bundles web-html into html/blackjack-coach.html;
+                  make-sounds.py synthesizes assets/sounds/*.wav (no licensed audio)
 html/             The built single-file HTML app
 ```
 
@@ -90,8 +93,7 @@ Development builds always use Google's test ad units.
 ## Ideas for next steps
 
 - "Remove ads" in-app purchase
-- Sound effects and haptics
-- Deal animations
+- Haptics
 - Daily practice streaks and achievements
 - More counting systems (KO, Hi-Opt I) and a full Illustrious 18 / Fab 4 trainer
 - Bet-spread and bankroll simulator

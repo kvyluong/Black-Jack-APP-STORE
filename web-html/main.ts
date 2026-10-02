@@ -10,6 +10,7 @@ import {
   shouldTakeInsurance,
   suggestedBetUnits,
 } from '../src/engine/counting';
+import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../src/engine/dealSchedule';
 import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/engine/drills';
 import {
   GameState,
@@ -25,6 +26,7 @@ import {
 import { describeHand } from '../src/engine/hand';
 import { DEFAULT_RULES, Rules } from '../src/engine/rules';
 import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
+import { playSound, unlockAudio } from './sound';
 
 // ---------- Saved settings and progress ----------
 
@@ -44,6 +46,7 @@ interface Settings {
   showCount: boolean;
   countQuizzes: boolean;
   useDeviations: boolean;
+  soundEffects: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -56,6 +59,7 @@ const DEFAULT_SETTINGS: Settings = {
   showCount: true,
   countQuizzes: false,
   useDeviations: false,
+  soundEffects: true,
   bankroll: STARTING_BANKROLL,
   baseBet: 10,
 };
@@ -112,24 +116,51 @@ const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`;
 const SUIT_NAME: Record<Card['suit'], string> = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
 
-function cardHtml(card: Card | null, opts: { size?: 'sm' | 'md' | 'lg'; tag?: boolean } = {}) {
+function cardHtml(card: Card | null, opts: { size?: 'sm' | 'md' | 'lg'; tag?: boolean; dealAt?: number; flipAt?: number } = {}): string {
   const size = opts.size ?? 'md';
-  if (!card) return `<div class="card back ${size}" aria-label="Face-down card"></div>`;
+  if (!card) return `<div class="card back ${size} ${opts.dealAt !== undefined ? 'deal-in' : ''}" style="${opts.dealAt !== undefined ? `animation-delay:${opts.dealAt}ms` : ''}" aria-label="Face-down card"></div>`;
+  if (opts.flipAt !== undefined) {
+    // Two-sided card that starts face down and turns over after the delay.
+    return `<div class="flipper ${size}" style="animation-delay:${opts.flipAt}ms">
+      <div class="card back ${size} face-back"></div>${cardHtml(card, { size })}</div>`;
+  }
   const t = hiLoValue(card.rank);
   const tag = opts.tag
     ? `<span class="tag ${t > 0 ? 'plus' : t < 0 ? 'minus' : ''}">${t > 0 ? '+1' : t < 0 ? '−1' : '0'}</span>`
     : '';
-  return `<div class="card-wrap"><div class="card ${size} ${isRed(card) ? 'red' : ''}" aria-label="${card.rank} of ${SUIT_NAME[card.suit]}">
+  const deal = opts.dealAt !== undefined;
+  return `<div class="card-wrap ${deal ? 'deal-in' : ''}" style="${deal ? `animation-delay:${opts.dealAt}ms` : ''}"><div class="card ${size} ${isRed(card) ? 'red' : ''}" aria-label="${card.rank} of ${SUIT_NAME[card.suit]}">
     <span class="idx">${card.rank}<br>${card.suit}</span><span class="pip">${card.suit}</span><span class="idx flip">${card.rank}<br>${card.suit}</span>
   </div>${tag}</div>`;
 }
 
-function handHtml(cards: Card[], o: { label: string; hideHole?: boolean; active?: boolean; result?: string; size?: 'sm' | 'md' }) {
-  const cardsHtml = cards.map((c, i) => cardHtml(o.hideHole && i === 1 ? null : c, { size: o.size })).join('');
-  const desc = o.hideHole ? `showing ${cards[0].rank}` : describeHand(cards);
+interface HandOpts {
+  label: string;
+  hideHole?: boolean;
+  active?: boolean;
+  result?: string;
+  size?: 'sm' | 'md';
+  /** Deal delay for cards that are new in this render (undefined = already on the table). */
+  dealAt?: (index: number) => number | undefined;
+  flipAt?: number;
+  /** Cards still landing: hide totals and results so they don't spoil the outcome. */
+  settling?: boolean;
+}
+
+function handHtml(cards: Card[], o: HandOpts) {
+  const cardsHtml = cards
+    .map((c, i) =>
+      cardHtml(o.hideHole && i === 1 ? null : c, {
+        size: o.size,
+        dealAt: o.dealAt?.(i),
+        flipAt: i === 1 && !o.hideHole ? o.flipAt : undefined,
+      }),
+    )
+    .join('');
+  const desc = o.settling ? '…' : o.hideHole ? `showing ${cards[0].rank}` : describeHand(cards);
   return `<div class="hand ${o.active ? 'active' : ''}">
     <div class="hand-cards">${cardsHtml}</div>
-    <div class="hand-label">${esc(o.label)}: <b>${esc(desc)}</b>${o.result ? ` · ${esc(o.result)}` : ''}</div>
+    <div class="hand-label">${esc(o.label)}: <b>${esc(desc)}</b>${o.result && !o.settling ? ` · ${esc(o.result)}` : ''}</div>
   </div>`;
 }
 
@@ -166,6 +197,7 @@ function route(): View {
 function navigate() {
   cleanup?.();
   cleanup = null;
+  settleTable();
   const view = route();
   titleEl.textContent = view.title;
   backEl.hidden = !view.back;
@@ -175,6 +207,9 @@ function navigate() {
 }
 
 window.addEventListener('hashchange', navigate);
+// Warm up audio on the first interaction so the first deal isn't silent.
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
 
 // ---------- Home ----------
 
@@ -319,10 +354,28 @@ const table = {
   streak: 0,
   roundsSinceAd: 0,
   lastAd: Date.now(),
+  // Deal animation state: what changed last, whether it has finished, and the
+  // state whose cards have all landed (the count and bankroll show that one).
+  schedule: null as DealSchedule | null,
+  settled: true,
+  shown: null as GameState | null,
+  timers: [] as ReturnType<typeof setTimeout>[],
 };
+
+const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/** Ends any running deal animation immediately. */
+function settleTable() {
+  table.timers.forEach(clearTimeout);
+  table.timers = [];
+  table.settled = true;
+  table.schedule = null;
+  table.shown = table.game;
+}
 
 function resetTable() {
   table.game = newGame(settings.rules, settings.bankroll);
+  table.shown = table.game;
   table.feedback = null;
   table.quiz = null;
 }
@@ -330,9 +383,13 @@ function resetTable() {
 function renderPlay() {
   cleanup?.();
   const g = table.game;
+  const shown = table.shown ?? g;
+  const animating = !table.settled;
+  const sched = animating ? table.schedule : null;
   const rules = g.rules;
   const legal = legalActions(g);
   const tc = currentTrueCount(g);
+  const shownTc = currentTrueCount(shown);
   const ctx = decisionContext(g, settings.useDeviations);
   const advice = ctx ? recommend(ctx) : null;
   const unit = settings.baseBet;
@@ -340,11 +397,16 @@ function renderPlay() {
   const hideHole = !g.holeRevealed && g.dealer.length > 0;
 
   const countHtml = table.countVisible
-    ? `<button class="count" id="count-toggle" title="Hide the count">RC ${signed(g.runningCount)} · Decks ${decksRemaining(g.shoe.length)} · TC ${formatTrueCount(tc)}</button>`
+    ? `<button class="count" id="count-toggle" title="Hide the count">RC ${signed(shown.runningCount)} · Decks ${decksRemaining(shown.shoe.length)} · TC ${formatTrueCount(shownTc)}</button>`
     : `<button class="count" id="count-toggle">Show count</button>`;
 
+  const inSchedule = (seat: 'dealer' | number) => (i: number) =>
+    sched?.cards.some((c) => c.seat === seat && c.index === i) ? cardDelay(sched, seat, i) : undefined;
+
   let controls = '';
-  if (g.phase === 'playing') {
+  if (animating) {
+    controls = '';
+  } else if (g.phase === 'playing') {
     controls = `
       ${settings.showHints && advice ? `<p class="hint">Coach: ${ACTION_LABEL[advice.action]}${advice.deviation ? ' (count play)' : ''}</p>` : ''}
       <div class="btn-row actions">${ACTIONS.filter((a) => a !== 'surrender' || rules.lateSurrender)
@@ -393,12 +455,18 @@ function renderPlay() {
   }
 
   app.innerHTML = `
-    <div class="topbar"><span class="bankroll">Bankroll ${money(g.bankroll)}</span>${countHtml}</div>
+    <div class="topbar"><span class="bankroll">Bankroll ${money(shown.bankroll)}</span>${countHtml}</div>
     ${g.justShuffled && g.phase !== 'betting' ? '<p class="shuffle">New shoe shuffled. The count resets to 0.</p>' : ''}
     <div class="felt">
       <div class="area">${
         g.dealer.length
-          ? handHtml(g.dealer, { label: 'Dealer', hideHole })
+          ? handHtml(g.dealer, {
+              label: 'Dealer',
+              hideHole,
+              dealAt: inSchedule('dealer'),
+              flipAt: sched?.holeFlipAt ?? undefined,
+              settling: animating && g.holeRevealed,
+            })
           : `<p class="rules-line">${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
       }</div>
       <div class="area players">${g.hands
@@ -408,6 +476,8 @@ function renderPlay() {
             active: g.phase === 'playing' && i === g.active && g.hands.length > 1,
             result: h.outcome ? OUTCOME_LABEL[h.outcome] : money(h.bet),
             size: g.hands.length > 2 ? 'sm' : 'md',
+            dealAt: inSchedule(i),
+            settling: animating,
           }),
         )
         .join('')}</div>
@@ -429,6 +499,7 @@ function renderPlay() {
   on('#next-hand', 'click', nextHand);
   on('#reset-bankroll', 'click', () => {
     table.game = { ...table.game, bankroll: STARTING_BANKROLL };
+    table.shown = table.game;
     updateSettings({ bankroll: STARTING_BANKROLL });
     renderPlay();
   });
@@ -451,6 +522,7 @@ function renderPlay() {
     const k = e.key.toLowerCase();
     const map: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split', r: 'surrender' };
     const ph = table.game.phase;
+    if (!table.settled) return;
     if (ph === 'playing' && map[k] && legalActions(table.game)[map[k]]) playerAction(map[k]);
     else if (k === 'enter' && ph === 'betting' && table.game.bankroll >= settings.baseBet) deal();
     else if (k === 'enter' && ph === 'roundOver') nextHand();
@@ -469,7 +541,26 @@ function grade(ok: boolean, explanation: string) {
 }
 
 function afterChange(next: GameState) {
+  unlockAudio();
+  settleTable();
+  const s = dealSchedule(table.game, next, reduceMotion() ? 0 : DEAL_STEP_MS);
+  if (settings.soundEffects) {
+    for (const sound of s.sounds) table.timers.push(setTimeout(() => playSound(sound.name), sound.at));
+  }
   table.game = next;
+  table.schedule = s;
+  if (s.doneAt > 0) {
+    table.settled = false;
+    table.timers.push(
+      setTimeout(() => {
+        table.settled = true;
+        table.shown = next;
+        renderPlay(); // leaving the table clears these timers (see navigate)
+      }, s.doneAt),
+    );
+  } else {
+    table.shown = next;
+  }
   if (next.phase === 'roundOver') {
     updateSettings({ bankroll: next.bankroll });
     updateStats((s) => ({ ...s, handsPlayed: s.handsPlayed + 1 }));
@@ -511,7 +602,9 @@ function deal() {
 function nextHand() {
   table.feedback = null;
   table.quiz = null;
+  settleTable();
   table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
+  table.shown = table.game;
   table.roundsSinceAd++;
   if (table.roundsSinceAd >= AD_EVERY_N_ROUNDS && Date.now() - table.lastAd >= AD_MIN_INTERVAL_MS) {
     table.roundsSinceAd = 0;
@@ -826,6 +919,7 @@ function renderSettings() {
         ${toggle('showCount', 'Show the count', 'Display running count, decks left and true count at the table')}
         ${toggle('countQuizzes', 'Count pop quizzes', 'Sometimes ask for the running count between hands')}
         ${toggle('useDeviations', 'Count-based advice', 'Coach uses Hi-Lo index plays and insurance at +3')}
+        ${toggle('soundEffects', 'Sound effects', 'Card, chip and win/lose sounds')}
         <span class="lbl">Betting unit</span>${seg('unit', [['$5', 5], ['$10', 10], ['$25', 25]], settings.baseBet)}
       </div>
       <h2>Table rules</h2>
@@ -848,7 +942,7 @@ function renderSettings() {
       <h2>About</h2>
       <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
 
-    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations'] as const).forEach((id) =>
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects'] as const).forEach((id) =>
       on(`#${id}`, 'change', (el) => {
         updateSettings({ [id]: (el as HTMLInputElement).checked });
         if (id === 'showCount') table.countVisible = settings.showCount;

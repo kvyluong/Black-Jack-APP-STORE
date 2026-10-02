@@ -55,6 +55,12 @@ export default function SettingsScreen() {
           value={settings.useDeviations}
           onChange={(v) => updateSettings({ useDeviations: v })}
         />
+        <ToggleRow
+          label="Sound effects"
+          hint="Card, chip and win/lose sounds (follows your phone's silent switch)"
+          value={settings.soundEffects}
+          onChange={(v) => updateSettings({ soundEffects: v })}
+        />
         <Text style={{ color: colors.text, fontWeight: '600' }}>Betting unit</Text>
         <Segmented
           options={[5, 10, 25].map((v) => ({ label: `$${v}`, value: v }))}

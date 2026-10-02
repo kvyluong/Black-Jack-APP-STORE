@@ -43,6 +43,14 @@
           "delayAppMeasurementInit": true,
           "userTrackingUsageDescription": "This identifier will be used to deliver more relevant ads to you."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
       ]
     ],
     "extra": {

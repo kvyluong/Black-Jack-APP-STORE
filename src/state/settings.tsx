@@ -24,6 +24,8 @@ export interface Settings {
   countQuizzes: boolean;
   /** Apply Hi-Lo index plays in coaching advice. */
   useDeviations: boolean;
+  /** Card, chip and result sound effects. */
+  soundEffects: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -35,6 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
   showCount: true,
   countQuizzes: false,
   useDeviations: false,
+  soundEffects: true,
   bankroll: 1000,
   baseBet: 10,
 };
