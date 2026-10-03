@@ -30,6 +30,23 @@ import { DEFAULT_RULES, Rules } from '../src/engine/rules';
 import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
 import { countUpTicks, roundFanfare, streakPitch } from '../src/engine/juice';
 import {
+  CHIP_COLORS,
+  CasinoTable,
+  STARTING_CHIPS,
+  TABLES,
+  bestAffordableTable,
+  canSit,
+  chipBreakdown,
+  chipLabel,
+  formatChips,
+  getTable,
+  isUnlocked,
+  levelInfo,
+  needsRefill,
+  newlyUnlocked,
+  roundXp,
+} from '../src/engine/progression';
+import {
   Npc,
   Occupant,
   SEAT_COUNT,
@@ -57,6 +74,10 @@ interface Stats {
   countDrillsPassed: number;
   bestStrategyStreak: number;
   lessonsCompleted: string[];
+  xp: number;
+  peakChips: number;
+  biggestWin: number;
+  refills: number;
 }
 
 interface Settings {
@@ -71,10 +92,9 @@ interface Settings {
   yourHands: number;
   otherPlayers: boolean;
   bankroll: number;
-  baseBet: number;
+  tableId: string;
 }
 
-const STARTING_BANKROLL = 1000;
 const DEFAULT_SETTINGS: Settings = {
   rules: DEFAULT_RULES,
   showHints: true,
@@ -86,8 +106,8 @@ const DEFAULT_SETTINGS: Settings = {
   bigEffects: true,
   yourHands: 2,
   otherPlayers: true,
-  bankroll: STARTING_BANKROLL,
-  baseBet: 10,
+  bankroll: STARTING_CHIPS,
+  tableId: 'floor',
 };
 const DEFAULT_STATS: Stats = {
   handsPlayed: 0,
@@ -96,6 +116,10 @@ const DEFAULT_STATS: Stats = {
   countDrillsPassed: 0,
   bestStrategyStreak: 0,
   lessonsCompleted: [],
+  xp: 0,
+  peakChips: STARTING_CHIPS,
+  biggestWin: 0,
+  refills: 0,
 };
 const STORAGE_KEY = 'blackjack-coach/v1';
 
@@ -214,7 +238,8 @@ function route(): View {
   const views: Record<string, View> = {
     home: { title: 'Blackjack Coach', render: renderHome },
     learn: { title: 'Lessons', back: 'home', render: renderLearn },
-    play: { title: 'Practice Table', back: 'home', render: renderPlay },
+    tables: { title: 'Casino Floor', back: 'home', render: renderTables },
+    play: { title: getTable(settings.tableId).name, back: 'tables', render: renderPlay },
     drills: { title: 'Drills', back: 'home', render: renderDrills },
     'drill-strategy': { title: 'Strategy Drill', back: 'drills', render: renderStrategyDrill },
     'drill-count': { title: 'Running Count Drill', back: 'drills', render: renderCountDrill },
@@ -248,7 +273,7 @@ function renderHome() {
   const accuracy = stats.decisions ? `${Math.round((stats.correctDecisions / stats.decisions) * 100)}%` : '—';
   const tiles = [
     ['learn', 'Learn', 'Step-by-step lessons from the rules to card counting', '01'],
-    ['play', 'Practice Table', 'Play with a coach that explains every decision', '02'],
+    ['tables', 'Casino Floor', 'Play with a coach. Win chips to unlock bigger tables', '02'],
     ['drills', 'Drills', 'Basic strategy, running count and true count drills', '03'],
     ['chart', 'Strategy Chart', 'The full basic strategy chart for your table rules', '04'],
     ['settings', 'Settings', 'Table rules, coaching options and progress', '05'],
@@ -259,10 +284,13 @@ function renderHome() {
       <h1>Blackjack Coach</h1>
       <p class="muted">Learn to play every hand correctly, then learn to count cards.</p>
     </section>
-    <div class="stats">
-      <div><b>${stats.lessonsCompleted.length}/${LESSONS.length}</b><span>Lessons</span></div>
-      <div><b>${stats.handsPlayed}</b><span>Hands</span></div>
-      <div><b>${accuracy}</b><span>Accuracy</span></div>
+    <div class="panel">
+      <div class="stats">
+        <div><b>$${formatChips(settings.bankroll)}</b><span>Chips</span></div>
+        <div><b>${stats.lessonsCompleted.length}/${LESSONS.length}</b><span>Lessons</span></div>
+        <div><b>${accuracy}</b><span>Accuracy</span></div>
+      </div>
+      ${levelBarHtml()}
     </div>
     <nav class="tiles">
       ${tiles
@@ -273,6 +301,71 @@ function renderHome() {
         .join('')}
     </nav>
     <p class="fine">For entertainment and education only. Play money, no real-money gambling.</p>`;
+}
+
+/** Level, title and progress toward the next level. */
+function levelBarHtml(compact = false) {
+  const { level, title, into, span } = levelInfo(stats.xp);
+  return `<div class="levelbar ${compact ? 'compact' : ''}">
+    <div class="level-row"><b>Lv ${level} · ${title}</b>${compact ? '' : `<span>${into}/${span} XP</span>`}</div>
+    <div class="track"><div class="fill" style="width:${Math.min(100, (into / span) * 100)}%"></div></div>
+  </div>`;
+}
+
+const chipHtml = (d: number, attrs = '') => {
+  const c = CHIP_COLORS[d] ?? CHIP_COLORS[1];
+  return `<button class="chip" style="--chip:${c.fill};--chip-ink:${c.text}" ${attrs} aria-label="Add a ${d} chip"><span>${chipLabel(d)}</span></button>`;
+};
+
+/** Your bet drawn as a small stack of chips. */
+function chipStackHtml(amount: number) {
+  const chips = chipBreakdown(amount, 10).reverse();
+  return `<div class="chip-stack" style="height:${26 + Math.max(0, chips.length - 1) * 4}px">${chips
+    .map((d, i) => `<i style="bottom:${i * 4}px;background:${(CHIP_COLORS[d] ?? CHIP_COLORS[1]).fill}"></i>`)
+    .join('')}</div>`;
+}
+
+// ---------- Casino floor ----------
+
+function renderTables() {
+  const chips = settings.bankroll;
+  const peak = stats.peakChips;
+  app.innerHTML = `
+    <div class="panel">
+      <div class="chips-head"><b>$${formatChips(chips)}</b><span>chips</span></div>
+      ${levelBarHtml()}
+      <p class="muted small">Best ever: $${formatChips(peak)} · Biggest win: $${formatChips(stats.biggestWin)}</p>
+    </div>
+    <p class="muted">Grow your chips to unlock bigger tables. Chips are play money and can't be bought.</p>
+    <div class="list">${TABLES.map((t) => {
+      const unlocked = isUnlocked(t, peak);
+      const sit = canSit(t, chips, peak);
+      const here = settings.tableId === t.id;
+      return `<button class="casino-table ${unlocked ? '' : 'locked'}" data-table="${t.id}" style="background:${t.felt}" ${sit ? '' : 'disabled'}>
+        <span class="tile-text">
+          <b>${unlocked ? '' : '🔒 '}${t.name}${here ? ' · your table' : ''}</b>
+          <span class="limits">$${formatChips(t.minBet)} – $${formatChips(t.maxBet)}</span>
+          <span>${t.blurb}</span>
+          ${
+            !unlocked
+              ? `<span class="need">Reach $${formatChips(t.unlockAt)} chips to unlock</span><span class="track"><span class="fill" style="width:${Math.min(100, (peak / t.unlockAt) * 100)}%"></span></span>`
+              : !sit
+                ? `<span class="need">You need $${formatChips(t.minBet)} to sit here</span>`
+                : ''
+          }
+        </span>${sit ? '<span class="chev" aria-hidden="true">›</span>' : ''}</button>`;
+    }).join('')}</div>`;
+  on('[data-table]', 'click', (el) => sitAt(el.dataset.table!));
+}
+
+/** Walks to another table: new shoe, new players, bet set to its minimum. */
+function sitAt(id: string) {
+  if (settings.tableId !== id) {
+    updateSettings({ tableId: id });
+    settleTable();
+    resetTable();
+  }
+  location.hash = 'play';
 }
 
 // ---------- Lessons ----------
@@ -383,7 +476,7 @@ const SEAT_ORDER = Array.from({ length: SEAT_COUNT }, (_, i) => SEAT_COUNT - 1 -
 const ARC = [0, 10, 16, 18, 16, 10, 0];
 
 const seatTable = () => {
-  const t = createTable(settings.yourHands, settings.baseBet, settings.otherPlayers);
+  const t = createTable(settings.yourHands, getTable(settings.tableId).minBet, settings.otherPlayers);
   return t;
 };
 
@@ -394,7 +487,11 @@ const table = {
   /** What each computer player just did, keyed by player id. */
   bubbles: {} as Record<string, string>,
   npcPending: false,
-  bet: settings.baseBet,
+  bet: getTable(settings.tableId).minBet,
+  /** Correct decisions this round, for XP. */
+  roundCorrect: 0,
+  /** Level-ups and newly unlocked tables to announce after a round. */
+  milestones: [] as { text: string; table?: CasinoTable }[],
   feedback: null as { ok: boolean; text: string } | null,
   countVisible: settings.showCount,
   quiz: null as { guess: number; revealed: boolean } | null,
@@ -431,6 +528,8 @@ function settleTable() {
 
 function resetTable() {
   table.game = newGame(settings.rules, settings.bankroll);
+  table.bet = getTable(settings.tableId).minBet;
+  table.milestones = [];
   table.seats = seatTable();
   table.events = [];
   table.bubbles = {};
@@ -456,7 +555,11 @@ function renderPlay() {
   const waitingOn = activeHand && !yourTurn ? findNpc(table.seats, activeHand.owner) : undefined;
   const yourSeatCount = table.seats.seats.filter((o) => o === YOU).length;
   const affordable = Math.min(yourSeatCount, Math.floor(g.bankroll / table.bet));
-  const unit = settings.baseBet;
+  const casino = getTable(settings.tableId);
+  const unit = casino.minBet;
+  const maxPerHand = Math.min(casino.maxBet, Math.floor(g.bankroll / Math.max(1, yourSeatCount)));
+  // When your chips no longer cover this table's minimum, suggest one that fits.
+  const moveTo = g.bankroll < unit && !needsRefill(g.bankroll) ? bestAffordableTable(g.bankroll, stats.peakChips) : undefined;
   const units = suggestedBetUnits(flooredTrueCount(g.runningCount, g.shoe.length));
   const hideHole = !g.holeRevealed && g.dealer.length > 0;
 
@@ -509,29 +612,32 @@ function renderPlay() {
       <div class="seg" id="hands-choice" role="group" aria-label="Hands to play">${[1, 2]
         .map((n) => `<button class="${settings.yourHands === n ? 'on' : ''}" data-hands="${n}" aria-pressed="${settings.yourHands === n}">Play ${n} hand${n > 1 ? 's' : ''}</button>`)
         .join('')}</div>
-      <p class="prompt">Bet ${money(table.bet)}${yourSeatCount > 1 ? ` on each of your ${yourSeatCount} hands` : ''}</p>
-      ${table.countVisible ? `<p class="hint">Count suggests ${units} unit${units > 1 ? 's' : ''} (${money(units * unit)}) per hand</p>` : ''}
-      <div class="btn-row">${[-unit, unit, unit * 5]
-        .map(
-          (d) =>
-            `<button class="btn ghost" data-bet="${d}" ${table.bet + d < unit || (table.bet + d) * yourSeatCount > g.bankroll ? 'disabled' : ''}>${d < 0 ? `−$${-d}` : `+$${d}`}</button>`,
-        )
-        .join('')}</div>
+      <div class="bet-row">${chipStackHtml(table.bet)}<p class="prompt">Bet $${formatChips(table.bet)}${yourSeatCount > 1 ? ` on each of your ${yourSeatCount} hands` : ''}</p></div>
+      <p class="muted center small">Table limits $${formatChips(unit)}–$${formatChips(casino.maxBet)}</p>
+      ${table.countVisible ? `<button class="hint linklike" id="count-bet">Count suggests ${units} unit${units > 1 ? 's' : ''} ($${formatChips(units * unit)}) per hand · bet it</button>` : ''}
+      <div class="tray">${casino.chips.map((c) => chipHtml(c, `data-chip="${c}" ${table.bet + c > maxPerHand ? 'disabled' : ''}`)).join('')}
+        <button class="btn ghost" id="clear-bet" ${table.bet === 0 ? 'disabled' : ''}>Clear</button></div>
       ${
-        affordable >= 1
-          ? `<button class="btn primary" id="deal">${affordable < yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} <kbd>Enter</kbd></button>`
-          : g.bankroll >= unit
-            ? `<button class="btn primary" id="lower-bet">Lower bet to ${money(unit)}</button>`
-            : `<button class="btn primary" id="reset-bankroll">Out of chips: reset to $${STARTING_BANKROLL}</button>`
+        needsRefill(g.bankroll)
+          ? `<button class="btn primary" id="refill">Out of chips: free refill to $${formatChips(STARTING_CHIPS)}</button>`
+          : moveTo
+            ? `<button class="btn primary" id="move-table" data-table="${moveTo.id}">You need $${formatChips(unit)} here. Move to ${moveTo.name}</button>`
+            : table.bet < unit
+              ? `<button class="btn primary" disabled>Add chips: $${formatChips(unit)} minimum</button>`
+              : affordable >= 1
+                ? `<button class="btn primary" id="deal">${affordable < yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} <kbd>Enter</kbd></button>`
+                : `<button class="btn primary" id="lower-bet">Lower bet to $${formatChips(unit)}</button>`
       }
+      <a class="center small" href="#tables">Change table</a>
     </div>`;
   }
 
   app.innerHTML = `
-    <div class="topbar"><span class="bankroll" id="bankroll">Bankroll ${money(table.bankrollShown ?? shown.bankroll)}</span>${countHtml}</div>
+    <div class="topbar"><span class="bankroll" id="bankroll">Chips $${formatChips(table.bankrollShown ?? shown.bankroll)}</span>${countHtml}</div>
+    ${levelBarHtml(true)}
     ${streakBadge()}
     ${g.justShuffled && g.phase !== 'betting' ? '<p class="shuffle">New shoe shuffled. The count resets to 0.</p>' : ''}
-    <div class="felt">
+    <div class="felt" style="background-color:${casino.felt}">
       <div class="area">${
         g.dealer.length
           ? handHtml(g.dealer, {
@@ -541,7 +647,7 @@ function renderPlay() {
               flipAt: sched?.holeFlipAt ?? undefined,
               settling: animating && g.holeRevealed,
             })
-          : `<p class="rules-line">${money(unit)} minimum · ${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
+          : `<p class="rules-line">${casino.name} · $${formatChips(unit)}–$${formatChips(casino.maxBet)} · ${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
       }</div>
       <div class="seats">${SEAT_ORDER.map(
         (seat, pos) => `<div class="seat-slot" style="margin-top:${ARC[pos]}px">${seatHtml(seat, table.seats.seats[seat], g, inSchedule, animating)}</div>`,
@@ -562,6 +668,18 @@ function renderPlay() {
     ${
       table.events.length
         ? `<div class="events">${table.events.map((e, i) => `<p class="${i ? 'old' : ''}">${e.kind === 'join' ? '→' : '←'} ${esc(e.text)}</p>`).join('')}</div>`
+        : ''
+    }
+    ${
+      !animating && table.milestones.length
+        ? `<div class="panel milestone">${table.milestones
+            .map(
+              (m) =>
+                `<p class="milestone-text">★ ${esc(m.text)}</p>${
+                  m.table ? `<button class="btn secondary" data-goto="${m.table.id}">Go to ${m.table.name} ($${formatChips(m.table.minBet)}–$${formatChips(m.table.maxBet)})</button>` : ''
+                }`,
+            )
+            .join('')}</div>`
         : ''
     }
     ${table.feedback ? `<div class="feedback ${table.feedback.ok ? 'ok' : 'no'}">${table.feedback.ok ? '✓' : '✗'} ${esc(table.feedback.text)}</div>` : ''}
@@ -588,10 +706,32 @@ function renderPlay() {
     renderPlay();
   });
   on('#next-hand', 'click', nextHand);
-  on('#reset-bankroll', 'click', () => {
-    table.game = { ...table.game, bankroll: STARTING_BANKROLL };
+  on('[data-chip]', 'click', (el) => {
+    table.bet += Number(el.dataset.chip);
+    renderPlay();
+  });
+  on('#clear-bet', 'click', () => {
+    table.bet = 0;
+    renderPlay();
+  });
+  on('#count-bet', 'click', () => {
+    table.bet = Math.min(maxPerHand, units * unit);
+    renderPlay();
+  });
+  on('#refill', 'click', () => {
+    // Free refill back to the starting stack, at the Main Floor.
+    updateSettings({ bankroll: STARTING_CHIPS, tableId: 'floor' });
+    updateStats((s) => ({ ...s, refills: s.refills + 1 }));
+    resetTable();
     table.shown = table.game;
-    updateSettings({ bankroll: STARTING_BANKROLL });
+    titleEl.textContent = getTable('floor').name;
+    renderPlay();
+  });
+  on('#move-table', 'click', (el) => sitAt(el.dataset.table!));
+  on('[data-goto]', 'click', (el) => {
+    if (table.game.phase === 'roundOver') nextHand();
+    sitAt(el.dataset.goto!);
+    titleEl.textContent = getTable(el.dataset.goto!).name;
     renderPlay();
   });
   on('#q-minus', 'click', () => {
@@ -737,6 +877,7 @@ function countUpBankroll(from: number, target: number) {
 
 function grade(ok: boolean, explanation: string) {
   table.streak = ok ? table.streak + 1 : 0;
+  if (ok) table.roundCorrect++;
   gradeSound(ok, table.streak);
   updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
   if (!ok) table.feedback = settings.correctMistakes ? { ok, text: explanation } : null;
@@ -772,7 +913,21 @@ function afterChange(next: GameState) {
   if (next.phase === 'roundOver') {
     table.seats = settleNpcs(table.seats, next);
     updateSettings({ bankroll: next.bankroll });
-    updateStats((s) => ({ ...s, handsPlayed: s.handsPlayed + 1 }));
+    // XP for each of your seats played and each correct call; new peaks unlock tables.
+    const seatsPlayed = new Set(next.hands.filter(isYours).map((h) => h.seat)).size;
+    const xp = stats.xp + roundXp(seatsPlayed, table.roundCorrect);
+    const before = levelInfo(stats.xp);
+    const after = levelInfo(xp);
+    table.milestones = [];
+    if (after.level > before.level) table.milestones.push({ text: `Level ${after.level}: ${after.title}` });
+    for (const t of newlyUnlocked(stats.peakChips, next.bankroll)) table.milestones.push({ text: `New table unlocked: ${t.name}`, table: t });
+    updateStats((s) => ({
+      ...s,
+      handsPlayed: s.handsPlayed + 1,
+      xp,
+      peakChips: Math.max(s.peakChips, next.bankroll),
+      biggestWin: Math.max(s.biggestWin, next.lastNet),
+    }));
     if (settings.countQuizzes && Math.random() < 0.25) {
       table.quiz = { guess: 0, revealed: false };
       table.countVisible = false;
@@ -806,11 +961,13 @@ function deal() {
   table.feedback = null;
   table.quiz = null;
   table.bubbles = {};
+  table.milestones = [];
+  table.roundCorrect = 0;
   const g = table.game;
   const yourSeatCount = table.seats.seats.filter((o) => o === YOU).length;
   // Play as many of your seats as your bankroll covers.
   let skip = yourSeatCount - Math.min(yourSeatCount, Math.floor(g.bankroll / table.bet));
-  const bets = roundBets(table.seats, table.bet, currentTrueCount(g), settings.baseBet).filter((b) => b.owner !== YOU || skip-- <= 0);
+  const bets = roundBets(table.seats, table.bet, currentTrueCount(g), getTable(settings.tableId).minBet).filter((b) => b.owner !== YOU || skip-- <= 0);
   const next = startRound(g, bets);
   if (next.phase === 'insurance') {
     // Card counters at the table take insurance when the count is high.
@@ -827,7 +984,7 @@ function nextHand() {
   table.bubbles = {};
   table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
   applySeating();
-  const between = betweenRounds(table.seats, settings.baseBet, settings.otherPlayers);
+  const between = betweenRounds(table.seats, getTable(settings.tableId).minBet, settings.otherPlayers);
   table.seats = between.table;
   if (between.events.length) table.events = [...between.events, ...table.events].slice(0, 3);
   table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
@@ -1155,7 +1312,6 @@ function renderSettings() {
       <div class="panel">
         <span class="lbl">Hands you play</span>${seg('hands', [['1 hand', 1], ['2 hands', 2]], settings.yourHands)}
         ${toggle('otherPlayers', 'Other players', 'Players sit down and leave like a real casino table. Their cards count too.')}
-        <span class="lbl">Betting unit</span>${seg('unit', [['$5', 5], ['$10', 10], ['$25', 25]], settings.baseBet)}
       </div>
       <h2>Table rules</h2>
       <div class="panel">
@@ -1170,8 +1326,8 @@ function renderSettings() {
       <div class="panel">
         ${
           confirmReset
-            ? `<p>This clears your stats, lesson progress and bankroll.</p><div class="btn-row"><button class="btn danger" id="reset-yes">Reset everything</button><button class="btn ghost" id="reset-no">Cancel</button></div>`
-            : `<button class="btn danger" id="reset">Reset progress and bankroll</button>`
+            ? `<p>This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.</p><div class="btn-row"><button class="btn danger" id="reset-yes">Reset everything</button><button class="btn ghost" id="reset-no">Cancel</button></div>`
+            : `<button class="btn danger" id="reset">Reset progress and chips</button>`
         }
       </div>
       <h2>About</h2>
@@ -1192,18 +1348,13 @@ function renderSettings() {
       applySeating();
       draw();
     });
-    on('#unit button', 'click', (el) => {
-      updateSettings({ baseBet: Number(el.dataset.v) });
-      table.bet = settings.baseBet;
-      draw();
-    });
     on('#decks button', 'click', (el) => (setRules({ decks: Number(el.dataset.v) }), draw()));
     on('#payout button', 'click', (el) => (setRules({ blackjackPayout: Number(el.dataset.v) }), draw()));
     on('#reset', 'click', () => ((confirmReset = true), draw()));
     on('#reset-no', 'click', () => ((confirmReset = false), draw()));
     on('#reset-yes', 'click', () => {
       stats = DEFAULT_STATS;
-      updateSettings({ bankroll: STARTING_BANKROLL });
+      updateSettings({ bankroll: STARTING_CHIPS, tableId: 'floor' });
       resetTable();
       confirmReset = false;
       draw();

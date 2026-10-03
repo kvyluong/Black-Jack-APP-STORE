@@ -16,7 +16,7 @@ export default function SettingsScreen() {
   }, []);
 
   const confirmReset = () =>
-    Alert.alert('Reset progress?', 'This clears your stats, lesson progress and bankroll.', [
+    Alert.alert('Reset progress?', 'This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Reset', style: 'destructive', onPress: resetProgress },
     ]);
@@ -67,12 +67,6 @@ export default function SettingsScreen() {
           value={settings.bigEffects}
           onChange={(v) => updateSettings({ bigEffects: v })}
         />
-        <Text style={{ color: colors.text, fontWeight: '600' }}>Betting unit</Text>
-        <Segmented
-          options={[5, 10, 25].map((v) => ({ label: `$${v}`, value: v }))}
-          value={settings.baseBet}
-          onChange={(v) => updateSettings({ baseBet: v })}
-        />
       </Panel>
 
       <H2>The table</H2>
@@ -122,7 +116,7 @@ export default function SettingsScreen() {
       <H2>Data</H2>
       <Panel>
         {showPrivacy && <Button title="Ad privacy choices" variant="secondary" onPress={showPrivacyOptions} />}
-        <Button title="Reset progress and bankroll" variant="danger" onPress={confirmReset} />
+        <Button title="Reset progress and chips" variant="danger" onPress={confirmReset} />
       </Panel>
 
       <H2>About</H2>

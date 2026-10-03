@@ -1,8 +1,10 @@
+import { Stack, router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { useInterstitial } from '../ads/useInterstitial';
 import { playSound, preloadSounds } from '../audio/sounds';
+import { ChipButton, ChipStack, LevelBar } from '../components/chips';
 import { HandView } from '../components/HandView';
 import { FanfareOverlay, StreakBadge, useCountUp, useShake } from '../components/juice';
 import { SeatView } from '../components/SeatView';
@@ -24,6 +26,17 @@ import {
   startRound,
 } from '../engine/game';
 import { Fanfare, roundFanfare, streakPitch } from '../engine/juice';
+import {
+  CasinoTable,
+  STARTING_CHIPS,
+  bestAffordableTable,
+  formatChips,
+  getTable,
+  levelInfo,
+  needsRefill,
+  newlyUnlocked,
+  roundXp,
+} from '../engine/progression';
 import { ACTION_LABEL, Action, formatTrueCount, recommend } from '../engine/strategy';
 import {
   SEAT_COUNT,
@@ -38,7 +51,7 @@ import {
   setYourHands,
   settleNpcs,
 } from '../engine/table';
-import { STARTING_BANKROLL, useSettings } from '../state/settings';
+import { useSettings } from '../state/settings';
 import { colors, spacing } from '../theme';
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
@@ -60,9 +73,11 @@ const ARC = [0, 10, 16, 18, 16, 10, 0];
 type Feedback = { ok: boolean; text: string } | null;
 
 export default function Play() {
-  const { ready, settings, updateSettings, updateStats } = useSettings();
+  const { ready, settings, stats, updateSettings, updateStats } = useSettings();
   const { rules, showHints, correctMistakes, showCount, countQuizzes, useDeviations } = settings;
-  const unit = settings.baseBet;
+  // The casino table you're sitting at sets the bet limits.
+  const casino = getTable(settings.tableId);
+  const unit = casino.minBet;
   const [game, setGame] = useState<GameState>(() => newGame(rules, settings.bankroll));
   const [table, setTable] = useState<Table>(() => createTable(settings.yourHands, unit, settings.otherPlayers));
   const [events, setEvents] = useState<TableEvent[]>([]);
@@ -73,6 +88,10 @@ export default function Play() {
   const [quiz, setQuiz] = useState<{ guess: number; revealed: boolean } | null>(null);
   const roundBreak = useInterstitial();
   const [streak, setStreak] = useState(0);
+  // Correct decisions this round, for XP.
+  const roundCorrect = useRef(0);
+  // Level-ups and newly unlocked tables to announce after a round.
+  const [milestones, setMilestones] = useState<{ text: string; table?: CasinoTable }[]>([]);
   const [fanfare, setFanfare] = useState<(Fanfare & { key: number }) | null>(null);
   const shake = useShake();
   const reduceMotion = useReduceMotion();
@@ -123,8 +142,9 @@ export default function Play() {
     setCountSource(fresh);
     setTable(createTable(settings.yourHands, unit, settings.otherPlayers));
     setEvents([]);
+    setBet(unit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, rules]);
+  }, [ready, rules, settings.tableId]);
 
   // Switching between 1 and 2 hands, or turning other players off, applies at the next deal.
   useEffect(() => {
@@ -152,7 +172,22 @@ export default function Play() {
   const recordRoundEnd = (g: GameState) => {
     if (g.phase !== 'roundOver') return;
     updateSettings({ bankroll: g.bankroll });
-    updateStats((s) => ({ ...s, handsPlayed: s.handsPlayed + 1 }));
+    // XP for each of your seats played and each correct call; new peaks unlock tables.
+    const seatsPlayed = new Set(g.hands.filter(isYours).map((h) => h.seat)).size;
+    const xp = stats.xp + roundXp(seatsPlayed, roundCorrect.current);
+    const before = levelInfo(stats.xp);
+    const after = levelInfo(xp);
+    const found: { text: string; table?: CasinoTable }[] = [];
+    if (after.level > before.level) found.push({ text: `Level ${after.level}: ${after.title}` });
+    for (const t of newlyUnlocked(stats.peakChips, g.bankroll)) found.push({ text: `New table unlocked: ${t.name}`, table: t });
+    if (found.length) setMilestones(found);
+    updateStats((s) => ({
+      ...s,
+      handsPlayed: s.handsPlayed + 1,
+      xp,
+      peakChips: Math.max(s.peakChips, g.bankroll),
+      biggestWin: Math.max(s.biggestWin, g.lastNet),
+    }));
     setTable((t) => settleNpcs(t, g));
     if (countQuizzes && Math.random() < QUIZ_CHANCE) {
       setQuiz({ guess: 0, revealed: false });
@@ -184,6 +219,7 @@ export default function Play() {
   const grade = (ok: boolean, text: string) => {
     const nextStreak = ok ? streak + 1 : 0;
     setStreak(nextStreak);
+    if (ok) roundCorrect.current++;
     // The chime climbs a semitone with every correct play in a row.
     if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(nextStreak) : 1);
     updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
@@ -216,12 +252,16 @@ export default function Play() {
 
   // You play as many of your seats as your bankroll covers.
   const yourSeatCount = table.seats.filter((o) => o === YOU).length;
-  const affordableSeats = Math.min(yourSeatCount, Math.floor(game.bankroll / bet));
+  const affordableSeats = bet >= unit ? Math.min(yourSeatCount, Math.floor(game.bankroll / bet)) : 0;
+  // The most you can put on each hand: the table max, or what your chips cover.
+  const maxPerHand = Math.min(casino.maxBet, Math.floor(game.bankroll / Math.max(1, yourSeatCount)));
 
   const deal = () => {
     setFeedback(null);
     setQuiz(null);
     setBubbles({});
+    setMilestones([]);
+    roundCorrect.current = 0;
     let skip = yourSeatCount - affordableSeats;
     const bets = roundBets(table, bet, currentTrueCount(game), unit).filter((b) => b.owner !== YOU || skip-- <= 0);
     const next = startRound(game, bets);
@@ -248,11 +288,16 @@ export default function Play() {
     setGame((g) => ({ ...g, phase: 'betting', hands: [], dealer: [] }));
   };
 
-  const resetBankroll = () => {
-    setGame((g) => ({ ...g, bankroll: STARTING_BANKROLL }));
-    setCountSource((g) => ({ ...g, bankroll: STARTING_BANKROLL }));
-    updateSettings({ bankroll: STARTING_BANKROLL });
+  /** Free refill back to the starting stack once you can't cover the smallest table. */
+  const refill = () => {
+    setGame((g) => ({ ...g, bankroll: STARTING_CHIPS }));
+    setCountSource((g) => ({ ...g, bankroll: STARTING_CHIPS }));
+    updateSettings({ bankroll: STARTING_CHIPS, tableId: 'floor' });
+    updateStats((s) => ({ ...s, refills: s.refills + 1 }));
+    setBet(getTable('floor').minBet);
   };
+  // When your chips no longer cover this table's minimum, suggest one that fits.
+  const moveTo = game.bankroll < unit && !needsRefill(game.bankroll) ? bestAffordableTable(game.bankroll, stats.peakChips) : undefined;
 
   // Winnings count up into the bankroll with rising ticks.
   const shownBankroll = useCountUp(
@@ -269,9 +314,10 @@ export default function Play() {
 
   return (
     <Screen>
-      {/* Status bar: bankroll and count */}
+      <Stack.Screen options={{ title: casino.name }} />
+      {/* Status bar: chips, level and count */}
       <View style={styles.topBar}>
-        <Text style={styles.bankroll}>Bankroll ${shownBankroll.toFixed(shownBankroll % 1 ? 2 : 0)}</Text>
+        <Text style={styles.bankroll}>Chips ${formatChips(shownBankroll)}</Text>
         {countVisible ? (
           <Text style={styles.count} onPress={() => setCountVisible(false)} accessibilityRole="button">
             RC {countSource.runningCount >= 0 ? '+' : ''}
@@ -283,11 +329,12 @@ export default function Play() {
           </Text>
         )}
       </View>
+      <LevelBar xp={stats.xp} compact />
       {game.justShuffled && game.phase !== 'betting' && <Text style={styles.shuffle}>New shoe shuffled · count resets to 0</Text>}
 
       <StreakBadge streak={streak} />
 
-      <Animated.View style={shake.style}>
+      <Animated.View style={[shake.style, styles.felt, { backgroundColor: casino.felt }]}>
         {/* Dealer */}
         <View style={styles.dealer}>
           {game.dealer.length > 0 ? (
@@ -303,7 +350,7 @@ export default function Play() {
             />
           ) : (
             <Text style={styles.placeholder}>
-              ${unit} minimum · {rules.decks} deck{rules.decks > 1 ? 's' : ''} · Dealer{' '}
+              {casino.name} · ${formatChips(unit)}–${formatChips(casino.maxBet)} · {rules.decks} deck{rules.decks > 1 ? 's' : ''} · Dealer{' '}
               {rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays{' '}
               {rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}
             </Text>
@@ -355,6 +402,27 @@ export default function Play() {
             </Text>
           ))}
         </View>
+      )}
+
+      {settled && milestones.length > 0 && (
+        <Panel style={styles.milestone}>
+          {milestones.map((m) => (
+            <View key={m.text} style={{ gap: 6 }}>
+              <Text style={styles.milestoneText}>★ {m.text}</Text>
+              {m.table && (
+                <Button
+                  title={`Go to ${m.table.name} ($${formatChips(m.table.minBet)}–$${formatChips(m.table.maxBet)})`}
+                  variant="secondary"
+                  onPress={() => {
+                    setMilestones([]);
+                    if (game.phase === 'roundOver') nextHand();
+                    updateSettings({ tableId: m.table!.id });
+                  }}
+                />
+              )}
+            </View>
+          ))}
+        </Panel>
       )}
 
       {feedback && (
@@ -429,33 +497,45 @@ export default function Play() {
             value={settings.yourHands}
             onChange={(v) => updateSettings({ yourHands: v })}
           />
-          <Text style={styles.prompt}>
-            Bet ${bet} {yourSeatCount > 1 ? `on each of your ${yourSeatCount} hands` : ''}
+          <View style={styles.betRow}>
+            <ChipStack amount={bet} />
+            <Text style={styles.prompt}>
+              Bet ${formatChips(bet)}
+              {yourSeatCount > 1 ? ` on each of your ${yourSeatCount} hands` : ''}
+            </Text>
+          </View>
+          <Text style={styles.limits}>
+            Table limits ${formatChips(unit)}–${formatChips(casino.maxBet)}
           </Text>
           {countVisible && (
-            <Text style={styles.hint}>
-              Count suggests {suggestedUnits} unit{suggestedUnits > 1 ? 's' : ''} (${suggestedUnits * unit}) per hand
+            <Text style={styles.hint} onPress={() => setBet(Math.min(maxPerHand, suggestedUnits * unit))}>
+              Count suggests {suggestedUnits} unit{suggestedUnits > 1 ? 's' : ''} (${formatChips(suggestedUnits * unit)}) per hand · tap to bet it
             </Text>
           )}
-          <View style={styles.actions}>
-            {[-unit, unit, unit * 5].map((d) => (
-              <Button
-                key={d}
-                title={d < 0 ? `−$${-d}` : `+$${d}`}
-                variant="ghost"
-                disabled={bet + d < unit || (bet + d) * yourSeatCount > game.bankroll}
-                onPress={() => setBet(bet + d)}
-                style={styles.actionButton}
-              />
+          {/* Chip tray: tap chips to build your bet. */}
+          <View style={styles.tray}>
+            {casino.chips.map((c) => (
+              <ChipButton key={c} value={c} disabled={bet + c > maxPerHand} onPress={() => setBet(bet + c)} />
             ))}
+            <Button title="Clear" variant="ghost" disabled={bet === 0} onPress={() => setBet(0)} style={styles.clear} />
           </View>
-          {affordableSeats >= 1 ? (
+          {needsRefill(game.bankroll) ? (
+            <Button title={`Out of chips: free refill to $${formatChips(STARTING_CHIPS)}`} onPress={refill} />
+          ) : moveTo ? (
+            <Button
+              title={`You need $${formatChips(unit)} here. Move to ${moveTo.name}`}
+              onPress={() => updateSettings({ tableId: moveTo.id })}
+            />
+          ) : bet < unit ? (
+            <Button title={`Add chips: $${formatChips(unit)} minimum`} disabled onPress={() => {}} />
+          ) : affordableSeats >= 1 ? (
             <Button title={affordableSeats < yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} onPress={deal} />
-          ) : game.bankroll >= unit ? (
-            <Button title={`Lower bet to $${unit}`} onPress={() => setBet(unit)} />
           ) : (
-            <Button title={`Out of chips: reset to $${STARTING_BANKROLL}`} onPress={resetBankroll} />
+            <Button title={`Lower bet to $${formatChips(unit)}`} onPress={() => setBet(unit)} />
           )}
+          <Text style={styles.lobby} onPress={() => router.push('/tables')} accessibilityRole="link">
+            Change table
+          </Text>
         </Panel>
       )}
     </Screen>
@@ -505,6 +585,14 @@ function CountQuiz({
 }
 
 const styles = StyleSheet.create({
+  felt: { borderRadius: 18, paddingVertical: spacing(1), paddingHorizontal: 4 },
+  betRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing(1.5) },
+  limits: { color: colors.muted, textAlign: 'center', fontSize: 13 },
+  tray: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing(1.5), flexWrap: 'wrap' },
+  clear: { paddingVertical: 8, paddingHorizontal: 12 },
+  lobby: { color: colors.gold, textAlign: 'center', textDecorationLine: 'underline', marginTop: 4 },
+  milestone: { borderWidth: 2, borderColor: colors.gold },
+  milestoneText: { color: colors.gold, fontSize: 17, fontWeight: '900', textAlign: 'center' },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   bankroll: { color: colors.gold, fontWeight: '800', fontSize: 16 },
   count: { color: colors.text, fontSize: 14, fontVariant: ['tabular-nums'] },

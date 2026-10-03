@@ -1,21 +1,23 @@
 import { Href, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { LevelBar } from '../components/chips';
 import { H1, P, Panel, Screen } from '../components/ui';
+import { formatChips } from '../engine/progression';
 import { LESSONS } from '../content/lessons';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 
 const TILES: { title: string; subtitle: string; href: Href; icon: string }[] = [
   { title: 'Learn', subtitle: 'Step-by-step lessons from the rules to card counting', href: '/learn', icon: '📘' },
-  { title: 'Practice Table', subtitle: 'Play with a coach that explains every decision', href: '/play', icon: '🃏' },
+  { title: 'Casino Floor', subtitle: 'Play with a coach. Win chips to unlock bigger tables', href: '/tables', icon: '🃏' },
   { title: 'Drills', subtitle: 'Basic strategy, running count and true count drills', href: '/drills', icon: '🎯' },
   { title: 'Strategy Chart', subtitle: 'The full basic strategy chart for your rules', href: '/chart', icon: '📊' },
   { title: 'Settings', subtitle: 'Table rules, coaching options and progress', href: '/settings', icon: '⚙️' },
 ];
 
 export default function Home() {
-  const { stats } = useSettings();
+  const { stats, settings } = useSettings();
   const accuracy = stats.decisions ? Math.round((stats.correctDecisions / stats.decisions) * 100) : null;
   const done = stats.lessonsCompleted.length;
 
@@ -27,10 +29,13 @@ export default function Home() {
         <P muted>Learn to play perfectly and count cards</P>
       </View>
 
-      <Panel style={styles.stats}>
-        <Stat label="Lessons" value={`${done}/${LESSONS.length}`} />
-        <Stat label="Hands" value={String(stats.handsPlayed)} />
-        <Stat label="Accuracy" value={accuracy === null ? '—' : `${accuracy}%`} />
+      <Panel>
+        <View style={styles.stats}>
+          <Stat label="Chips" value={`$${formatChips(settings.bankroll)}`} />
+          <Stat label="Lessons" value={`${done}/${LESSONS.length}`} />
+          <Stat label="Accuracy" value={accuracy === null ? '—' : `${accuracy}%`} />
+        </View>
+        <LevelBar xp={stats.xp} />
       </Panel>
 
       {TILES.map((t) => (

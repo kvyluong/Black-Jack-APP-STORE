@@ -25,7 +25,8 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ title: 'Blackjack Coach' }} />
-          <Stack.Screen name="play" options={{ title: 'Practice Table' }} />
+          <Stack.Screen name="tables" options={{ title: 'Casino Floor' }} />
+          <Stack.Screen name="play" options={{ title: 'Table' }} />
           <Stack.Screen name="learn/index" options={{ title: 'Lessons' }} />
           <Stack.Screen name="learn/[id]" options={{ title: 'Lesson' }} />
           <Stack.Screen name="drills/index" options={{ title: 'Drills' }} />

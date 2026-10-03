@@ -160,6 +160,48 @@ kbd { font: 600 11px var(--font-body); border: 1px solid currentColor; border-ra
 .hand-label { font-size: 14px; text-align: center; max-width: 9.5rem; }
 .actions .btn { flex: 1 1 96px; }
 
+/* Chips and progression */
+.chip {
+  width: 54px; height: 54px; border-radius: 50%; flex: none; cursor: pointer;
+  background: var(--chip); color: var(--chip-ink);
+  border: 4px dashed rgba(255, 255, 255, 0.75);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45), 0 4px 8px var(--shade);
+  display: grid; place-items: center; font: 900 13px var(--font-body);
+  transition: transform 0.08s, opacity 0.15s;
+}
+.chip span { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.5); display: grid; place-items: center; }
+.chip:not(:disabled):hover { transform: translateY(-3px); }
+.chip:not(:disabled):active { transform: translateY(2px) scale(0.92); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45); }
+.chip:disabled { opacity: 0.3; cursor: not-allowed; }
+.tray { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.bet-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.chip-stack { position: relative; width: 30px; flex: none; }
+.chip-stack i { position: absolute; left: 0; width: 30px; height: 10px; border-radius: 50%; border: 1.5px dashed rgba(255, 255, 255, 0.7); }
+.linklike { background: none; border: 0; cursor: pointer; font: inherit; text-decoration: underline dotted; }
+.levelbar { display: flex; flex-direction: column; gap: 4px; }
+.level-row { display: flex; justify-content: space-between; align-items: baseline; }
+.level-row b { color: var(--gold); font-size: 14px; }
+.levelbar.compact .level-row b { font-size: 12px; }
+.level-row span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.track { display: block; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
+.fill { display: block; height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.4s ease-out; }
+.chips-head { display: flex; align-items: baseline; gap: 6px; }
+.chips-head b { color: var(--gold); font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.chips-head span { color: var(--muted); }
+.casino-table {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+  color: var(--ink); font: inherit; padding: 16px; border-radius: 12px;
+  border: 2px solid rgba(232, 197, 71, 0.35); transition: transform 0.15s, border-color 0.15s;
+}
+.casino-table:not(:disabled):hover { transform: translateY(-2px); border-color: var(--gold); }
+.casino-table:disabled { cursor: default; }
+.casino-table.locked { opacity: 0.6; border-color: transparent; }
+.casino-table .tile-text { gap: 2px; }
+.casino-table .limits { color: var(--gold); font-weight: 800; }
+.casino-table .need { color: var(--ink); font-size: 12px; font-weight: 600; margin-top: 4px; }
+.milestone { border: 2px solid var(--gold); animation: badge-pop 420ms cubic-bezier(0.34, 1.8, 0.64, 1); }
+.milestone-text { color: var(--gold); font: 900 17px var(--font-display); text-align: center; letter-spacing: 0.03em; }
+
 /* Seats around the table */
 .seats { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; min-height: 150px; }
 .seat { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; height: 100%; }

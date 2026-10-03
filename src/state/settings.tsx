@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 
 export interface Stats {
@@ -10,6 +11,12 @@ export interface Stats {
   countDrillsPassed: number;
   bestStrategyStreak: number;
   lessonsCompleted: string[];
+  /** Experience from hands played and correct decisions; sets your level. */
+  xp: number;
+  /** Most chips you've ever had; unlocks tables. */
+  peakChips: number;
+  biggestWin: number;
+  refills: number;
 }
 
 export interface Settings {
@@ -32,8 +39,10 @@ export interface Settings {
   yourHands: number;
   /** Computer players who come and go at the practice table. */
   otherPlayers: boolean;
+  /** Your chips. They start at STARTING_CHIPS and carry over between sessions. */
   bankroll: number;
-  baseBet: number;
+  /** The casino table you're sitting at (see TABLES in engine/progression). */
+  tableId: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -47,8 +56,8 @@ const DEFAULT_SETTINGS: Settings = {
   bigEffects: true,
   yourHands: 2,
   otherPlayers: true,
-  bankroll: 1000,
-  baseBet: 10,
+  bankroll: STARTING_CHIPS,
+  tableId: 'floor',
 };
 
 const DEFAULT_STATS: Stats = {
@@ -58,9 +67,11 @@ const DEFAULT_STATS: Stats = {
   countDrillsPassed: 0,
   bestStrategyStreak: 0,
   lessonsCompleted: [],
+  xp: 0,
+  peakChips: STARTING_CHIPS,
+  biggestWin: 0,
+  refills: 0,
 };
-
-export const STARTING_BANKROLL = DEFAULT_SETTINGS.bankroll;
 
 const STORAGE_KEY = 'blackjack-coach/v1';
 
@@ -105,7 +116,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const updateStats = useCallback((fn: (s: Stats) => Stats) => setStats(fn), []);
   const resetProgress = useCallback(() => {
     setStats(DEFAULT_STATS);
-    setSettings((s) => ({ ...s, bankroll: DEFAULT_SETTINGS.bankroll }));
+    setSettings((s) => ({ ...s, bankroll: STARTING_CHIPS, tableId: 'floor' }));
   }, []);
 
   const value = useMemo(
