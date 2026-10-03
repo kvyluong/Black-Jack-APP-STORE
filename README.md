@@ -7,7 +7,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 ## Features
 
 - **Lessons**: 10 short lessons from the rules to true count and index plays, each ending in a quiz.
-- **A real casino table**: seven seats with computer players who sit down and leave between rounds (broke, bored, or up and cashing out). You play two seats in the middle (or one, in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards (watch their bets rise with the count), plays hunches, never busts, copies the dealer, or high roller. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
+- **A real casino table**: seven seats with computer players who sit down and leave between rounds (broke, bored, or up and cashing out). Before each deal you choose to play one hand or two, right in the betting panel (also in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards (watch their bets rise with the count), plays hunches, never busts, copies the dealer, or high roller. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
 - **Practice table**: a full blackjack game (splits, doubles, surrender, insurance, multi-deck shoe with penetration) with a coach that:
   - highlights the best play before you act (optional)
   - explains mistakes in plain English after you act

@@ -506,6 +506,9 @@ function renderPlay() {
     </div>`;
   } else {
     controls = `<div class="panel">
+      <div class="seg" id="hands-choice" role="group" aria-label="Hands to play">${[1, 2]
+        .map((n) => `<button class="${settings.yourHands === n ? 'on' : ''}" data-hands="${n}" aria-pressed="${settings.yourHands === n}">Play ${n} hand${n > 1 ? 's' : ''}</button>`)
+        .join('')}</div>
       <p class="prompt">Bet ${money(table.bet)}${yourSeatCount > 1 ? ` on each of your ${yourSeatCount} hands` : ''}</p>
       ${table.countVisible ? `<p class="hint">Count suggests ${units} unit${units > 1 ? 's' : ''} (${money(units * unit)}) per hand</p>` : ''}
       <div class="btn-row">${[-unit, unit, unit * 5]
@@ -575,6 +578,11 @@ function renderPlay() {
     renderPlay();
   });
   on('#deal', 'click', deal);
+  on('[data-hands]', 'click', (el) => {
+    updateSettings({ yourHands: Number(el.dataset.hands) });
+    applySeating();
+    renderPlay();
+  });
   on('#lower-bet', 'click', () => {
     table.bet = unit;
     renderPlay();

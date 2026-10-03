@@ -6,7 +6,7 @@ import { playSound, preloadSounds } from '../audio/sounds';
 import { HandView } from '../components/HandView';
 import { FanfareOverlay, StreakBadge, useCountUp, useShake } from '../components/juice';
 import { SeatView } from '../components/SeatView';
-import { Button, Panel, Screen } from '../components/ui';
+import { Button, Panel, Screen, Segmented } from '../components/ui';
 import { useReduceMotion } from '../components/useReduceMotion';
 import { decksRemaining, flooredTrueCount, shouldTakeInsurance, suggestedBetUnits } from '../engine/counting';
 import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../engine/dealSchedule';
@@ -420,6 +420,15 @@ export default function Play() {
 
       {game.phase === 'betting' && (
         <Panel>
+          {/* Like spreading to a second betting spot at a real table: choose before each deal. */}
+          <Segmented
+            options={[
+              { label: 'Play 1 hand', value: 1 },
+              { label: 'Play 2 hands', value: 2 },
+            ]}
+            value={settings.yourHands}
+            onChange={(v) => updateSettings({ yourHands: v })}
+          />
           <Text style={styles.prompt}>
             Bet ${bet} {yourSeatCount > 1 ? `on each of your ${yourSeatCount} hands` : ''}
           </Text>
