@@ -64,5 +64,5 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', padding: 6, borderRadius: 10, borderWidth: 2, borderColor: 'transparent' },
   active: { borderColor: colors.gold },
   row: { flexDirection: 'row' },
-  label: { color: colors.text, marginTop: 6, fontWeight: '600' },
+  label: { color: colors.text, marginTop: 6, fontWeight: '600', textAlign: 'center', maxWidth: 150 },
 });

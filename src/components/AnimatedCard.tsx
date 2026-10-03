@@ -8,7 +8,7 @@ import { PlayingCard } from './PlayingCard';
 interface Props {
   card: Card;
   faceDown: boolean;
-  size: 'sm' | 'md';
+  size: 'xs' | 'sm' | 'md';
   /** Delay before the card slides in from the shoe, in ms. */
   dealDelay: number;
   /** Delay before a face-down card turns over once `faceDown` becomes false. */

@@ -7,7 +7,14 @@ import { Action, DecisionContext } from './strategy';
 export type Phase = 'betting' | 'insurance' | 'playing' | 'roundOver';
 export type Outcome = 'win' | 'lose' | 'push' | 'blackjack' | 'surrender';
 
+/** Owner id for the person using the app; other hands belong to computer players. */
+export const YOU = 'you';
+
 export interface PlayerHand {
+  /** Table position, 0 = first base (dealt first). Split hands keep their seat. */
+  seat: number;
+  /** Who plays this hand: `YOU` or a computer player's id. */
+  owner: string;
   cards: Card[];
   bet: number;
   doubled: boolean;
@@ -28,14 +35,16 @@ export interface GameState {
   runningCount: number;
   /** Set when the most recent round started from a freshly shuffled shoe. */
   justShuffled: boolean;
+  /** Your bankroll. Computer players' money is tracked by the table simulation. */
   bankroll: number;
   phase: Phase;
   dealer: Card[];
   holeRevealed: boolean;
   hands: PlayerHand[];
   active: number;
+  /** Your total insurance stake this round. */
   insuranceBet: number;
-  /** Bankroll change over the last completed round. */
+  /** Your bankroll change over the last completed round. */
   lastNet: number;
   roundStartBankroll: number;
 }
@@ -90,13 +99,34 @@ function clone(s: GameState): GameState {
   };
 }
 
-function newHand(cards: Card[], bet: number, fromSplit = false): PlayerHand {
-  return { cards, bet, doubled: false, done: false, fromSplit, splitAces: false, surrendered: false };
+function newHand(seat: number, owner: string, cards: Card[], bet: number, fromSplit = false): PlayerHand {
+  return { seat, owner, cards, bet, doubled: false, done: false, fromSplit, splitAces: false, surrendered: false };
 }
 
-export function startRound(prev: GameState, bet: number, rng: Rng = Math.random): GameState {
+export const isYours = (h: PlayerHand | undefined) => h?.owner === YOU;
+
+/** One bet in the betting circle at a seat. */
+export interface SeatBet {
+  seat: number;
+  owner: string;
+  bet: number;
+}
+
+/**
+ * Deals a new round. Pass a single number to play one hand alone, or one
+ * `SeatBet` per occupied seat. Cards go around the table in seat order,
+ * like a real dealer: one card to each seat, the dealer's upcard, a second
+ * card to each seat, then the dealer's hole card.
+ */
+export function startRound(prev: GameState, bets: number | SeatBet[], rng: Rng = Math.random): GameState {
   if (prev.phase !== 'betting' && prev.phase !== 'roundOver') throw new Error('Round in progress');
-  if (bet <= 0 || bet > prev.bankroll) throw new Error('Invalid bet');
+  const seatBets = (typeof bets === 'number' ? [{ seat: 0, owner: YOU, bet: bets }] : bets)
+    .slice()
+    .sort((a, b) => a.seat - b.seat);
+  const yourTotal = seatBets.filter((b) => b.owner === YOU).reduce((sum, b) => sum + b.bet, 0);
+  if (seatBets.length === 0 || seatBets.some((b) => b.bet <= 0) || yourTotal > prev.bankroll) {
+    throw new Error('Invalid bet');
+  }
   let s = clone(prev);
   s.justShuffled = false;
   if (needsShuffle(s)) {
@@ -106,17 +136,17 @@ export function startRound(prev: GameState, bet: number, rng: Rng = Math.random)
     s.justShuffled = true;
   }
   s.roundStartBankroll = s.bankroll;
-  s.bankroll -= bet;
+  s.bankroll -= yourTotal;
   s.insuranceBet = 0;
   s.lastNet = 0;
   s.holeRevealed = false;
   s.active = 0;
 
-  const p1 = draw(s, true, rng);
+  s.hands = seatBets.map((b) => newHand(b.seat, b.owner, [], b.bet));
+  for (const h of s.hands) h.cards.push(draw(s, true, rng));
   const up = draw(s, true, rng);
-  const p2 = draw(s, true, rng);
+  for (const h of s.hands) h.cards.push(draw(s, true, rng));
   const hole = draw(s, false, rng);
-  s.hands = [newHand([p1, p2], bet)];
   s.dealer = [up, hole];
 
   if (up.rank === 'A') {
@@ -130,7 +160,9 @@ export function resolveInsurance(prev: GameState, take: boolean, rng: Rng = Math
   if (prev.phase !== 'insurance') throw new Error('Insurance not offered');
   const s = clone(prev);
   if (take) {
-    const amount = Math.min(s.hands[0].bet / 2, s.bankroll);
+    // Half of each of your bets, as far as your bankroll covers it.
+    const wanted = s.hands.filter(isYours).reduce((sum, h) => sum + h.bet / 2, 0);
+    const amount = Math.min(wanted, s.bankroll);
     s.insuranceBet = amount;
     s.bankroll -= amount;
   }
@@ -155,13 +187,11 @@ function afterPeek(s: GameState, rng: Rng): GameState {
     for (const h of s.hands) h.done = true;
     return settle(s);
   }
-  if (isBlackjack(s.hands[0].cards)) {
-    s.hands[0].done = true;
-    revealHole(s);
-    return settle(s);
-  }
+  // Naturals are paid at the end; those hands need no decisions.
+  for (const h of s.hands) if (isBlackjack(h.cards)) h.done = true;
   s.phase = 'playing';
-  return s;
+  s.active = 0;
+  return advance(s, rng);
 }
 
 export interface LegalActions {
@@ -178,13 +208,15 @@ export function legalActions(s: GameState): LegalActions {
   const h = s.hands[s.active];
   if (!h || h.done) return none;
   const two = h.cards.length === 2;
-  const canAfford = s.bankroll >= h.bet;
+  // Computer players are assumed to have the chips; only your bankroll is checked.
+  const canAfford = !isYours(h) || s.bankroll >= h.bet;
+  const handsAtSeat = s.hands.filter((x) => x.seat === h.seat).length;
   return {
     hit: true,
     stand: true,
     double: two && canAfford && (!h.fromSplit || s.rules.doubleAfterSplit),
-    split: two && isPair(h.cards) && canAfford && s.hands.length < s.rules.maxHands && !h.splitAces,
-    surrender: s.rules.lateSurrender && two && s.hands.length === 1 && !h.fromSplit,
+    split: two && isPair(h.cards) && canAfford && handsAtSeat < s.rules.maxHands && !h.splitAces,
+    surrender: s.rules.lateSurrender && two && !h.fromSplit,
   };
 }
 
@@ -218,7 +250,7 @@ export function act(prev: GameState, action: Action, rng: Rng = Math.random): Ga
       h.done = true;
       break;
     case 'double':
-      s.bankroll -= h.bet;
+      if (isYours(h)) s.bankroll -= h.bet;
       h.bet *= 2;
       h.doubled = true;
       h.cards.push(draw(s, true, rng));
@@ -229,9 +261,9 @@ export function act(prev: GameState, action: Action, rng: Rng = Math.random): Ga
       h.done = true;
       break;
     case 'split': {
-      s.bankroll -= h.bet;
+      if (isYours(h)) s.bankroll -= h.bet;
       const aces = h.cards[0].rank === 'A';
-      const second = newHand([h.cards[1]], h.bet, true);
+      const second = newHand(h.seat, h.owner, [h.cards[1]], h.bet, true);
       h.cards = [h.cards[0], draw(s, true, rng)];
       h.fromSplit = true;
       second.cards.push(draw(s, true, rng));
@@ -256,7 +288,8 @@ function advance(s: GameState, rng: Rng): GameState {
   if (s.active < s.hands.length) return s;
   s.active = s.hands.length - 1;
   revealHole(s);
-  const live = s.hands.some((h) => !h.surrendered && !isBust(h.cards));
+  // The dealer only draws if some hand still needs beating (not bust, surrendered or a natural).
+  const live = s.hands.some((h) => !h.surrendered && !isBust(h.cards) && !(isBlackjack(h.cards) && !h.fromSplit));
   if (live) {
     while (dealerShouldHit(s.dealer, s.rules)) s.dealer.push(draw(s, true, rng));
   }
@@ -304,7 +337,7 @@ function settle(s: GameState): GameState {
     h.outcome = outcome;
     h.payout = payout;
     h.done = true;
-    s.bankroll += payout;
+    if (isYours(h)) s.bankroll += payout;
   }
   s.lastNet = s.bankroll - s.roundStartBankroll;
   s.phase = 'roundOver';

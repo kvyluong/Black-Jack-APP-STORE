@@ -28,6 +28,10 @@ export interface Settings {
   soundEffects: boolean;
   /** Screen shake, chip bursts and pop-ups. */
   bigEffects: boolean;
+  /** How many seats you play at the practice table (1 or 2). */
+  yourHands: number;
+  /** Computer players who come and go at the practice table. */
+  otherPlayers: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -41,6 +45,8 @@ const DEFAULT_SETTINGS: Settings = {
   useDeviations: false,
   soundEffects: true,
   bigEffects: true,
+  yourHands: 2,
+  otherPlayers: true,
   bankroll: 1000,
   baseBet: 10,
 };

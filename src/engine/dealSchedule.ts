@@ -31,7 +31,7 @@ const RESULT_SOUND: Record<FanfareTier, SoundName> = {
   lose: 'lose',
 };
 
-/** Where a card sits: the dealer's hand, or a player hand by index. */
+/** Where a card sits: the dealer's hand, or a player hand by its index in `GameState.hands`. */
 export type Seat = 'dealer' | number;
 
 export interface CardTiming {
@@ -74,8 +74,14 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
       t += SHUFFLE_MS;
     }
     sounds.push({ name: 'chips', at: t });
-    // Real dealing order: player, dealer upcard, player, dealer hole card.
-    const order: [Seat, number][] = [[0, 0], ['dealer', 0], [0, 1], ['dealer', 1]];
+    // Real dealing order: a card to each seat, dealer upcard, a second card to each seat, hole card.
+    const seats = next.hands.map((_, i) => i);
+    const order: [Seat, number][] = [
+      ...seats.map((i): [Seat, number] => [i, 0]),
+      ['dealer', 0],
+      ...seats.map((i): [Seat, number] => [i, 1]),
+      ['dealer', 1],
+    ];
     for (const [seat, index] of order) {
       cards.push({ seat, index, at: t });
       sounds.push({ name: 'card', at: t });

@@ -75,6 +75,25 @@ export default function SettingsScreen() {
         />
       </Panel>
 
+      <H2>The table</H2>
+      <Panel>
+        <Text style={{ color: colors.text, fontWeight: '600' }}>Hands you play</Text>
+        <Segmented
+          options={[
+            { label: '1 hand', value: 1 },
+            { label: '2 hands', value: 2 },
+          ]}
+          value={settings.yourHands}
+          onChange={(v) => updateSettings({ yourHands: v })}
+        />
+        <ToggleRow
+          label="Other players"
+          hint="Players sit down and leave like a real casino table. Their cards count too."
+          value={settings.otherPlayers}
+          onChange={(v) => updateSettings({ otherPlayers: v })}
+        />
+      </Panel>
+
       <H2>Table rules</H2>
       <Panel>
         <Text style={{ color: colors.text, fontWeight: '600' }}>Decks</Text>

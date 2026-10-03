@@ -7,12 +7,12 @@ import { colors, radius } from '../theme';
 interface Props {
   card?: Card;
   faceDown?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Shows the card's Hi-Lo tag beneath it (used in lessons and drills). */
   showTag?: boolean;
 }
 
-const SIZES = { sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
+const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
 
 export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
   const s = SIZES[size];
@@ -25,6 +25,19 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
   }
   const color = isRed(card) ? colors.red : colors.black;
   const tag = hiLoValue(card.rank);
+  if (size === 'xs') {
+    // Tiny cards for other players' seats: just rank over suit.
+    return (
+      <View
+        style={[styles.card, styles.xs, { width: s.w, height: s.h }]}
+        accessible
+        accessibilityLabel={`${card.rank} of ${suitName(card.suit)}`}
+      >
+        <Text style={{ color, fontSize: s.f, fontWeight: '800', lineHeight: s.f + 2 }}>{card.rank}</Text>
+        <Text style={{ color, fontSize: s.f, lineHeight: s.f + 2 }}>{card.suit}</Text>
+      </View>
+    );
+  }
   return (
     <View style={{ alignItems: 'center' }}>
       <View
@@ -61,6 +74,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
+  // Rank in the corner so it stays readable when cards are stacked.
+  xs: { alignItems: 'flex-start', justifyContent: 'flex-start', paddingHorizontal: 3, paddingTop: 1 },
   back: { backgroundColor: colors.cardBack, padding: 4 },
   backInner: { flex: 1, alignSelf: 'stretch', borderRadius: 4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
   corner: { position: 'absolute', top: 3, left: 5, fontWeight: '700' },

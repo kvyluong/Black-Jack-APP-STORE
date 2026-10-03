@@ -1,4 +1,4 @@
-import { GameState } from './game';
+import { GameState, isYours } from './game';
 import { isBust } from './hand';
 
 /** How loudly to celebrate (or commiserate) a finished round. */
@@ -20,12 +20,15 @@ const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`;
 
 /** Decides the celebration for a finished round. Returns null mid-round. */
 export function roundFanfare(g: GameState): Fanfare | null {
-  if (g.phase !== 'roundOver' || g.hands.length === 0) return null;
+  const yours = g.hands.filter(isYours);
+  if (g.phase !== 'roundOver' || yours.length === 0) return null;
   const net = g.lastNet;
-  const first = g.hands[0];
-  const originalBet = first.doubled ? first.bet / 2 : first.bet;
+  // What you put out before doubling or splitting: the first hand at each of your seats.
+  const originalBet = yours
+    .filter((h, i) => yours.findIndex((x) => x.seat === h.seat) === i)
+    .reduce((sum, h) => sum + (h.doubled ? h.bet / 2 : h.bet), 0);
 
-  if (g.hands.some((h) => h.outcome === 'blackjack')) {
+  if (yours.some((h) => h.outcome === 'blackjack')) {
     return { tier: 'blackjack', label: 'BLACKJACK!', net, shake: 0.8, particles: 42 };
   }
   if (net > originalBet) {
@@ -33,10 +36,10 @@ export function roundFanfare(g: GameState): Fanfare | null {
   }
   if (net > 0) return { tier: 'win', label: `+${money(net)}`, net, shake: 0, particles: 14 };
   if (net === 0) return { tier: 'push', label: 'PUSH', net, shake: 0, particles: 0 };
-  if (g.hands.every((h) => h.surrendered)) {
+  if (yours.every((h) => h.surrendered)) {
     return { tier: 'surrender', label: `SURRENDER −${money(-net)}`, net, shake: 0, particles: 0 };
   }
-  if (g.hands.every((h) => isBust(h.cards))) {
+  if (yours.every((h) => isBust(h.cards))) {
     return { tier: 'bust', label: 'BUST', net, shake: 0.35, particles: 0 };
   }
   return { tier: 'lose', label: `−${money(-net)}`, net, shake: 0.1, particles: 0 };

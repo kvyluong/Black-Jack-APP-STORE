@@ -15,6 +15,8 @@ import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/eng
 import {
   GameState,
   Outcome,
+  YOU,
+  isYours,
   act,
   currentTrueCount,
   decisionContext,
@@ -27,6 +29,22 @@ import { describeHand } from '../src/engine/hand';
 import { DEFAULT_RULES, Rules } from '../src/engine/rules';
 import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
 import { countUpTicks, roundFanfare, streakPitch } from '../src/engine/juice';
+import {
+  Npc,
+  Occupant,
+  SEAT_COUNT,
+  STYLE_LABEL,
+  TableEvent,
+  Table as SeatTable,
+  betweenRounds,
+  createTable,
+  findNpc,
+  isNpc,
+  npcAction,
+  roundBets,
+  setYourHands,
+  settleNpcs,
+} from '../src/engine/table';
 import { clearFanfare, enableCardTilt, playFanfare } from './fx';
 import { playSound, unlockAudio } from './sound';
 
@@ -50,6 +68,8 @@ interface Settings {
   useDeviations: boolean;
   soundEffects: boolean;
   bigEffects: boolean;
+  yourHands: number;
+  otherPlayers: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -64,6 +84,8 @@ const DEFAULT_SETTINGS: Settings = {
   useDeviations: false,
   soundEffects: true,
   bigEffects: true,
+  yourHands: 2,
+  otherPlayers: true,
   bankroll: STARTING_BANKROLL,
   baseBet: 10,
 };
@@ -120,8 +142,13 @@ const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`;
 const SUIT_NAME: Record<Card['suit'], string> = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
 
-function cardHtml(card: Card | null, opts: { size?: 'sm' | 'md' | 'lg'; tag?: boolean; dealAt?: number; flipAt?: number } = {}): string {
+function cardHtml(card: Card | null, opts: { size?: 'xs' | 'sm' | 'md' | 'lg'; tag?: boolean; dealAt?: number; flipAt?: number } = {}): string {
   const size = opts.size ?? 'md';
+  if (size === 'xs' && card) {
+    // Tiny cards for other players' seats: just rank over suit.
+    const deal = opts.dealAt !== undefined;
+    return `<div class="card-wrap ${deal ? 'deal-in' : ''}" style="${deal ? `animation-delay:${opts.dealAt}ms` : ''}"><div class="card xs ${isRed(card) ? 'red' : ''}" aria-label="${card.rank} of ${SUIT_NAME[card.suit]}"><b>${card.rank}</b><span>${card.suit}</span></div></div>`;
+  }
   if (!card) return `<div class="card back ${size} ${opts.dealAt !== undefined ? 'deal-in' : ''}" style="${opts.dealAt !== undefined ? `animation-delay:${opts.dealAt}ms` : ''}" aria-label="Face-down card"></div>`;
   if (opts.flipAt !== undefined) {
     // Two-sided card that starts face down and turns over after the delay.
@@ -349,8 +376,24 @@ const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
 const AD_EVERY_N_ROUNDS = 10;
 const AD_MIN_INTERVAL_MS = 3 * 60 * 1000;
 
+/** How long a computer player "thinks" before acting. */
+const NPC_THINK_MS = 650;
+/** Seat 1 (first base) is on the right from your chair; seats sit on an arc. */
+const SEAT_ORDER = Array.from({ length: SEAT_COUNT }, (_, i) => SEAT_COUNT - 1 - i);
+const ARC = [0, 10, 16, 18, 16, 10, 0];
+
+const seatTable = () => {
+  const t = createTable(settings.yourHands, settings.baseBet, settings.otherPlayers);
+  return t;
+};
+
 const table = {
   game: newGame(settings.rules, settings.bankroll),
+  seats: seatTable() as SeatTable,
+  events: [] as TableEvent[],
+  /** What each computer player just did, keyed by player id. */
+  bubbles: {} as Record<string, string>,
+  npcPending: false,
   bet: settings.baseBet,
   feedback: null as { ok: boolean; text: string } | null,
   countVisible: settings.showCount,
@@ -376,6 +419,7 @@ const reducedMotionPref = () => window.matchMedia?.('(prefers-reduced-motion: re
 function settleTable() {
   table.timers.forEach(clearTimeout);
   table.timers = [];
+  table.npcPending = false;
   if (table.countTimer) clearInterval(table.countTimer);
   table.countTimer = null;
   table.bankrollShown = null;
@@ -387,6 +431,9 @@ function settleTable() {
 
 function resetTable() {
   table.game = newGame(settings.rules, settings.bankroll);
+  table.seats = seatTable();
+  table.events = [];
+  table.bubbles = {};
   table.shown = table.game;
   table.feedback = null;
   table.quiz = null;
@@ -402,8 +449,13 @@ function renderPlay() {
   const legal = legalActions(g);
   const tc = currentTrueCount(g);
   const shownTc = currentTrueCount(shown);
-  const ctx = decisionContext(g, settings.useDeviations);
+  const activeHand = g.phase === 'playing' ? g.hands[g.active] : undefined;
+  const yourTurn = isYours(activeHand);
+  const ctx = yourTurn ? decisionContext(g, settings.useDeviations) : null;
   const advice = ctx ? recommend(ctx) : null;
+  const waitingOn = activeHand && !yourTurn ? findNpc(table.seats, activeHand.owner) : undefined;
+  const yourSeatCount = table.seats.seats.filter((o) => o === YOU).length;
+  const affordable = Math.min(yourSeatCount, Math.floor(g.bankroll / table.bet));
   const unit = settings.baseBet;
   const units = suggestedBetUnits(flooredTrueCount(g.runningCount, g.shoe.length));
   const hideHole = !g.holeRevealed && g.dealer.length > 0;
@@ -412,15 +464,19 @@ function renderPlay() {
     ? `<button class="count" id="count-toggle" title="Hide the count">RC ${signed(shown.runningCount)} · Decks ${decksRemaining(shown.shoe.length)} · TC ${formatTrueCount(shownTc)}</button>`
     : `<button class="count" id="count-toggle">Show count</button>`;
 
+  // Your hands, shown large, in the same left-to-right order as the seats.
+  const yours = g.hands.map((h, i) => ({ h, i })).filter(({ h }) => isYours(h)).reverse();
   const inSchedule = (seat: 'dealer' | number) => (i: number) =>
     sched?.cards.some((c) => c.seat === seat && c.index === i) ? cardDelay(sched, seat, i) : undefined;
 
   let controls = '';
   if (animating) {
     controls = '';
+  } else if (g.phase === 'playing' && !yourTurn) {
+    controls = `<p class="waiting">${esc(waitingOn?.name ?? 'Another player')} is playing…</p>`;
   } else if (g.phase === 'playing') {
     controls = `
-      ${settings.showHints && advice ? `<p class="hint">Coach: ${ACTION_LABEL[advice.action]}${advice.deviation ? ' (count play)' : ''}</p>` : ''}
+      ${settings.showHints && advice ? `<p class="hint">Seat ${activeHand!.seat + 1} · Coach: ${ACTION_LABEL[advice.action]}${advice.deviation ? ' (count play)' : ''}</p>` : ''}
       <div class="btn-row actions">${ACTIONS.filter((a) => a !== 'surrender' || rules.lateSurrender)
         .map(
           (a) =>
@@ -450,18 +506,20 @@ function renderPlay() {
     </div>`;
   } else {
     controls = `<div class="panel">
-      <p class="prompt">Place your bet: ${money(table.bet)}</p>
-      ${table.countVisible ? `<p class="hint">Count suggests ${units} unit${units > 1 ? 's' : ''} (${money(units * unit)})</p>` : ''}
+      <p class="prompt">Bet ${money(table.bet)}${yourSeatCount > 1 ? ` on each of your ${yourSeatCount} hands` : ''}</p>
+      ${table.countVisible ? `<p class="hint">Count suggests ${units} unit${units > 1 ? 's' : ''} (${money(units * unit)}) per hand</p>` : ''}
       <div class="btn-row">${[-unit, unit, unit * 5]
         .map(
           (d) =>
-            `<button class="btn ghost" data-bet="${d}" ${table.bet + d < unit || table.bet + d > g.bankroll ? 'disabled' : ''}>${d < 0 ? `−$${-d}` : `+$${d}`}</button>`,
+            `<button class="btn ghost" data-bet="${d}" ${table.bet + d < unit || (table.bet + d) * yourSeatCount > g.bankroll ? 'disabled' : ''}>${d < 0 ? `−$${-d}` : `+$${d}`}</button>`,
         )
         .join('')}</div>
       ${
-        g.bankroll >= unit
-          ? `<button class="btn primary" id="deal">Deal <kbd>Enter</kbd></button>`
-          : `<button class="btn primary" id="reset-bankroll">Out of chips: reset to $${STARTING_BANKROLL}</button>`
+        affordable >= 1
+          ? `<button class="btn primary" id="deal">${affordable < yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} <kbd>Enter</kbd></button>`
+          : g.bankroll >= unit
+            ? `<button class="btn primary" id="lower-bet">Lower bet to ${money(unit)}</button>`
+            : `<button class="btn primary" id="reset-bankroll">Out of chips: reset to $${STARTING_BANKROLL}</button>`
       }
     </div>`;
   }
@@ -480,21 +538,29 @@ function renderPlay() {
               flipAt: sched?.holeFlipAt ?? undefined,
               settling: animating && g.holeRevealed,
             })
-          : `<p class="rules-line">${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
+          : `<p class="rules-line">${money(unit)} minimum · ${rules.decks} deck${rules.decks > 1 ? 's' : ''} · Dealer ${rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays ${rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</p>`
       }</div>
-      <div class="area players">${g.hands
-        .map((h, i) =>
+      <div class="seats">${SEAT_ORDER.map(
+        (seat, pos) => `<div class="seat-slot" style="margin-top:${ARC[pos]}px">${seatHtml(seat, table.seats.seats[seat], g, inSchedule, animating)}</div>`,
+      ).join('')}</div>
+      <div class="area players">${yours
+        .map(({ h, i }) =>
           handHtml(h.cards, {
-            label: g.hands.length > 1 ? `Hand ${i + 1}` : 'You',
-            active: g.phase === 'playing' && i === g.active && g.hands.length > 1,
+            label: `Seat ${h.seat + 1}`,
+            active: g.phase === 'playing' && i === g.active,
             result: h.outcome ? OUTCOME_LABEL[h.outcome] : money(h.bet),
-            size: g.hands.length > 2 ? 'sm' : 'md',
+            size: yours.length > 2 || (yours.length > 1 && yours.some(({ h: x }) => x.cards.length >= 4)) ? 'sm' : 'md',
             dealAt: inSchedule(i),
             settling: animating,
           }),
         )
         .join('')}</div>
     </div>
+    ${
+      table.events.length
+        ? `<div class="events">${table.events.map((e, i) => `<p class="${i ? 'old' : ''}">${e.kind === 'join' ? '→' : '←'} ${esc(e.text)}</p>`).join('')}</div>`
+        : ''
+    }
     ${table.feedback ? `<div class="feedback ${table.feedback.ok ? 'ok' : 'no'}">${table.feedback.ok ? '✓' : '✗'} ${esc(table.feedback.text)}</div>` : ''}
     ${controls}`;
 
@@ -509,6 +575,10 @@ function renderPlay() {
     renderPlay();
   });
   on('#deal', 'click', deal);
+  on('#lower-bet', 'click', () => {
+    table.bet = unit;
+    renderPlay();
+  });
   on('#next-hand', 'click', nextHand);
   on('#reset-bankroll', 'click', () => {
     table.game = { ...table.game, bankroll: STARTING_BANKROLL };
@@ -536,14 +606,83 @@ function renderPlay() {
     const map: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split', r: 'surrender' };
     const ph = table.game.phase;
     if (!table.settled) return;
+    if (ph === 'playing' && !isYours(table.game.hands[table.game.active])) return;
     if (ph === 'playing' && map[k] && legalActions(table.game)[map[k]]) playerAction(map[k]);
-    else if (k === 'enter' && ph === 'betting' && table.game.bankroll >= settings.baseBet) deal();
+    else if (k === 'enter' && ph === 'betting' && app.querySelector('#deal')) deal();
     else if (k === 'enter' && ph === 'roundOver') nextHand();
     else return;
     e.preventDefault();
   };
   document.addEventListener('keydown', keys);
   cleanup = () => document.removeEventListener('keydown', keys);
+  // Computer players act on their own; one who has left just stands.
+  if (table.settled && activeHand && !yourTurn) scheduleNpcTurn();
+}
+
+/** One seat: a computer player's avatar, bets and small cards, your spot, or an open seat. */
+function seatHtml(seat: number, o: Occupant, g: GameState, inSchedule: (seat: number) => (i: number) => number | undefined, animating: boolean) {
+  const no = `<span class="seat-no">${seat + 1}</span>`;
+  if (o === null) return `<div class="seat"><div class="avatar empty"></div><span class="open">open</span>${no}</div>`;
+  if (o === YOU) {
+    const bet = g.hands.filter((h) => h.seat === seat).reduce((sum, h) => sum + h.bet, 0);
+    return `<div class="seat"><div class="avatar you">YOU</div>${bet ? `<span class="seat-bet">${money(bet)}</span>` : ''}${no}</div>`;
+  }
+  const npc = o as Npc;
+  const hands = g.hands.map((h, i) => ({ h, i })).filter(({ h }) => h.owner === npc.id);
+  const turn = g.phase === 'playing' && hands.some(({ i }) => i === g.active);
+  const initials = npc.name.split(' ').map((w) => w[0]).join('').slice(0, 2);
+  const bubble = table.bubbles[npc.id];
+  return `<div class="seat">
+    <div class="avatar ${turn ? 'turn' : ''}" style="background:hsl(${npc.hue} 45% 38%)">${esc(initials)}</div>
+    <span class="seat-name">${esc(npc.name)}</span>
+    <span class="seat-style">${STYLE_LABEL[npc.style]}</span>
+    ${hands
+      .map(({ h, i }) => {
+        const dealAt = inSchedule(i);
+        const cards = h.cards
+          .map((c, ci) => `<div class="xs-pos" style="top:${ci * 14}px;left:${ci * 6}px">${cardHtml(c, { size: 'xs', dealAt: dealAt(ci) })}</div>`)
+          .join('');
+        const won = (h.payout ?? 0) > h.bet;
+        const res = animating ? '&nbsp;' : h.outcome ? OUTCOME_SHORT[h.outcome] : esc(describeHand(h.cards));
+        return `<div class="seat-hand"><span class="seat-bet">${money(h.bet)}</span>
+          <div class="xs-stack" style="height:${42 + (h.cards.length - 1) * 14}px;width:${30 + (h.cards.length - 1) * 6}px">${cards}</div>
+          <span class="seat-total ${!animating && h.outcome ? (won ? 'good' : h.payout === h.bet ? '' : 'bad') : ''}">${res}</span></div>`;
+      })
+      .join('')}
+    ${bubble ? `<span class="bubble ${bubble.includes('✗') ? 'mistake' : ''}">${esc(bubble)}</span>` : ''}
+    ${no}</div>`;
+}
+
+const OUTCOME_SHORT: Record<Outcome, string> = { win: 'Win', lose: 'Lose', push: 'Push', blackjack: 'BJ!', surrender: 'Surr.' };
+
+/** Applies the "hands you play" and "other players" settings; only between rounds. */
+function applySeating() {
+  if (table.game.phase !== 'betting' && table.game.phase !== 'roundOver') return;
+  const seated = setYourHands(table.seats, settings.yourHands);
+  table.seats = settings.otherPlayers ? seated : { ...seated, seats: seated.seats.map((o) => (isNpc(o) ? null : o)) };
+}
+
+/** Lets the computer player whose turn it is act after a short pause. */
+function scheduleNpcTurn() {
+  if (table.npcPending) return;
+  table.npcPending = true;
+  table.timers.push(
+    setTimeout(() => {
+      table.npcPending = false;
+      const g = table.game;
+      const h = g.phase === 'playing' ? g.hands[g.active] : undefined;
+      if (!h || isYours(h)) return;
+      const npc = findNpc(table.seats, h.owner);
+      let action: Action = 'stand';
+      if (npc) {
+        const choice = npcAction(g, npc);
+        action = choice.action;
+        const note = action === choice.book ? '' : npc.style === 'counter' ? ' · count play' : ` ✗ book: ${ACTION_LABEL[choice.book]}`;
+        table.bubbles[npc.id] = `${ACTION_LABEL[action]}${note}`;
+      }
+      afterChange(act(g, action));
+    }, NPC_THINK_MS),
+  );
 }
 
 /** "STREAK ×n" badge; it pops only when the streak has just grown. */
@@ -623,6 +762,7 @@ function afterChange(next: GameState) {
     queueMicrotask(() => land(false));
   }
   if (next.phase === 'roundOver') {
+    table.seats = settleNpcs(table.seats, next);
     updateSettings({ bankroll: next.bankroll });
     updateStats((s) => ({ ...s, handsPlayed: s.handsPlayed + 1 }));
     if (settings.countQuizzes && Math.random() < 0.25) {
@@ -657,13 +797,31 @@ function insurance(take: boolean) {
 function deal() {
   table.feedback = null;
   table.quiz = null;
-  afterChange(startRound(table.game, Math.min(table.bet, table.game.bankroll)));
+  table.bubbles = {};
+  const g = table.game;
+  const yourSeatCount = table.seats.seats.filter((o) => o === YOU).length;
+  // Play as many of your seats as your bankroll covers.
+  let skip = yourSeatCount - Math.min(yourSeatCount, Math.floor(g.bankroll / table.bet));
+  const bets = roundBets(table.seats, table.bet, currentTrueCount(g), settings.baseBet).filter((b) => b.owner !== YOU || skip-- <= 0);
+  const next = startRound(g, bets);
+  if (next.phase === 'insurance') {
+    // Card counters at the table take insurance when the count is high.
+    const take = shouldTakeInsurance(currentTrueCount(next));
+    for (const o of table.seats.seats) if (isNpc(o) && o.style === 'counter') table.bubbles[o.id] = take ? 'Takes insurance' : 'No insurance';
+  }
+  afterChange(next);
 }
 
 function nextHand() {
   table.feedback = null;
   table.quiz = null;
   settleTable();
+  table.bubbles = {};
+  table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
+  applySeating();
+  const between = betweenRounds(table.seats, settings.baseBet, settings.otherPlayers);
+  table.seats = between.table;
+  if (between.events.length) table.events = [...between.events, ...table.events].slice(0, 3);
   table.game = { ...table.game, phase: 'betting', hands: [], dealer: [] };
   table.shown = table.game;
   table.roundsSinceAd++;
@@ -984,6 +1142,11 @@ function renderSettings() {
         ${toggle('useDeviations', 'Count-based advice', 'Coach uses Hi-Lo index plays and insurance at +3')}
         ${toggle('soundEffects', 'Sound effects', 'Card, chip and win/lose sounds')}
         ${toggle('bigEffects', 'Big effects', 'Screen shake, chip bursts and score pop-ups')}
+      </div>
+      <h2>The table</h2>
+      <div class="panel">
+        <span class="lbl">Hands you play</span>${seg('hands', [['1 hand', 1], ['2 hands', 2]], settings.yourHands)}
+        ${toggle('otherPlayers', 'Other players', 'Players sit down and leave like a real casino table. Their cards count too.')}
         <span class="lbl">Betting unit</span>${seg('unit', [['$5', 5], ['$10', 10], ['$25', 25]], settings.baseBet)}
       </div>
       <h2>Table rules</h2>
@@ -1006,15 +1169,21 @@ function renderSettings() {
       <h2>About</h2>
       <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
 
-    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'bigEffects'] as const).forEach((id) =>
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'bigEffects', 'otherPlayers'] as const).forEach((id) =>
       on(`#${id}`, 'change', (el) => {
         updateSettings({ [id]: (el as HTMLInputElement).checked });
         if (id === 'showCount') table.countVisible = settings.showCount;
+        if (id === 'otherPlayers') applySeating();
       }),
     );
     (['dealerHitsSoft17', 'doubleAfterSplit', 'lateSurrender'] as const).forEach((id) =>
       on(`#rule-${id}`, 'change', (el) => setRules({ [id]: (el as HTMLInputElement).checked })),
     );
+    on('#hands button', 'click', (el) => {
+      updateSettings({ yourHands: Number(el.dataset.v) });
+      applySeating();
+      draw();
+    });
     on('#unit button', 'click', (el) => {
       updateSettings({ baseBet: Number(el.dataset.v) });
       table.bet = settings.baseBet;
