@@ -26,6 +26,8 @@ export interface Settings {
   useDeviations: boolean;
   /** Card, chip and result sound effects. */
   soundEffects: boolean;
+  /** Screen shake, chip bursts and pop-ups. */
+  bigEffects: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -38,6 +40,7 @@ const DEFAULT_SETTINGS: Settings = {
   countQuizzes: false,
   useDeviations: false,
   soundEffects: true,
+  bigEffects: true,
   bankroll: 1000,
   baseBet: 10,
 };

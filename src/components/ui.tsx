@@ -47,7 +47,7 @@ export function Button({
         styles[variant],
         highlighted && styles.highlighted,
         disabled && styles.disabled,
-        pressed && { opacity: 0.75 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.94 }] },
         style,
       ]}
     >

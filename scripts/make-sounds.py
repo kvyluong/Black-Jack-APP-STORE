@@ -108,6 +108,38 @@ def shuffle():
     return mix(s, noise_burst(0.12, 0.03, lowpass=0.25), offset=0.55, gain=0.8)
 
 
+def bust():
+    """A heavy thud: a falling low sine plus a dull noise hit."""
+    s, n = [], int(RATE * 0.45)
+    for i in range(n):
+        t = i / RATE
+        f = 140 * math.exp(-t * 4) + 45
+        s.append(math.sin(2 * math.pi * f * t) * math.exp(-t / 0.12) * 0.9)
+    return mix(s, noise_burst(0.15, 0.03, lowpass=0.12), gain=0.9)
+
+
+def correct():
+    """A short bright chime. The game raises its pitch as a streak grows."""
+    s = []
+    mix(s, bell(1046.5, 0.35, 0.09), gain=0.35)
+    mix(s, bell(1567.98, 0.3, 0.07), offset=0.045, gain=0.25)
+    return s
+
+
+def wrong():
+    s = []
+    buzz = ((1, 1.0), (3, 0.3), (5, 0.15))
+    mix(s, tone(196.0, 0.16, 0.08, harmonics=buzz), gain=0.3)
+    mix(s, tone(174.6, 0.22, 0.1, harmonics=buzz), offset=0.11, gain=0.3)
+    return s
+
+
+def tick():
+    """A tiny coin click for the bankroll counting up."""
+    s = tone(2637.0, 0.06, 0.012, harmonics=((1, 1.0), (2.4, 0.4)))
+    return mix(s, noise_burst(0.01, 0.002, lowpass=0.9), gain=0.3)
+
+
 def write(name, samples):
     peak = max(1e-9, max(abs(x) for x in samples))
     scale = 0.85 / peak if peak > 0.85 else 1.0
@@ -127,6 +159,7 @@ def write(name, samples):
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     for name, fn in [("card", card), ("flip", flip), ("chips", chips), ("win", win),
-                     ("blackjack", blackjack), ("lose", lose), ("push", push), ("shuffle", shuffle)]:
+                     ("blackjack", blackjack), ("lose", lose), ("push", push), ("shuffle", shuffle),
+                     ("bust", bust), ("correct", correct), ("wrong", wrong), ("tick", tick)]:
         write(name, fn())
         print(f"wrote assets/sounds/{name}.wav")

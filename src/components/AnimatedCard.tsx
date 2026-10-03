@@ -20,19 +20,32 @@ interface Props {
 export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
   const deal = useRef(new Animated.Value(instant ? 1 : 0)).current;
   const flip = useRef(new Animated.Value(1)).current;
+  const sway = useRef(new Animated.Value(0)).current;
   const [showBack, setShowBack] = useState(faceDown);
 
   useEffect(() => {
     if (instant) return;
     const anim = Animated.timing(deal, {
       toValue: 1,
-      duration: CARD_ANIM_MS,
+      duration: CARD_ANIM_MS + 80,
       delay: dealDelay,
-      easing: Easing.out(Easing.cubic),
+      // Overshoot slightly so the card lands with a little bounce.
+      easing: Easing.out(Easing.back(1.6)),
       useNativeDriver: true,
     });
-    anim.start();
-    return () => anim.stop();
+    // After landing, the card idles with a slow, slightly random sway.
+    const period = 1600 + Math.random() * 900;
+    const idle = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sway, { toValue: 1, duration: period, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(sway, { toValue: -1, duration: period, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    anim.start(({ finished }) => finished && idle.start());
+    return () => {
+      anim.stop();
+      idle.stop();
+    };
     // Runs once per card: later prop changes must not re-deal it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -67,6 +80,8 @@ export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, insta
       { translateX: deal.interpolate({ inputRange: [0, 1], outputRange: [140, 0] }) },
       { translateY: deal.interpolate({ inputRange: [0, 1], outputRange: [-220, 0] }) },
       { rotate: deal.interpolate({ inputRange: [0, 1], outputRange: ['-25deg', '0deg'] }) },
+      { rotate: sway.interpolate({ inputRange: [-1, 1], outputRange: ['-1.5deg', '1.5deg'] }) },
+      { translateY: sway.interpolate({ inputRange: [-1, 1], outputRange: [1.5, -1.5] }) },
       { scaleX: flip },
     ],
   };

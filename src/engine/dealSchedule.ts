@@ -1,4 +1,5 @@
 import { GameState } from './game';
+import { FanfareTier, roundFanfare } from './juice';
 
 /** Milliseconds between cards being dealt. */
 export const DEAL_STEP_MS = 280;
@@ -6,7 +7,29 @@ export const DEAL_STEP_MS = 280;
 export const CARD_ANIM_MS = 260;
 const SHUFFLE_MS = 700;
 
-export type SoundName = 'card' | 'flip' | 'chips' | 'win' | 'blackjack' | 'lose' | 'push' | 'shuffle';
+export type SoundName =
+  | 'card'
+  | 'flip'
+  | 'chips'
+  | 'win'
+  | 'blackjack'
+  | 'lose'
+  | 'push'
+  | 'shuffle'
+  | 'bust'
+  | 'correct'
+  | 'wrong'
+  | 'tick';
+
+const RESULT_SOUND: Record<FanfareTier, SoundName> = {
+  blackjack: 'blackjack',
+  bigWin: 'win',
+  win: 'win',
+  push: 'push',
+  surrender: 'lose',
+  bust: 'bust',
+  lose: 'lose',
+};
 
 /** Where a card sits: the dealer's hand, or a player hand by index. */
 export type Seat = 'dealer' | number;
@@ -87,17 +110,8 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
 
   const doneAt = cards.length || holeFlipAt !== null ? Math.max(0, t - step) + anim : 0;
 
-  if (next.phase === 'roundOver' && prev.phase !== 'roundOver') {
-    const outcomes = next.hands.map((h) => h.outcome);
-    const name: SoundName = outcomes.includes('blackjack')
-      ? 'blackjack'
-      : next.lastNet > 0
-        ? 'win'
-        : next.lastNet < 0
-          ? 'lose'
-          : 'push';
-    sounds.push({ name, at: doneAt });
-  }
+  const fanfare = next.phase === 'roundOver' && prev.phase !== 'roundOver' ? roundFanfare(next) : null;
+  if (fanfare) sounds.push({ name: RESULT_SOUND[fanfare.tier], at: doneAt });
 
   return { cards, holeFlipAt, sounds, doneAt };
 }

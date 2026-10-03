@@ -1,16 +1,33 @@
 // Plays the same synthesized sounds as the mobile app (assets/sounds), embedded in the page.
 import blackjack from '../assets/sounds/blackjack.wav';
+import bust from '../assets/sounds/bust.wav';
 import card from '../assets/sounds/card.wav';
 import chips from '../assets/sounds/chips.wav';
+import correct from '../assets/sounds/correct.wav';
 import flip from '../assets/sounds/flip.wav';
 import lose from '../assets/sounds/lose.wav';
 import push from '../assets/sounds/push.wav';
 import shuffle from '../assets/sounds/shuffle.wav';
+import tick from '../assets/sounds/tick.wav';
 import win from '../assets/sounds/win.wav';
+import wrong from '../assets/sounds/wrong.wav';
 import type { SoundName } from '../src/engine/dealSchedule';
 
-const BYTES: Record<SoundName, Uint8Array> = { card, flip, chips, win, blackjack, lose, push, shuffle };
-const VOLUME: Partial<Record<SoundName, number>> = { card: 0.8, flip: 0.8, shuffle: 0.7 };
+const BYTES: Record<SoundName, Uint8Array> = {
+  card,
+  flip,
+  chips,
+  win,
+  blackjack,
+  lose,
+  push,
+  shuffle,
+  bust,
+  correct,
+  wrong,
+  tick,
+};
+const VOLUME: Partial<Record<SoundName, number>> = { card: 0.8, flip: 0.8, shuffle: 0.7, tick: 0.6 };
 
 let ctx: AudioContext | null = null;
 const buffers: Partial<Record<SoundName, AudioBuffer>> = {};
@@ -32,13 +49,15 @@ export function unlockAudio() {
   }
 }
 
-export function playSound(name: SoundName) {
+/** Plays a sound; `rate` above 1 plays it faster and higher (used for streaks). */
+export function playSound(name: SoundName, rate = 1) {
   const buffer = buffers[name];
   if (!ctx || !buffer) return;
   const src = ctx.createBufferSource();
   const gain = ctx.createGain();
   gain.gain.value = VOLUME[name] ?? 1;
   src.buffer = buffer;
+  src.playbackRate.value = rate;
   src.connect(gain).connect(ctx.destination);
   src.start();
 }

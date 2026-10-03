@@ -61,6 +61,12 @@ export default function SettingsScreen() {
           value={settings.soundEffects}
           onChange={(v) => updateSettings({ soundEffects: v })}
         />
+        <ToggleRow
+          label="Big effects"
+          hint="Screen shake, chip bursts and score pop-ups"
+          value={settings.bigEffects}
+          onChange={(v) => updateSettings({ bigEffects: v })}
+        />
         <Text style={{ color: colors.text, fontWeight: '600' }}>Betting unit</Text>
         <Segmented
           options={[5, 10, 25].map((v) => ({ label: `$${v}`, value: v }))}

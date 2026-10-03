@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../../audio/sounds';
 import { HandView } from '../../components/HandView';
+import { StreakBadge } from '../../components/juice';
 import { PlayingCard } from '../../components/PlayingCard';
 import { Button, Panel, Screen } from '../../components/ui';
 import { strategyQuestion } from '../../engine/drills';
+import { streakPitch } from '../../engine/juice';
 import { ACTION_LABEL, Action, recommend } from '../../engine/strategy';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
@@ -31,6 +34,7 @@ export default function StrategyDrill() {
     setPicked(a);
     const ok = a === advice.action;
     const streak = ok ? score.streak + 1 : 0;
+    if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(streak) : 1);
     setScore({ right: score.right + (ok ? 1 : 0), total: score.total + 1, streak });
     updateStats((s) => ({
       ...s,
@@ -57,6 +61,8 @@ export default function StrategyDrill() {
           Streak {score.streak} · Best {Math.max(stats.bestStrategyStreak, score.streak)}
         </Text>
       </View>
+
+      <StreakBadge streak={score.streak} />
 
       <View style={styles.table}>
         <Text style={styles.label}>Dealer shows</Text>

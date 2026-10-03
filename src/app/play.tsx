@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { useInterstitial } from '../ads/useInterstitial';
 import { playSound, preloadSounds } from '../audio/sounds';
 import { HandView } from '../components/HandView';
+import { FanfareOverlay, StreakBadge, useCountUp, useShake } from '../components/juice';
 import { Button, Panel, Screen } from '../components/ui';
 import { useReduceMotion } from '../components/useReduceMotion';
 import { decksRemaining, flooredTrueCount, shouldTakeInsurance, suggestedBetUnits } from '../engine/counting';
 import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../engine/dealSchedule';
+import { Fanfare, roundFanfare, streakPitch } from '../engine/juice';
 import {
   GameState,
   Outcome,
@@ -44,7 +46,9 @@ export default function Play() {
   const [countVisible, setCountVisible] = useState(showCount);
   const [quiz, setQuiz] = useState<{ guess: number; revealed: boolean } | null>(null);
   const roundBreak = useInterstitial();
-  const streak = useRef(0);
+  const [streak, setStreak] = useState(0);
+  const [fanfare, setFanfare] = useState<(Fanfare & { key: number }) | null>(null);
+  const shake = useShake();
   const reduceMotion = useReduceMotion();
   // What changed in the last move, so cards deal in one by one; controls wait until it's done.
   const [schedule, setSchedule] = useState<DealSchedule | null>(null);
@@ -61,23 +65,27 @@ export default function Play() {
   const commit = (next: GameState) => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+    setFanfare(null);
     const s = dealSchedule(game, next, reduceMotion ? 0 : DEAL_STEP_MS);
     if (settings.soundEffects) {
       for (const sound of s.sounds) timers.current.push(setTimeout(() => playSound(sound.name), sound.at));
     }
     setSchedule(s);
     setGame(next);
-    if (s.doneAt > 0) {
-      setSettled(false);
-      timers.current.push(
-        setTimeout(() => {
-          setSettled(true);
-          setCountSource(next);
-        }, s.doneAt),
-      );
-    } else {
+    const land = () => {
       setSettled(true);
       setCountSource(next);
+      const f = roundFanfare(next);
+      if (f) {
+        setFanfare({ ...f, key: Date.now() });
+        if (settings.bigEffects && !reduceMotion) shake.shake(f.shake);
+      }
+    };
+    if (s.doneAt > 0) {
+      setSettled(false);
+      timers.current.push(setTimeout(land, s.doneAt));
+    } else {
+      land();
     }
   };
 
@@ -112,10 +120,13 @@ export default function Play() {
   };
 
   const grade = (ok: boolean, text: string) => {
-    streak.current = ok ? streak.current + 1 : 0;
+    const nextStreak = ok ? streak + 1 : 0;
+    setStreak(nextStreak);
+    // The chime climbs a semitone with every correct play in a row.
+    if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(nextStreak) : 1);
     updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
     if (!ok && correctMistakes) setFeedback({ ok, text });
-    else if (ok) setFeedback({ ok, text: streak.current >= 5 ? `Correct! ${streak.current} in a row 🔥` : 'Correct!' });
+    else if (ok) setFeedback({ ok, text: nextStreak >= 5 ? `Correct! ${nextStreak} in a row 🔥` : 'Correct!' });
   };
 
   const onAction = (action: Action) => {
@@ -154,6 +165,7 @@ export default function Play() {
     setFeedback(null);
     setQuiz(null);
     setSchedule(null);
+    setFanfare(null);
     setGame((g) => ({ ...g, phase: 'betting', hands: [], dealer: [] }));
   };
 
@@ -163,6 +175,13 @@ export default function Play() {
     updateSettings({ bankroll: STARTING_BANKROLL });
   };
 
+  // Winnings count up into the bankroll with rising ticks.
+  const shownBankroll = useCountUp(
+    countSource.bankroll,
+    (step) => settings.soundEffects && playSound('tick', 1 + step * 0.06),
+    !reduceMotion,
+  );
+
   const unit = settings.baseBet;
   const suggestedUnits = suggestedBetUnits(flooredTrueCount(game.runningCount, game.shoe.length));
   const hideHole = !game.holeRevealed && game.dealer.length > 0;
@@ -171,7 +190,7 @@ export default function Play() {
     <Screen>
       {/* Status bar: bankroll and count */}
       <View style={styles.topBar}>
-        <Text style={styles.bankroll}>Bankroll ${countSource.bankroll.toFixed(countSource.bankroll % 1 ? 2 : 0)}</Text>
+        <Text style={styles.bankroll}>Bankroll ${shownBankroll.toFixed(shownBankroll % 1 ? 2 : 0)}</Text>
         {countVisible ? (
           <Text style={styles.count} onPress={() => setCountVisible(false)} accessibilityRole="button">
             RC {countSource.runningCount >= 0 ? '+' : ''}
@@ -185,39 +204,44 @@ export default function Play() {
       </View>
       {game.justShuffled && game.phase !== 'betting' && <Text style={styles.shuffle}>New shoe shuffled · count resets to 0</Text>}
 
-      {/* Dealer */}
-      <View style={styles.area}>
-        {game.dealer.length > 0 ? (
-          <HandView
-            cards={game.dealer}
-            hideHole={hideHole}
-            label="Dealer"
-            dealDelay={(i) => cardDelay(schedule, 'dealer', i)}
-            flipDelay={schedule?.holeFlipAt ?? 0}
-            settling={!settled && game.holeRevealed}
-            instant={reduceMotion}
-          />
-        ) : (
-          <Text style={styles.placeholder}>{rules.decks} deck{rules.decks > 1 ? 's' : ''} · Dealer {rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays {rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</Text>
-        )}
-      </View>
+      <StreakBadge streak={streak} />
 
-      {/* Player */}
-      <View style={[styles.area, styles.playerRow]}>
-        {game.hands.map((h, i) => (
-          <HandView
-            key={i}
-            cards={h.cards}
-            size={game.hands.length > 2 ? 'sm' : 'md'}
-            active={game.phase === 'playing' && i === game.active && game.hands.length > 1}
-            label={game.hands.length > 1 ? `Hand ${i + 1}` : 'You'}
-            result={h.outcome ? `${OUTCOME_LABEL[h.outcome]}` : `$${h.bet}`}
-            dealDelay={(c) => cardDelay(schedule, i, c)}
-            settling={!settled}
-            instant={reduceMotion}
-          />
-        ))}
-      </View>
+      <Animated.View style={shake.style}>
+        {/* Dealer */}
+        <View style={styles.area}>
+          {game.dealer.length > 0 ? (
+            <HandView
+              cards={game.dealer}
+              hideHole={hideHole}
+              label="Dealer"
+              dealDelay={(i) => cardDelay(schedule, 'dealer', i)}
+              flipDelay={schedule?.holeFlipAt ?? 0}
+              settling={!settled && game.holeRevealed}
+              instant={reduceMotion}
+            />
+          ) : (
+            <Text style={styles.placeholder}>{rules.decks} deck{rules.decks > 1 ? 's' : ''} · Dealer {rules.dealerHitsSoft17 ? 'hits soft 17' : 'stands on all 17s'} · Blackjack pays {rules.blackjackPayout === 1.5 ? '3:2' : '6:5'}</Text>
+          )}
+        </View>
+
+        {/* Player */}
+        <View style={[styles.area, styles.playerRow]}>
+          {game.hands.map((h, i) => (
+            <HandView
+              key={i}
+              cards={h.cards}
+              size={game.hands.length > 2 ? 'sm' : 'md'}
+              active={game.phase === 'playing' && i === game.active && game.hands.length > 1}
+              label={game.hands.length > 1 ? `Hand ${i + 1}` : 'You'}
+              result={h.outcome ? `${OUTCOME_LABEL[h.outcome]}` : `$${h.bet}`}
+              dealDelay={(c) => cardDelay(schedule, i, c)}
+              settling={!settled}
+              instant={reduceMotion}
+            />
+          ))}
+        </View>
+        <FanfareOverlay fanfare={fanfare} effects={settings.bigEffects && !reduceMotion} />
+      </Animated.View>
 
       {feedback && (
         <Panel style={{ borderLeftWidth: 4, borderLeftColor: feedback.ok ? colors.good : colors.bad }}>

@@ -26,6 +26,8 @@ import {
 import { describeHand } from '../src/engine/hand';
 import { DEFAULT_RULES, Rules } from '../src/engine/rules';
 import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
+import { countUpTicks, roundFanfare, streakPitch } from '../src/engine/juice';
+import { clearFanfare, enableCardTilt, playFanfare } from './fx';
 import { playSound, unlockAudio } from './sound';
 
 // ---------- Saved settings and progress ----------
@@ -47,6 +49,7 @@ interface Settings {
   countQuizzes: boolean;
   useDeviations: boolean;
   soundEffects: boolean;
+  bigEffects: boolean;
   bankroll: number;
   baseBet: number;
 }
@@ -60,6 +63,7 @@ const DEFAULT_SETTINGS: Settings = {
   countQuizzes: false,
   useDeviations: false,
   soundEffects: true,
+  bigEffects: true,
   bankroll: STARTING_BANKROLL,
   baseBet: 10,
 };
@@ -360,14 +364,22 @@ const table = {
   settled: true,
   shown: null as GameState | null,
   timers: [] as ReturnType<typeof setTimeout>[],
+  // Bankroll display while winnings count up into it.
+  bankrollShown: null as number | null,
+  countTimer: null as ReturnType<typeof setInterval> | null,
+  badgeShown: 0,
 };
 
-const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const reducedMotionPref = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /** Ends any running deal animation immediately. */
 function settleTable() {
   table.timers.forEach(clearTimeout);
   table.timers = [];
+  if (table.countTimer) clearInterval(table.countTimer);
+  table.countTimer = null;
+  table.bankrollShown = null;
+  clearFanfare();
   table.settled = true;
   table.schedule = null;
   table.shown = table.game;
@@ -455,7 +467,8 @@ function renderPlay() {
   }
 
   app.innerHTML = `
-    <div class="topbar"><span class="bankroll">Bankroll ${money(shown.bankroll)}</span>${countHtml}</div>
+    <div class="topbar"><span class="bankroll" id="bankroll">Bankroll ${money(table.bankrollShown ?? shown.bankroll)}</span>${countHtml}</div>
+    ${streakBadge()}
     ${g.justShuffled && g.phase !== 'betting' ? '<p class="shuffle">New shoe shuffled. The count resets to 0.</p>' : ''}
     <div class="felt">
       <div class="area">${
@@ -533,8 +546,51 @@ function renderPlay() {
   cleanup = () => document.removeEventListener('keydown', keys);
 }
 
+/** "STREAK ×n" badge; it pops only when the streak has just grown. */
+function streakBadge(streak = table.streak) {
+  if (streak < 2) {
+    table.badgeShown = streak;
+    return '';
+  }
+  const pop = streak > table.badgeShown ? 'pop' : '';
+  table.badgeShown = streak;
+  return `<div class="streak ${streak >= 10 ? 'hot' : ''} ${pop}">STREAK ×${streak}</div>`;
+}
+
+/** Correct/wrong chime; the correct one climbs a semitone per streak step. */
+function gradeSound(ok: boolean, streak: number) {
+  unlockAudio();
+  if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(streak) : 1);
+}
+
+/** Counts the bankroll display up to `target` with rising ticks. */
+function countUpBankroll(from: number, target: number) {
+  const ticks = reducedMotionPref() ? 0 : countUpTicks(target - from);
+  if (!ticks) return;
+  let i = 0;
+  table.bankrollShown = from;
+  table.countTimer = setInterval(() => {
+    i++;
+    table.bankrollShown = i >= ticks ? target : Math.round(from + ((target - from) * i) / ticks);
+    const el = document.getElementById('bankroll');
+    if (el) {
+      el.textContent = `Bankroll ${money(table.bankrollShown)}`;
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+    if (settings.soundEffects) playSound('tick', 1 + i * 0.06);
+    if (i >= ticks) {
+      clearInterval(table.countTimer!);
+      table.countTimer = null;
+      table.bankrollShown = null;
+    }
+  }, 65);
+}
+
 function grade(ok: boolean, explanation: string) {
   table.streak = ok ? table.streak + 1 : 0;
+  gradeSound(ok, table.streak);
   updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
   if (!ok) table.feedback = settings.correctMistakes ? { ok, text: explanation } : null;
   else table.feedback = { ok, text: table.streak >= 5 ? `Correct! ${table.streak} in a row.` : 'Correct!' };
@@ -543,23 +599,28 @@ function grade(ok: boolean, explanation: string) {
 function afterChange(next: GameState) {
   unlockAudio();
   settleTable();
-  const s = dealSchedule(table.game, next, reduceMotion() ? 0 : DEAL_STEP_MS);
+  const s = dealSchedule(table.game, next, reducedMotionPref() ? 0 : DEAL_STEP_MS);
   if (settings.soundEffects) {
     for (const sound of s.sounds) table.timers.push(setTimeout(() => playSound(sound.name), sound.at));
   }
+  const before = (table.shown ?? table.game).bankroll;
   table.game = next;
   table.schedule = s;
+  const land = (rerender: boolean) => {
+    table.settled = true;
+    table.shown = next;
+    countUpBankroll(before, next.bankroll);
+    if (rerender) renderPlay();
+    const f = roundFanfare(next);
+    if (f) playFanfare(f, app.querySelector('.felt'), settings.bigEffects);
+  };
   if (s.doneAt > 0) {
     table.settled = false;
-    table.timers.push(
-      setTimeout(() => {
-        table.settled = true;
-        table.shown = next;
-        renderPlay(); // leaving the table clears these timers (see navigate)
-      }, s.doneAt),
-    );
+    // Leaving the table clears these timers (see navigate).
+    table.timers.push(setTimeout(() => land(true), s.doneAt));
   } else {
     table.shown = next;
+    queueMicrotask(() => land(false));
   }
   if (next.phase === 'roundOver') {
     updateSettings({ bankroll: next.bankroll });
@@ -652,6 +713,7 @@ function renderStrategyDrill() {
     const ok = picked === advice.action;
     app.innerHTML = `
       <div class="score-row"><span>${score.right}/${score.total} correct</span><span>Streak ${score.streak} · Best ${Math.max(stats.bestStrategyStreak, score.streak)}</span></div>
+      ${streakBadge(score.streak)}
       <div class="felt drill">
         <p class="muted">Dealer shows</p>${cardHtml(q.dealerUp)}
         ${handHtml(q.cards, { label: 'You' })}
@@ -678,6 +740,7 @@ function renderStrategyDrill() {
       score.total++;
       score.right += correct ? 1 : 0;
       score.streak = correct ? score.streak + 1 : 0;
+      gradeSound(correct, score.streak);
       updateStats((s) => ({
         ...s,
         decisions: s.decisions + 1,
@@ -920,6 +983,7 @@ function renderSettings() {
         ${toggle('countQuizzes', 'Count pop quizzes', 'Sometimes ask for the running count between hands')}
         ${toggle('useDeviations', 'Count-based advice', 'Coach uses Hi-Lo index plays and insurance at +3')}
         ${toggle('soundEffects', 'Sound effects', 'Card, chip and win/lose sounds')}
+        ${toggle('bigEffects', 'Big effects', 'Screen shake, chip bursts and score pop-ups')}
         <span class="lbl">Betting unit</span>${seg('unit', [['$5', 5], ['$10', 10], ['$25', 25]], settings.baseBet)}
       </div>
       <h2>Table rules</h2>
@@ -942,7 +1006,7 @@ function renderSettings() {
       <h2>About</h2>
       <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
 
-    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects'] as const).forEach((id) =>
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'bigEffects'] as const).forEach((id) =>
       on(`#${id}`, 'change', (el) => {
         updateSettings({ [id]: (el as HTMLInputElement).checked });
         if (id === 'showCount') table.countVisible = settings.showCount;
@@ -976,4 +1040,5 @@ function setRules(patch: Partial<Rules>) {
   resetTable();
 }
 
+enableCardTilt(app);
 navigate();
