@@ -4,6 +4,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { useInterstitial } from '../ads/useInterstitial';
 import { playSound, preloadSounds } from '../audio/sounds';
+import { BonusAdButton } from '../components/BonusAdButton';
 import { ChipButton, ChipStack, LevelBar } from '../components/chips';
 import { HandView } from '../components/HandView';
 import { FanfareOverlay, StreakBadge, useCountUp, useShake } from '../components/juice';
@@ -157,6 +158,15 @@ export default function Play() {
   }, [settings.yourHands, settings.otherPlayers]);
 
   useEffect(() => setCountVisible(showCount), [showCount]);
+
+  // Chips can change off this screen (a bonus claimed in the lobby, a refill, a reset).
+  // Between rounds, pick up the saved balance so a later round can't overwrite it.
+  useEffect(() => {
+    if (!ready || game.phase !== 'betting' || game.bankroll === settings.bankroll) return;
+    setGame((g) => ({ ...g, bankroll: settings.bankroll }));
+    setCountSource((g) => ({ ...g, bankroll: settings.bankroll }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, settings.bankroll, game.phase]);
 
   const activeHand = game.phase === 'playing' ? game.hands[game.active] : undefined;
   const yourTurn = isYours(activeHand);
@@ -533,6 +543,15 @@ export default function Play() {
           ) : (
             <Button title={`Lower bet to $${formatChips(unit)}`} onPress={() => setBet(unit)} />
           )}
+          <BonusAdButton
+            onGranted={(amount) => {
+              // Bonus chips land in your stack with the usual count-up and a chip burst.
+              setGame((g) => ({ ...g, bankroll: g.bankroll + amount }));
+              setCountSource((g) => ({ ...g, bankroll: g.bankroll + amount }));
+              setFanfare({ tier: 'bigWin', label: `+$${formatChips(amount)} BONUS`, net: amount, shake: 0, particles: 28, key: Date.now() });
+              if (settings.soundEffects) playSound('chips');
+            }}
+          />
           <Text style={styles.lobby} onPress={() => router.push('/tables')} accessibilityRole="link">
             Change table
           </Text>

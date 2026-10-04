@@ -57,11 +57,13 @@
       "adUnits": {
         "ios": {
           "banner": "REPLACE_WITH_IOS_BANNER_UNIT_ID",
-          "interstitial": "REPLACE_WITH_IOS_INTERSTITIAL_UNIT_ID"
+          "interstitial": "REPLACE_WITH_IOS_INTERSTITIAL_UNIT_ID",
+          "rewarded": "REPLACE_WITH_IOS_REWARDED_UNIT_ID"
         },
         "android": {
           "banner": "REPLACE_WITH_ANDROID_BANNER_UNIT_ID",
-          "interstitial": "REPLACE_WITH_ANDROID_INTERSTITIAL_UNIT_ID"
+          "interstitial": "REPLACE_WITH_ANDROID_INTERSTITIAL_UNIT_ID",
+          "rewarded": "REPLACE_WITH_ANDROID_REWARDED_UNIT_ID"
         }
       }
     }

@@ -8,6 +8,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
 - **Lessons**: 10 short lessons from the rules to true count and index plays, each ending in a quiz.
 - **Chip progression**: you start with 1,000 chips, and your stack carries over between sessions. Five tables with rising limits (Main Floor $5–$100, Downtown $25–$500, The Strip $100–$2,000, High Limit Room $500–$10,000, Private Salon $2,500–$50,000) unlock permanently the first time your chips reach 2.5K, 10K, 50K and 250K. Bets are built from a casino chip tray. XP from hands played and correct decisions raises your level (Rookie → Regular → Card Sharp → Counter → Advantage Player → Legend). If you can't cover a table's minimum you're offered a cheaper table, and if you go broke you get a free refill to 1,000. Chips can't be bought or cashed out, which keeps the app clear of the stores' social-casino rules.
+- **Bonus chips from rewarded ads**: an optional "Watch an ad: +500 chips" button at the table and in the Casino Floor lobby. Chips are granted only when the ad reports it was watched to the end, up to 5 times a day (resets at local midnight). The bonus is 20 minimum bets at your best unlocked table (500 at the start, up to 50,000 at the Private Salon). In development builds without the ad SDK (Expo Go, web) a labeled test ad stands in; the HTML build shows a 5-second preview.
 - **A real casino table**: seven seats with computer players who sit down and leave between rounds (broke, bored, or up and cashing out). Before each deal you choose to play one hand or two, right in the betting panel (also in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards (watch their bets rise with the count), plays hunches, never busts, copies the dealer, or high roller. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
 - **Practice table**: a full blackjack game (splits, doubles, surrender, insurance, multi-deck shoe with penetration) with a coach that:
   - highlights the best play before you act (optional)
@@ -74,7 +75,7 @@ Development builds always use Google's test ad units.
 1. **Pick your app ID.** Replace `com.REPLACE_ME.blackjackcoach` in `app.json` (`ios.bundleIdentifier` and `android.package`).
 2. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
    - Put the **app IDs** in `app.json` under the `react-native-google-mobile-ads` plugin (`androidAppId`, `iosAppId`). They are currently Google's sample IDs.
-   - Put the **ad unit IDs** in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
+   - Put the **ad unit IDs** (banner, interstitial and rewarded for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
    - In AdMob, set up a GDPR consent message (Privacy & messaging) and, for iOS, an IDFA explainer message so the ATT prompt shows.
    - Publish an `app-ads.txt` on your developer website.
 3. **Art.** Replace the placeholder icons and splash image in `assets/`.

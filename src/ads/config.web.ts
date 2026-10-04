@@ -7,7 +7,9 @@ export function getAds(): AdsModule | null {
   return null;
 }
 
-export function adUnitId(_placement: 'banner' | 'interstitial'): string | null {
+export type Placement = 'banner' | 'interstitial' | 'rewarded';
+
+export function adUnitId(_placement: Placement): string | null {
   return null;
 }
 

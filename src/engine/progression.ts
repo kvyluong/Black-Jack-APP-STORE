@@ -188,3 +188,40 @@ export function levelInfo(xp: number): LevelInfo {
 export function roundXp(yourHands: number, correctDecisions: number): number {
   return yourHands * XP_PER_HAND + correctDecisions * XP_PER_CORRECT;
 }
+
+// ---------- Bonus chips from rewarded ads ----------
+
+/** Rewarded ads a player can watch per day. */
+export const DAILY_BONUS_ADS = 5;
+
+/**
+ * Chips for one rewarded ad: 20 minimum bets at your best unlocked table
+ * (never less than 500), so the bonus stays meaningful as you move up.
+ */
+export function bonusChips(peakChips: number): number {
+  const best = [...TABLES].reverse().find((t) => isUnlocked(t, peakChips)) ?? TABLES[0];
+  return Math.max(500, best.minBet * 20);
+}
+
+export interface BonusClaims {
+  /** Local calendar day, YYYY-MM-DD. */
+  day: string;
+  count: number;
+}
+
+export function localDay(now: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+/** Bonus ads left today; the count resets at local midnight. */
+export function bonusAdsLeft(claims: BonusClaims | undefined, now: Date): number {
+  if (!claims || claims.day !== localDay(now)) return DAILY_BONUS_ADS;
+  return Math.max(0, DAILY_BONUS_ADS - claims.count);
+}
+
+/** Records one watched bonus ad. */
+export function recordBonusClaim(claims: BonusClaims | undefined, now: Date): BonusClaims {
+  const day = localDay(now);
+  return { day, count: claims && claims.day === day ? claims.count + 1 : 1 };
+}

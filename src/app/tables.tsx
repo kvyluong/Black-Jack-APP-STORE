@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BonusAdButton } from '../components/BonusAdButton';
 import { LevelBar } from '../components/chips';
 import { P, Panel, Screen } from '../components/ui';
 import { TABLES, canSit, formatChips, isUnlocked } from '../engine/progression';
@@ -24,6 +25,7 @@ export default function Tables() {
         <Text style={styles.small}>
           Best ever: ${formatChips(peak)} · Biggest win: ${formatChips(stats.biggestWin)}
         </Text>
+        <BonusAdButton onGranted={() => {}} />
       </Panel>
 
       <P muted>Grow your chips to unlock bigger tables. Chips are play money and can't be bought.</P>

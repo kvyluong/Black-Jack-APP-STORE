@@ -1,5 +1,10 @@
 import {
+  BonusClaims,
+  DAILY_BONUS_ADS,
   STARTING_CHIPS,
+  bonusAdsLeft,
+  bonusChips,
+  recordBonusClaim,
   TABLES,
   bestAffordableTable,
   canSit,
@@ -65,5 +70,25 @@ describe('levels', () => {
 
   it('awards XP for hands and correct calls', () => {
     expect(roundXp(2, 3)).toBe(35);
+  });
+});
+
+describe('bonus chips from rewarded ads', () => {
+  const day1 = new Date(2026, 9, 4, 22, 0);
+  const day2 = new Date(2026, 9, 5, 0, 5);
+
+  it('scales the bonus with your best unlocked table', () => {
+    expect(bonusChips(1000)).toBe(500);
+    expect(bonusChips(12000)).toBe(2000); // The Strip: 20 x $100
+    expect(bonusChips(300000)).toBe(50000);
+  });
+
+  it('allows a few ads per day and resets at midnight', () => {
+    let claims: BonusClaims | undefined;
+    expect(bonusAdsLeft(claims, day1)).toBe(DAILY_BONUS_ADS);
+    for (let i = 0; i < DAILY_BONUS_ADS; i++) claims = recordBonusClaim(claims, day1);
+    expect(bonusAdsLeft(claims, day1)).toBe(0);
+    expect(bonusAdsLeft(claims, day2)).toBe(DAILY_BONUS_ADS);
+    expect(recordBonusClaim(claims, day2)).toEqual({ day: '2026-10-05', count: 1 });
   });
 });

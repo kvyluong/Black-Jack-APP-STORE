@@ -30,6 +30,10 @@ import { DEFAULT_RULES, Rules } from '../src/engine/rules';
 import { ACTION_LABEL, Action, Cell, formatTrueCount, hardCell, pairCell, recommend, softCell } from '../src/engine/strategy';
 import { countUpTicks, roundFanfare, streakPitch } from '../src/engine/juice';
 import {
+  BonusClaims,
+  bonusAdsLeft,
+  bonusChips,
+  recordBonusClaim,
   CHIP_COLORS,
   CasinoTable,
   STARTING_CHIPS,
@@ -78,6 +82,8 @@ interface Stats {
   peakChips: number;
   biggestWin: number;
   refills: number;
+  bonusClaims?: BonusClaims;
+  bonusChipsEarned: number;
 }
 
 interface Settings {
@@ -120,6 +126,7 @@ const DEFAULT_STATS: Stats = {
   peakChips: STARTING_CHIPS,
   biggestWin: 0,
   refills: 0,
+  bonusChipsEarned: 0,
 };
 const STORAGE_KEY = 'blackjack-coach/v1';
 
@@ -335,6 +342,7 @@ function renderTables() {
       <div class="chips-head"><b>$${formatChips(chips)}</b><span>chips</span></div>
       ${levelBarHtml()}
       <p class="muted small">Best ever: $${formatChips(peak)} · Biggest win: $${formatChips(stats.biggestWin)}</p>
+      ${bonusButtonHtml()}
     </div>
     <p class="muted">Grow your chips to unlock bigger tables. Chips are play money and can't be bought.</p>
     <div class="list">${TABLES.map((t) => {
@@ -356,6 +364,7 @@ function renderTables() {
         </span>${sit ? '<span class="chev" aria-hidden="true">›</span>' : ''}</button>`;
     }).join('')}</div>`;
   on('[data-table]', 'click', (el) => sitAt(el.dataset.table!));
+  on('#bonus-ad', 'click', () => watchBonusAd(() => renderTables()));
 }
 
 /** Walks to another table: new shoe, new players, bet set to its minimum. */
@@ -540,6 +549,11 @@ function resetTable() {
 
 function renderPlay() {
   cleanup?.();
+  // Chips can change off the table (a bonus claimed in the lobby, a reset): pick them up between rounds.
+  if (table.game.phase === 'betting' && table.settled && table.game.bankroll !== settings.bankroll && !table.countTimer) {
+    table.game = { ...table.game, bankroll: settings.bankroll };
+    table.shown = table.game;
+  }
   const g = table.game;
   const shown = table.shown ?? g;
   const animating = !table.settled;
@@ -628,6 +642,7 @@ function renderPlay() {
                 ? `<button class="btn primary" id="deal">${affordable < yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} <kbd>Enter</kbd></button>`
                 : `<button class="btn primary" id="lower-bet">Lower bet to $${formatChips(unit)}</button>`
       }
+      ${bonusButtonHtml()}
       <a class="center small" href="#tables">Change table</a>
     </div>`;
   }
@@ -728,6 +743,22 @@ function renderPlay() {
     renderPlay();
   });
   on('#move-table', 'click', (el) => sitAt(el.dataset.table!));
+  on('#bonus-ad', 'click', () =>
+    watchBonusAd((amount) => {
+      // Bonus chips land in your stack with the usual count-up and a chip burst.
+      const before = table.game.bankroll;
+      table.game = { ...table.game, bankroll: before + amount };
+      table.shown = table.game;
+      renderPlay();
+      countUpBankroll(before, table.game.bankroll);
+      if (settings.soundEffects) playSound('chips');
+      playFanfare(
+        { tier: 'bigWin', label: `+$${formatChips(amount)} BONUS`, net: amount, shake: 0, particles: 28 },
+        app.querySelector('.felt'),
+        settings.bigEffects,
+      );
+    }),
+  );
   on('[data-goto]', 'click', (el) => {
     if (table.game.phase === 'roundOver') nextHand();
     sitAt(el.dataset.goto!);
@@ -861,7 +892,7 @@ function countUpBankroll(from: number, target: number) {
     table.bankrollShown = i >= ticks ? target : Math.round(from + ((target - from) * i) / ticks);
     const el = document.getElementById('bankroll');
     if (el) {
-      el.textContent = `Bankroll ${money(table.bankrollShown)}`;
+      el.textContent = `Chips $${formatChips(table.bankrollShown)}`;
       el.classList.remove('bump');
       void el.offsetWidth;
       el.classList.add('bump');
@@ -1002,6 +1033,56 @@ function showAdPreview() {
   const overlay = document.getElementById('ad-overlay')!;
   overlay.hidden = false;
   (overlay.querySelector('button') as HTMLButtonElement).focus();
+}
+
+// ---------- Bonus chips from rewarded ads ----------
+
+/** "Watch an ad for bonus chips" button; a note once today's ads are used up. */
+function bonusButtonHtml() {
+  const left = bonusAdsLeft(stats.bonusClaims, new Date());
+  if (left === 0) return '<p class="muted center small">Bonus chips: come back tomorrow for more.</p>';
+  return `<button class="btn secondary" id="bonus-ad">▶ Watch an ad: +$${formatChips(bonusChips(stats.peakChips))} chips (${left} left today)</button>`;
+}
+
+const REWARD_SECONDS = 5;
+let rewardTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Plays the rewarded-ad preview; chips are granted only if it runs to the end. */
+function watchBonusAd(onGranted: (amount: number) => void) {
+  const overlay = document.getElementById('reward-overlay')!;
+  const count = document.getElementById('reward-count')!;
+  const claim = document.getElementById('reward-claim') as HTMLButtonElement;
+  const amount = bonusChips(stats.peakChips);
+  let left = REWARD_SECONDS;
+  const tick = () => {
+    count.textContent = left > 0 ? `Reward in ${left}s` : 'Reward earned!';
+    claim.hidden = left > 0;
+    claim.textContent = `Claim +$${formatChips(amount)}`;
+  };
+  overlay.hidden = false;
+  tick();
+  if (rewardTimer) clearInterval(rewardTimer);
+  rewardTimer = setInterval(() => {
+    left--;
+    tick();
+    if (left <= 0 && rewardTimer) clearInterval(rewardTimer);
+  }, 1000);
+  const close = () => {
+    overlay.hidden = true;
+    if (rewardTimer) clearInterval(rewardTimer);
+    claim.onclick = null;
+  };
+  document.getElementById('reward-close')!.onclick = close;
+  claim.onclick = () => {
+    close();
+    updateSettings({ bankroll: settings.bankroll + amount });
+    updateStats((s) => ({
+      ...s,
+      bonusClaims: recordBonusClaim(s.bonusClaims, new Date()),
+      bonusChipsEarned: s.bonusChipsEarned + amount,
+    }));
+    onGranted(amount);
+  };
 }
 
 document.getElementById('ad-close')!.addEventListener('click', () => {

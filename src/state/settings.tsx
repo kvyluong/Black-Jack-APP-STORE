@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { STARTING_CHIPS } from '../engine/progression';
+import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 
 export interface Stats {
@@ -17,6 +17,9 @@ export interface Stats {
   peakChips: number;
   biggestWin: number;
   refills: number;
+  /** Rewarded-ad bonus claims today (resets daily). */
+  bonusClaims?: BonusClaims;
+  bonusChipsEarned: number;
 }
 
 export interface Settings {
@@ -71,6 +74,7 @@ const DEFAULT_STATS: Stats = {
   peakChips: STARTING_CHIPS,
   biggestWin: 0,
   refills: 0,
+  bonusChipsEarned: 0,
 };
 
 const STORAGE_KEY = 'blackjack-coach/v1';
@@ -81,6 +85,8 @@ interface Store {
   stats: Stats;
   updateSettings: (patch: Partial<Settings>) => void;
   updateRules: (patch: Partial<Rules>) => void;
+  /** Adds chips to your current balance (e.g. a rewarded-ad bonus). */
+  addChips: (amount: number) => void;
   updateStats: (fn: (s: Stats) => Stats) => void;
   resetProgress: () => void;
 }
@@ -113,6 +119,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     (patch: Partial<Rules>) => setSettings((s) => ({ ...s, rules: { ...s.rules, ...patch } })),
     [],
   );
+  const addChips = useCallback((amount: number) => setSettings((s) => ({ ...s, bankroll: s.bankroll + amount })), []);
   const updateStats = useCallback((fn: (s: Stats) => Stats) => setStats(fn), []);
   const resetProgress = useCallback(() => {
     setStats(DEFAULT_STATS);
@@ -120,8 +127,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ ready, settings, stats, updateSettings, updateRules, updateStats, resetProgress }),
-    [ready, settings, stats, updateSettings, updateRules, updateStats, resetProgress],
+    () => ({ ready, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
+    [ready, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
