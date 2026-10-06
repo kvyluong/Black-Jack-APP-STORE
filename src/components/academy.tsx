@@ -1,6 +1,6 @@
 // The Counting Academy's practice modes. Each reports back how accurate the
 // round was; the screen around it handles levels, XP and review scheduling.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
@@ -56,7 +56,7 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
   const acc = countAccuracy(guess, actual);
   return (
     <Panel>
-      <Text style={styles.prompt}>What's the running count?</Text>
+      <Text style={styles.prompt}>What’s the running count?</Text>
       <View style={styles.stepper}>
         <Button title="−" variant="ghost" disabled={checked} onPress={() => setGuess(guess - 1)} style={styles.step} />
         <Text style={styles.guess}>{signed(guess)}</Text>
@@ -96,7 +96,7 @@ export function TagTap({ level, onFinish }: ModeProps) {
   const [right, setRight] = useState(0);
   const [combo, setCombo] = useState(0);
   const [flash, setFlash] = useState<'ok' | 'no' | null>(null);
-  const clock = useRef(new Animated.Value(1)).current;
+  const clock = useState(() => new Animated.Value(1))[0];
   const seconds = tapSeconds(level);
 
   const answer = (value: number | null) => {
@@ -263,7 +263,7 @@ export function PairCancel({ level, onFinish }: ModeProps) {
         ))}
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        Tip: a high card and a low card cancel to 0. Count only what's left.
+        Tip: a high card and a low card cancel to 0. Count only what’s left.
       </P>
     </View>
   );

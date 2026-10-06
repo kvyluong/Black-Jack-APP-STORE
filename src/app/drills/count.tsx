@@ -104,7 +104,7 @@ export default function CountDrill() {
       {(phase === 'answer' || phase === 'result') && (
         <>
           <Panel>
-            <Text style={styles.prompt}>What's the running count?</Text>
+            <Text style={styles.prompt}>What’s the running count?</Text>
             <View style={styles.stepper}>
               <Button title="−" variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess - 1)} style={styles.step} />
               <Text style={styles.guess}>
@@ -122,7 +122,7 @@ export default function CountDrill() {
                 <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 18 }}>
                   {ok ? '✓ Perfect count!' : `✗ The count was ${actual > 0 ? '+' : ''}${actual}`}
                 </Text>
-                <Text style={styles.label}>Here's every card with its tag:</Text>
+                <Text style={styles.label}>Here’s every card with its tag:</Text>
                 <View style={styles.review}>
                   {cards.map((c, i) => (
                     <PlayingCard key={i} card={c} size="sm" showTag />

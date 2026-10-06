@@ -41,7 +41,7 @@ export default function TrueCountDrill() {
         <Text style={styles.big}>
           {q.decks} deck{q.decks === 1 ? '' : 's'} left
         </Text>
-        <Text style={styles.muted}>What's the true count?</Text>
+        <Text style={styles.muted}>What’s the true count?</Text>
       </Panel>
       <View style={styles.options}>
         {q.options.map((n) => (

@@ -55,7 +55,7 @@ export default function Academy() {
 
       <Panel style={styles.workout}>
         <View style={styles.row}>
-          <Text style={styles.workoutTitle}>Today's workout</Text>
+          <Text style={styles.workoutTitle}>Today’s workout</Text>
           <Text style={styles.streak}>{academy.streak > 0 ? `🔥 ${academy.streak}-day streak` : 'Start a streak'}</Text>
         </View>
         <Text style={styles.small}>

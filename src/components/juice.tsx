@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
+import { seededRng } from '../engine/cards';
 import { Fanfare, FanfareTier, countUpTicks } from '../engine/juice';
 import { useSettings } from '../state/settings';
 import { colorblindColors, colors } from '../theme';
@@ -20,7 +21,7 @@ const CHIP_COLORS = [colors.gold, '#E5484D', '#F4F1E8', '#3E9BFF', '#4ADE80'];
 
 /** Shakes whatever it wraps when `shake(strength)` is called. */
 export function useShake() {
-  const x = useRef(new Animated.Value(0)).current;
+  const x = useState(() => new Animated.Value(0))[0];
   const shake = (strength: number) => {
     if (strength <= 0) return;
     const px = 4 + strength * 14;
@@ -43,20 +44,22 @@ interface Particle {
 /** Big pop-up text plus a burst of chips, played once per new `fanfare.key`. */
 export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key: number }) | null; effects: boolean }) {
   const colorblind = useSettings().settings.colorblind;
-  const pop = useRef(new Animated.Value(0)).current;
-  const burst = useRef(new Animated.Value(0)).current;
+  const pop = useState(() => new Animated.Value(0))[0];
+  const burst = useState(() => new Animated.Value(0))[0];
 
   const particles = useMemo<Particle[]>(() => {
     if (!fanfare || !effects) return [];
+    // Seeded by the fanfare's key, so each burst is random but rendering stays pure.
+    const random = seededRng(fanfare.key);
     return Array.from({ length: fanfare.particles }, () => {
-      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.3;
-      const speed = 90 + Math.random() * 150;
+      const angle = -Math.PI / 2 + (random() - 0.5) * Math.PI * 1.3;
+      const speed = 90 + random() * 150;
       return {
         dx: Math.cos(angle) * speed,
         dy: Math.sin(angle) * speed,
-        spin: (Math.random() - 0.5) * 720,
-        color: CHIP_COLORS[Math.floor(Math.random() * CHIP_COLORS.length)],
-        size: 8 + Math.random() * 8,
+        spin: (random() - 0.5) * 720,
+        color: CHIP_COLORS[Math.floor(random() * CHIP_COLORS.length)],
+        size: 8 + random() * 8,
       };
     });
   }, [fanfare, effects]);
@@ -138,7 +141,9 @@ export function useCountUp(value: number, onTick?: (step: number) => void, enabl
   const [shown, setShown] = useState(value);
   const from = useRef(value);
   const tickRef = useRef(onTick);
-  tickRef.current = onTick;
+  useEffect(() => {
+    tickRef.current = onTick;
+  });
 
   useEffect(() => {
     const start = from.current;
@@ -163,7 +168,7 @@ export function useCountUp(value: number, onTick?: (step: number) => void, enabl
 
 /** A small badge that pops whenever the streak grows. */
 export function StreakBadge({ streak }: { streak: number }) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
   useEffect(() => {
     if (streak < 2) return;
     scale.setValue(1.5);

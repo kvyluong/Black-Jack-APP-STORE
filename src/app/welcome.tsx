@@ -1,21 +1,19 @@
 // First-launch walkthrough: two scripted hands (stand, then hit), then a
 // first look at the running count.
 import { Stack, router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { haptic } from '../audio/haptics';
-import { playSound, preloadSounds } from '../audio/sounds';
+import { playSound } from '../audio/sounds';
 import { HandView } from '../components/HandView';
 import { FanfareOverlay } from '../components/juice';
 import { PlayingCard } from '../components/PlayingCard';
 import { Button, H1, P, Panel, Screen } from '../components/ui';
-import { useReduceMotion } from '../components/useReduceMotion';
+import { useDealAnimation } from '../components/useDealAnimation';
 import { Card } from '../engine/cards';
 import { hiLoValue } from '../engine/counting';
-import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule, hapticSchedule } from '../engine/dealSchedule';
+import { cardDelay } from '../engine/dealSchedule';
 import { GameState, act, startRound } from '../engine/game';
-import { Fanfare, roundFanfare } from '../engine/juice';
 import { STARTING_CHIPS, formatChips } from '../engine/progression';
 import { ACTION_LABEL, Action } from '../engine/strategy';
 import { TUTORIAL, TUTORIAL_BET, tutorialGame } from '../engine/tutorial';
@@ -30,21 +28,13 @@ type Stage = { kind: 'intro' } | { kind: 'hand'; index: number } | { kind: 'fini
 
 export default function Welcome() {
   const { settings, updateStats } = useSettings();
-  const reduceMotion = useReduceMotion();
+  const anim = useDealAnimation();
+  const { schedule, settled, fanfare, reduceMotion } = anim;
   const [stage, setStage] = useState<Stage>({ kind: 'intro' });
   const [game, setGame] = useState<GameState | null>(null);
   const [step, setStep] = useState(0);
-  const [schedule, setSchedule] = useState<DealSchedule | null>(null);
-  const [settled, setSettled] = useState(true);
-  const [fanfare, setFanfare] = useState<(Fanfare & { key: number }) | null>(null);
   // Every card seen in the two hands, for the count teaser at the end.
   const [seen, setSeen] = useState<Card[]>([]);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  useEffect(() => {
-    preloadSounds();
-    return () => timers.current.forEach(clearTimeout);
-  }, []);
 
   const finish = (to?: Parameters<typeof router.replace>[0]) => {
     updateStats((s) => ({ ...s, onboarded: true }));
@@ -53,25 +43,10 @@ export default function Welcome() {
 
   /** Same deal animation, sounds and haptics as the real table. */
   const commit = (prev: GameState, next: GameState) => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    setFanfare(null);
-    const s = dealSchedule(prev, next, reduceMotion ? 0 : DEAL_STEP_MS);
-    if (settings.soundEffects) for (const sound of s.sounds) timers.current.push(setTimeout(() => playSound(sound.name), sound.at));
-    if (settings.haptics) {
-      for (const h of hapticSchedule(next, s, reduceMotion ? 0 : DEAL_STEP_MS)) timers.current.push(setTimeout(() => haptic(h.kind), h.at));
-    }
-    setSchedule(s);
     setGame(next);
-    setSettled(false);
-    timers.current.push(
-      setTimeout(() => {
-        setSettled(true);
-        const f = roundFanfare(next);
-        if (f) setFanfare({ ...f, key: Date.now() });
-        if (next.phase === 'roundOver') setSeen((c) => [...c, ...next.hands.flatMap((h) => h.cards), ...next.dealer]);
-      }, s.doneAt),
-    );
+    anim.play(prev, next, () => {
+      if (next.phase === 'roundOver') setSeen((c) => [...c, ...next.hands.flatMap((h) => h.cards), ...next.dealer]);
+    });
   };
 
   const deal = (index: number) => {
@@ -103,7 +78,7 @@ export default function Welcome() {
           <H1>Welcome to Blackjack Coach</H1>
         </View>
         <Panel>
-          <P>Let's play two quick practice hands together. I'll tell you exactly what to do and why.</P>
+          <P>Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.</P>
           <P muted>Takes about a minute. Practice chips only: your real stack of ${formatChips(STARTING_CHIPS)} is waiting for you after.</P>
         </Panel>
         <Button title="Let's play" onPress={() => deal(0)} />
@@ -118,7 +93,7 @@ export default function Welcome() {
       <Screen ads={false}>
         <Stack.Screen options={{ title: 'Nice playing!', headerBackVisible: false }} />
         <H1>Two hands, two wins</H1>
-        <P>You already know the heart of the game: stand when the dealer is likely to bust, hit when you can't.</P>
+        <P>You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.</P>
         <Panel>
           <Text style={styles.coachTitle}>Your first look at counting</Text>
           <P>
@@ -184,7 +159,7 @@ export default function Welcome() {
             />
           </>
         )}
-        <FanfareOverlay fanfare={fanfare} effects={settings.bigEffects && !reduceMotion} />
+        <FanfareOverlay fanfare={fanfare} effects={anim.effects} />
       </View>
 
       {settled && (

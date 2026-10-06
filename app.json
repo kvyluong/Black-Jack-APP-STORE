@@ -51,7 +51,9 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-iap",
+      "expo-localization"
     ],
     "extra": {
       "adUnits": {

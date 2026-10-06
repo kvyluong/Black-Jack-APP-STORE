@@ -11,9 +11,11 @@ export function useInterstitial() {
   const adRef = useRef<InterstitialAd | null>(null);
   const loaded = useRef(false);
   const rounds = useRef(0);
-  const lastShown = useRef(Date.now());
+  // The clock starts when the screen opens (set in the effect below).
+  const lastShown = useRef(0);
 
   useEffect(() => {
+    lastShown.current = Date.now();
     const ads = getAds();
     const unitId = adUnitId('interstitial');
     if (!ads || !unitId) return;

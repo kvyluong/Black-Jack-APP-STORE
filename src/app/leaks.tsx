@@ -38,7 +38,7 @@ export default function Leaks() {
           <Text style={styles.title}>Not enough hands yet</Text>
           <P>
             Every decision you make at the table and in the strategy drill is tracked here. After {MIN_SAMPLE} decisions of a kind (stiff
-            hands, soft hands, pairs and so on), you'll see how often you get it right and which spots trip you up.
+            hands, soft hands, pairs and so on), you’ll see how often you get it right and which spots trip you up.
           </P>
         </Panel>
         <Button title="Play a few hands" onPress={() => router.push('/tables')} />
@@ -59,7 +59,7 @@ export default function Leaks() {
       ) : (
         <Panel style={styles.focus}>
           <Text style={styles.title}>No leaks found 🎯</Text>
-          <P muted>Every category you've played is at 100%. Keep it up.</P>
+          <P muted>Every category you’ve played is at 100%. Keep it up.</P>
         </Panel>
       )}
 

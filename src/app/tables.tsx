@@ -28,7 +28,7 @@ export default function Tables() {
         <BonusAdButton onGranted={() => {}} />
       </Panel>
 
-      <P muted>Grow your chips to unlock bigger tables. Chips are play money and can't be bought.</P>
+      <P muted>Grow your chips to unlock bigger tables. Chips are play money and can’t be bought.</P>
 
       {TABLES.map((t) => {
         const unlocked = isUnlocked(t, peak);

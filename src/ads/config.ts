@@ -15,6 +15,8 @@ export function getAds(): AdsModule | null {
   cached = null;
   if (adsSupported) {
     try {
+      // A lazy require, so builds without the native module (Expo Go, web) never load it.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       cached = require('react-native-google-mobile-ads') as AdsModule;
     } catch {
       cached = null;

@@ -71,7 +71,10 @@ describe('table simulation', () => {
       table = settleNpcs(table, g);
       const r = betweenRounds(table, 10, true, rng);
       table = r.table;
-      for (const e of r.events) e.kind === 'join' ? joins++ : leaves++;
+      for (const e of r.events) {
+        if (e.kind === 'join') joins++;
+        else leaves++;
+      }
       expect(yourSeats(2).every((s) => table.seats[s] === YOU)).toBe(true);
     }
     expect(joins).toBeGreaterThan(5);

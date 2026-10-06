@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 
 import { Card } from '../engine/cards';
@@ -18,9 +18,9 @@ interface Props {
 
 /** A card that slides in from the shoe (top right) when it mounts and flips when revealed. */
 export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
-  const deal = useRef(new Animated.Value(instant ? 1 : 0)).current;
-  const flip = useRef(new Animated.Value(1)).current;
-  const sway = useRef(new Animated.Value(0)).current;
+  const deal = useState(() => new Animated.Value(instant ? 1 : 0))[0];
+  const flip = useState(() => new Animated.Value(1))[0];
+  const sway = useState(() => new Animated.Value(0))[0];
   const [showBack, setShowBack] = useState(faceDown);
 
   useEffect(() => {
@@ -52,6 +52,8 @@ export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, insta
 
   useEffect(() => {
     if (faceDown || !showBack) {
+      // Mirrors the prop when there is nothing to animate.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowBack(faceDown);
       return;
     }
