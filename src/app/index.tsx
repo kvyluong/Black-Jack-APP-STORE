@@ -5,18 +5,58 @@ import { LevelBar } from '../components/chips';
 import { H1, P, Panel, Screen } from '../components/ui';
 import { formatChips } from '../engine/progression';
 import { LESSONS } from '../content/lessons';
+import { localized } from '../i18n/lang';
 import { useRemoveAds } from '../purchases/RemoveAds';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 
-const TILES: { title: string; subtitle: string; href: Href; icon: string }[] = [
-  { title: 'Learn', subtitle: 'Step-by-step lessons from the rules to card counting', href: '/learn', icon: '📘' },
-  { title: 'Casino Floor', subtitle: 'Play with a coach. Win chips to unlock bigger tables', href: '/tables', icon: '🃏' },
-  { title: 'Counting Academy', subtitle: 'Learn to count your way: see it, hear it, tap it, chunk it or read it', href: '/academy', icon: '🧠' },
-  { title: 'Drills', subtitle: 'Basic strategy, running count and true count drills', href: '/drills', icon: '🎯' },
-  { title: 'Your Leaks', subtitle: 'The decisions you miss most, and a drill aimed at them', href: '/leaks', icon: '🔍' },
-  { title: 'Strategy Chart', subtitle: 'The full basic strategy chart for your rules', href: '/chart', icon: '📊' },
-  { title: 'Settings', subtitle: 'Table rules, coaching options and progress', href: '/settings', icon: '⚙️' },
+const T = localized({
+  en: {
+    tiles: {
+      learn: ['Learn', 'Step-by-step lessons from the rules to card counting'],
+      tables: ['Casino Floor', 'Play with a coach. Win chips to unlock bigger tables'],
+      academy: ['Counting Academy', 'Learn to count your way: see it, hear it, tap it, chunk it or read it'],
+      drills: ['Drills', 'Basic strategy, running count and true count drills'],
+      leaks: ['Your Leaks', 'The decisions you miss most, and a drill aimed at them'],
+      chart: ['Strategy Chart', 'The full basic strategy chart for your rules'],
+      settings: ['Settings', 'Table rules, coaching options and progress'],
+    } as Record<TileId, [string, string]>,
+    tagline: 'Learn to play perfectly and count cards',
+    chips: 'Chips',
+    lessons: 'Lessons',
+    accuracy: 'Accuracy',
+    removeAds: 'Remove ads',
+    disclaimer: 'For entertainment and education only. No real money gambling. Play responsibly.',
+  },
+  es: {
+    tiles: {
+      learn: ['Aprender', 'Lecciones paso a paso, desde las reglas hasta contar cartas'],
+      tables: ['Sala del casino', 'Juega con un coach. Gana fichas para desbloquear mesas más grandes'],
+      academy: ['Academia de conteo', 'Aprende a contar a tu manera: míralo, escúchalo, tócalo, agrúpalo o léelo'],
+      drills: ['Ejercicios', 'Ejercicios de estrategia básica, conteo continuo y conteo real'],
+      leaks: ['Tus fugas', 'Las decisiones que más fallas y un ejercicio enfocado en ellas'],
+      chart: ['Tabla de estrategia', 'La tabla completa de estrategia básica para tus reglas'],
+      settings: ['Ajustes', 'Reglas de la mesa, opciones del coach y progreso'],
+    },
+    tagline: 'Aprende a jugar perfecto y a contar cartas',
+    chips: 'Fichas',
+    lessons: 'Lecciones',
+    accuracy: 'Precisión',
+    removeAds: 'Quitar anuncios',
+    disclaimer: 'Solo para entretenimiento y aprendizaje. Sin apuestas con dinero real. Juega con responsabilidad.',
+  },
+});
+
+type TileId = 'learn' | 'tables' | 'academy' | 'drills' | 'leaks' | 'chart' | 'settings';
+
+const TILES: { id: TileId; href: Href; icon: string }[] = [
+  { id: 'learn', href: '/learn', icon: '📘' },
+  { id: 'tables', href: '/tables', icon: '🃏' },
+  { id: 'academy', href: '/academy', icon: '🧠' },
+  { id: 'drills', href: '/drills', icon: '🎯' },
+  { id: 'leaks', href: '/leaks', icon: '🔍' },
+  { id: 'chart', href: '/chart', icon: '📊' },
+  { id: 'settings', href: '/settings', icon: '⚙️' },
 ];
 
 export default function Home() {
@@ -33,42 +73,45 @@ export default function Home() {
       <View style={{ alignItems: 'center', marginVertical: spacing(1) }}>
         <Text style={styles.logo}>♠ ♥ 21 ♣ ♦</Text>
         <H1>Blackjack Coach</H1>
-        <P muted>Learn to play perfectly and count cards</P>
+        <P muted>{T.tagline}</P>
       </View>
 
       <Panel>
         <View style={styles.stats}>
-          <Stat label="Chips" value={`$${formatChips(settings.bankroll)}`} />
-          <Stat label="Lessons" value={`${done}/${LESSONS.length}`} />
-          <Stat label="Accuracy" value={accuracy === null ? '—' : `${accuracy}%`} />
+          <Stat label={T.chips} value={`$${formatChips(settings.bankroll)}`} />
+          <Stat label={T.lessons} value={`${done}/${LESSONS.length}`} />
+          <Stat label={T.accuracy} value={accuracy === null ? '—' : `${accuracy}%`} />
         </View>
         <LevelBar xp={stats.xp} />
       </Panel>
 
-      {TILES.map((t) => (
-        <Pressable
-          key={t.title}
-          accessibilityRole="button"
-          onPress={() => router.push(t.href)}
-          style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]}
-        >
-          <Text style={styles.icon}>{t.icon}</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.tileTitle}>{t.title}</Text>
-            <Text style={styles.tileSub}>{t.subtitle}</Text>
-          </View>
-          <Text style={styles.chev}>›</Text>
-        </Pressable>
-      ))}
+      {TILES.map((t) => {
+        const [title, subtitle] = T.tiles[t.id];
+        return (
+          <Pressable
+            key={t.id}
+            accessibilityRole="button"
+            onPress={() => router.push(t.href)}
+            style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={styles.icon}>{t.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tileTitle}>{title}</Text>
+              <Text style={styles.tileSub}>{subtitle}</Text>
+            </View>
+            <Text style={styles.chev}>›</Text>
+          </Pressable>
+        );
+      })}
 
       {!settings.adsRemoved && (removeAds.available || __DEV__) && (
         <Text style={styles.removeAds} onPress={() => router.push('/settings')} accessibilityRole="link">
-          Remove ads{removeAds.price ? ` · ${removeAds.price}` : ''}
+          {T.removeAds}{removeAds.price ? ` · ${removeAds.price}` : ''}
         </Text>
       )}
 
       <P muted style={styles.disclaimer}>
-        For entertainment and education only. No real money gambling. Play responsibly.
+        {T.disclaimer}
       </P>
     </Screen>
   );

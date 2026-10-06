@@ -5,9 +5,125 @@ import { Alert, Text } from 'react-native';
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
 import { useRemoveAds } from '../purchases/RemoveAds';
-import { LANGUAGE_NAME, LanguageSetting } from '../i18n/lang';
+import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors } from '../theme';
+
+const T = localized({
+  en: {
+    resetTitle: 'Reset progress?',
+    resetBody: 'This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.',
+    cancel: 'Cancel',
+    reset: 'Reset',
+    coaching: 'Coaching',
+    showHints: 'Show hints',
+    showHintsHint: 'Highlight the best play before you act',
+    explain: 'Explain mistakes',
+    explainHint: 'After a wrong play, show the correct one and why',
+    showCount: 'Show the count',
+    showCountHint: 'Display running count, decks left and true count at the table',
+    quizzes: 'Count pop quizzes',
+    quizzesHint: 'Sometimes ask for the running count between hands',
+    deviations: 'Count-based advice',
+    deviationsHint: 'Coach uses Hi-Lo index plays and insurance at +3',
+    sound: 'Sound effects',
+    soundHint: "Card, chip and win/lose sounds (follows your phone's silent switch)",
+    haptics: 'Haptics',
+    hapticsHint: 'A light tap as your cards land, a buzz when you win',
+    effects: 'Big effects',
+    effectsHint: 'Screen shake, chip bursts and score pop-ups',
+    accessibility: 'Accessibility',
+    colorblind: 'Color-blind mode',
+    colorblindHint: 'Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too.',
+    replayTour: 'Replay the welcome tour',
+    table: 'The table',
+    handsYouPlay: 'Hands you play',
+    oneHand: '1 hand',
+    twoHands: '2 hands',
+    others: 'Other players',
+    othersHint: 'Players sit down and leave like a real casino table. Their cards count too.',
+    rules: 'Table rules',
+    decks: 'Decks',
+    bjPays: 'Blackjack pays',
+    h17: 'Dealer hits soft 17',
+    das: 'Double after split',
+    ls: 'Late surrender',
+    rulesNote: 'The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.',
+    removeAds: 'Remove ads',
+    adsRemoved: '✓ Ads removed. Thanks for supporting Blackjack Coach!',
+    bringBack: 'Bring ads back (development only)',
+    removeAdsInfo:
+      'A one-time purchase that removes the banner and the ads between hands, on every device signed in to your store account. The optional bonus-chip videos stay, since you choose when to watch those.',
+    opening: 'Opening the store…',
+    removeAdsSimulated: 'Remove ads (simulated in development)',
+    appsOnly: 'Available in the iPhone and Android apps.',
+    checking: 'Checking…',
+    restore: 'Restore purchase',
+    data: 'Data',
+    privacy: 'Ad privacy choices',
+    resetButton: 'Reset progress and chips',
+    about: 'About',
+    aboutText:
+      'Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
+  },
+  es: {
+    resetTitle: '¿Reiniciar el progreso?',
+    resetBody:
+      'Esto borra tus estadísticas, niveles, mesas desbloqueadas, progreso de lecciones y fichas. Empiezas de nuevo con 1,000 fichas.',
+    cancel: 'Cancelar',
+    reset: 'Reiniciar',
+    coaching: 'Coach',
+    showHints: 'Mostrar pistas',
+    showHintsHint: 'Resalta la mejor jugada antes de que actúes',
+    explain: 'Explicar errores',
+    explainHint: 'Tras una jugada incorrecta, muestra la correcta y por qué',
+    showCount: 'Mostrar el conteo',
+    showCountHint: 'Muestra el conteo continuo, las barajas restantes y el conteo real en la mesa',
+    quizzes: 'Preguntas sorpresa de conteo',
+    quizzesHint: 'A veces te pregunta el conteo continuo entre manos',
+    deviations: 'Consejos según el conteo',
+    deviationsHint: 'El coach usa jugadas por conteo Hi-Lo y el seguro a +3',
+    sound: 'Efectos de sonido',
+    soundHint: 'Sonidos de cartas, fichas y de ganar/perder (respeta el modo silencio de tu teléfono)',
+    haptics: 'Vibración',
+    hapticsHint: 'Un toque suave al caer tus cartas y una vibración cuando ganas',
+    effects: 'Efectos grandes',
+    effectsHint: 'Sacudidas de pantalla, explosiones de fichas y puntos emergentes',
+    accessibility: 'Accesibilidad',
+    colorblind: 'Modo daltónico',
+    colorblindHint: 'Azul y naranja en lugar de verde y rojo. Las etiquetas del conteo siempre muestran ▲ ● ▼ también.',
+    replayTour: 'Repetir el tour de bienvenida',
+    table: 'La mesa',
+    handsYouPlay: 'Manos que juegas',
+    oneHand: '1 mano',
+    twoHands: '2 manos',
+    others: 'Otros jugadores',
+    othersHint: 'Los jugadores se sientan y se van como en una mesa de casino real. Sus cartas también cuentan.',
+    rules: 'Reglas de la mesa',
+    decks: 'Barajas',
+    bjPays: 'El blackjack paga',
+    h17: 'El crupier pide con 17 blando',
+    das: 'Doblar después de dividir',
+    ls: 'Rendición tardía',
+    rulesNote: 'La tabla de estrategia y el coach están pensados para juegos de varias barajas. Cambiar las reglas inicia un zapato nuevo.',
+    removeAds: 'Quitar anuncios',
+    adsRemoved: '✓ Anuncios quitados. ¡Gracias por apoyar a Blackjack Coach!',
+    bringBack: 'Volver a mostrar anuncios (solo desarrollo)',
+    removeAdsInfo:
+      'Una compra única que quita el banner y los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda. Los videos opcionales de fichas extra se quedan, ya que tú eliges cuándo verlos.',
+    opening: 'Abriendo la tienda…',
+    removeAdsSimulated: 'Quitar anuncios (simulado en desarrollo)',
+    appsOnly: 'Disponible en las apps de iPhone y Android.',
+    checking: 'Verificando…',
+    restore: 'Restaurar compra',
+    data: 'Datos',
+    privacy: 'Opciones de privacidad de anuncios',
+    resetButton: 'Reiniciar progreso y fichas',
+    about: 'Acerca de',
+    aboutText:
+      'Blackjack Coach es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
+  },
+});
 
 export default function SettingsScreen() {
   const { settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
@@ -20,9 +136,9 @@ export default function SettingsScreen() {
   }, []);
 
   const confirmReset = () =>
-    Alert.alert('Reset progress?', 'This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: resetProgress },
+    Alert.alert(T.resetTitle, T.resetBody, [
+      { text: T.cancel, style: 'cancel' },
+      { text: T.reset, style: 'destructive', onPress: resetProgress },
     ]);
 
   return (
@@ -40,68 +156,68 @@ export default function SettingsScreen() {
         />
       </Panel>
 
-      <H2>Coaching</H2>
+      <H2>{T.coaching}</H2>
       <Panel>
         <ToggleRow
-          label="Show hints"
-          hint="Highlight the best play before you act"
+          label={T.showHints}
+          hint={T.showHintsHint}
           value={settings.showHints}
           onChange={(v) => updateSettings({ showHints: v })}
         />
         <ToggleRow
-          label="Explain mistakes"
-          hint="After a wrong play, show the correct one and why"
+          label={T.explain}
+          hint={T.explainHint}
           value={settings.correctMistakes}
           onChange={(v) => updateSettings({ correctMistakes: v })}
         />
         <ToggleRow
-          label="Show the count"
-          hint="Display running count, decks left and true count at the table"
+          label={T.showCount}
+          hint={T.showCountHint}
           value={settings.showCount}
           onChange={(v) => updateSettings({ showCount: v })}
         />
         <ToggleRow
-          label="Count pop quizzes"
-          hint="Sometimes ask for the running count between hands"
+          label={T.quizzes}
+          hint={T.quizzesHint}
           value={settings.countQuizzes}
           onChange={(v) => updateSettings({ countQuizzes: v })}
         />
         <ToggleRow
-          label="Count-based advice"
-          hint="Coach uses Hi-Lo index plays and insurance at +3"
+          label={T.deviations}
+          hint={T.deviationsHint}
           value={settings.useDeviations}
           onChange={(v) => updateSettings({ useDeviations: v })}
         />
         <ToggleRow
-          label="Sound effects"
-          hint="Card, chip and win/lose sounds (follows your phone's silent switch)"
+          label={T.sound}
+          hint={T.soundHint}
           value={settings.soundEffects}
           onChange={(v) => updateSettings({ soundEffects: v })}
         />
         <ToggleRow
-          label="Haptics"
-          hint="A light tap as your cards land, a buzz when you win"
+          label={T.haptics}
+          hint={T.hapticsHint}
           value={settings.haptics}
           onChange={(v) => updateSettings({ haptics: v })}
         />
         <ToggleRow
-          label="Big effects"
-          hint="Screen shake, chip bursts and score pop-ups"
+          label={T.effects}
+          hint={T.effectsHint}
           value={settings.bigEffects}
           onChange={(v) => updateSettings({ bigEffects: v })}
         />
       </Panel>
 
-      <H2>Accessibility</H2>
+      <H2>{T.accessibility}</H2>
       <Panel>
         <ToggleRow
-          label="Color-blind mode"
-          hint="Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too."
+          label={T.colorblind}
+          hint={T.colorblindHint}
           value={settings.colorblind}
           onChange={(v) => updateSettings({ colorblind: v })}
         />
         <Button
-          title="Replay the welcome tour"
+          title={T.replayTour}
           variant="secondary"
           onPress={() => {
             updateStats((s) => ({ ...s, onboarded: false }));
@@ -110,34 +226,34 @@ export default function SettingsScreen() {
         />
       </Panel>
 
-      <H2>The table</H2>
+      <H2>{T.table}</H2>
       <Panel>
-        <Text style={{ color: colors.text, fontWeight: '600' }}>Hands you play</Text>
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.handsYouPlay}</Text>
         <Segmented
           options={[
-            { label: '1 hand', value: 1 },
-            { label: '2 hands', value: 2 },
+            { label: T.oneHand, value: 1 },
+            { label: T.twoHands, value: 2 },
           ]}
           value={settings.yourHands}
           onChange={(v) => updateSettings({ yourHands: v })}
         />
         <ToggleRow
-          label="Other players"
-          hint="Players sit down and leave like a real casino table. Their cards count too."
+          label={T.others}
+          hint={T.othersHint}
           value={settings.otherPlayers}
           onChange={(v) => updateSettings({ otherPlayers: v })}
         />
       </Panel>
 
-      <H2>Table rules</H2>
+      <H2>{T.rules}</H2>
       <Panel>
-        <Text style={{ color: colors.text, fontWeight: '600' }}>Decks</Text>
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.decks}</Text>
         <Segmented
           options={[1, 2, 6, 8].map((d) => ({ label: String(d), value: d }))}
           value={rules.decks}
           onChange={(d) => updateRules({ decks: d })}
         />
-        <Text style={{ color: colors.text, fontWeight: '600' }}>Blackjack pays</Text>
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.bjPays}</Text>
         <Segmented
           options={[
             { label: '3:2', value: 1.5 },
@@ -146,49 +262,48 @@ export default function SettingsScreen() {
           value={rules.blackjackPayout}
           onChange={(v) => updateRules({ blackjackPayout: v })}
         />
-        <ToggleRow label="Dealer hits soft 17" value={rules.dealerHitsSoft17} onChange={(v) => updateRules({ dealerHitsSoft17: v })} />
-        <ToggleRow label="Double after split" value={rules.doubleAfterSplit} onChange={(v) => updateRules({ doubleAfterSplit: v })} />
-        <ToggleRow label="Late surrender" value={rules.lateSurrender} onChange={(v) => updateRules({ lateSurrender: v })} />
+        <ToggleRow label={T.h17} value={rules.dealerHitsSoft17} onChange={(v) => updateRules({ dealerHitsSoft17: v })} />
+        <ToggleRow label={T.das} value={rules.doubleAfterSplit} onChange={(v) => updateRules({ doubleAfterSplit: v })} />
+        <ToggleRow label={T.ls} value={rules.lateSurrender} onChange={(v) => updateRules({ lateSurrender: v })} />
         <P muted style={{ fontSize: 13 }}>
-          The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.
+          {T.rulesNote}
         </P>
       </Panel>
 
-      <H2>Remove ads</H2>
+      <H2>{T.removeAds}</H2>
       <Panel>
         {settings.adsRemoved ? (
           <>
-            <P>✓ Ads removed. Thanks for supporting Blackjack Coach!</P>
+            <P>{T.adsRemoved}</P>
             {__DEV__ && !removeAds.available && (
-              <Button title="Bring ads back (development only)" variant="ghost" onPress={() => updateSettings({ adsRemoved: false })} />
+              <Button title={T.bringBack} variant="ghost" onPress={() => updateSettings({ adsRemoved: false })} />
             )}
           </>
         ) : (
           <>
             <P muted style={{ fontSize: 14 }}>
-              A one-time purchase that removes the banner and the ads between hands, on every device signed in to your store account.
-              The optional bonus-chip videos stay, since you choose when to watch those.
+              {T.removeAdsInfo}
             </P>
             {removeAds.available || __DEV__ ? (
               <Button
                 title={
                   removeAds.status === 'buying'
-                    ? 'Opening the store…'
+                    ? T.opening
                     : removeAds.available
-                      ? `Remove ads${removeAds.price ? ` · ${removeAds.price}` : ''}`
-                      : 'Remove ads (simulated in development)'
+                      ? `${T.removeAds}${removeAds.price ? ` · ${removeAds.price}` : ''}`
+                      : T.removeAdsSimulated
                 }
                 disabled={removeAds.status !== 'idle'}
                 onPress={removeAds.buy}
               />
             ) : (
-              <P muted style={{ fontSize: 14 }}>Available in the iPhone and Android apps.</P>
+              <P muted style={{ fontSize: 14 }}>{T.appsOnly}</P>
             )}
           </>
         )}
         {removeAds.available && !settings.adsRemoved && (
           <Button
-            title={removeAds.status === 'restoring' ? 'Checking…' : 'Restore purchase'}
+            title={removeAds.status === 'restoring' ? T.checking : T.restore}
             variant="ghost"
             disabled={removeAds.status !== 'idle'}
             onPress={removeAds.restore}
@@ -197,17 +312,15 @@ export default function SettingsScreen() {
         {removeAds.message && <P muted style={{ fontSize: 14 }}>{removeAds.message}</P>}
       </Panel>
 
-      <H2>Data</H2>
+      <H2>{T.data}</H2>
       <Panel>
-        {showPrivacy && <Button title="Ad privacy choices" variant="secondary" onPress={showPrivacyOptions} />}
-        <Button title="Reset progress and chips" variant="danger" onPress={confirmReset} />
+        {showPrivacy && <Button title={T.privacy} variant="secondary" onPress={showPrivacyOptions} />}
+        <Button title={T.resetButton} variant="danger" onPress={confirmReset} />
       </Panel>
 
-      <H2>About</H2>
+      <H2>{T.about}</H2>
       <P muted>
-        Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money
-        gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If
-        gambling stops being fun, get help: in the US call 1-800-GAMBLER.
+        {T.aboutText}
       </P>
     </Screen>
   );

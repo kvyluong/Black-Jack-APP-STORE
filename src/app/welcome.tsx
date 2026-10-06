@@ -17,8 +17,72 @@ import { GameState, act, startRound } from '../engine/game';
 import { STARTING_CHIPS, formatChips } from '../engine/progression';
 import { ACTION_LABEL, Action } from '../engine/strategy';
 import { TUTORIAL, TUTORIAL_BET, tutorialGame } from '../engine/tutorial';
+import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, spacing } from '../theme';
+
+const T = localized({
+  en: {
+    skip: 'Skip the tour',
+    welcome: 'Welcome',
+    welcomeTitle: 'Welcome to Blackjack Coach',
+    introBody: 'Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.',
+    introNote: (chips: string) => `Takes about a minute. Practice chips only: your real stack of $${chips} is waiting for you after.`,
+    letsPlay: 'Let’s play',
+    nicePlaying: 'Nice playing!',
+    twoWins: 'Two hands, two wins',
+    heart: 'You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.',
+    firstLook: 'Your first look at counting',
+    tags: 'Card counters give every card a tag: low cards (2–6) are +1, 7–9 are 0, and 10s and Aces are −1. Here are the cards from your two hands:',
+    seenA11y: (rc: string) => `Cards seen. Running count ${rc}`,
+    runningCount: 'Running count:',
+    positive:
+      'Positive means more low cards than high ones have gone, so the cards left are rich in 10s and Aces. That favors you, so counters bet more.',
+    negative: 'Negative means lots of 10s and Aces have gone, which is bad news for you. When the count is high, counters bet more.',
+    academyNote: 'The Counting Academy teaches you to keep this count in your head.',
+    startLessons: 'Start the lessons',
+    goFloor: 'Go to the casino floor',
+    learnCount: 'Learn to count',
+    home: 'Home',
+    practiceHand: (n: number, of: number) => `Practice hand ${n} of ${of}`,
+    dealer: 'Dealer',
+    you: 'You',
+    win: 'Win',
+    coach: 'COACH',
+    seeCounters: 'See what counters see',
+    nextHand: 'Next hand',
+  },
+  es: {
+    skip: 'Saltar el tour',
+    welcome: 'Bienvenida',
+    welcomeTitle: 'Bienvenido a Blackjack Coach',
+    introBody: 'Juguemos juntos dos manos rápidas de práctica. Te diré exactamente qué hacer y por qué.',
+    introNote: (chips: string) => `Toma como un minuto. Solo fichas de práctica: tu pila real de $${chips} te espera después.`,
+    letsPlay: '¡A jugar!',
+    nicePlaying: '¡Bien jugado!',
+    twoWins: 'Dos manos, dos victorias',
+    heart: 'Ya conoces lo esencial del juego: plántate cuando el crupier probablemente se pase y pide cuando no.',
+    firstLook: 'Tu primer vistazo al conteo',
+    tags: 'Quienes cuentan cartas le dan a cada carta una etiqueta: las bajas (2–6) son +1, del 7 al 9 son 0, y los 10 y los ases son −1. Estas son las cartas de tus dos manos:',
+    seenA11y: (rc: string) => `Cartas vistas. Conteo continuo ${rc}`,
+    runningCount: 'Conteo continuo:',
+    positive:
+      'Positivo significa que han salido más cartas bajas que altas, así que las que quedan están cargadas de 10 y ases. Eso te favorece, por eso los contadores apuestan más.',
+    negative: 'Negativo significa que han salido muchos 10 y ases, lo cual es malo para ti. Cuando el conteo es alto, los contadores apuestan más.',
+    academyNote: 'La Academia de conteo te enseña a llevar este conteo de memoria.',
+    startLessons: 'Empezar las lecciones',
+    goFloor: 'Ir a la sala del casino',
+    learnCount: 'Aprender a contar',
+    home: 'Inicio',
+    practiceHand: (n: number, of: number) => `Mano de práctica ${n} de ${of}`,
+    dealer: 'Crupier',
+    you: 'Tú',
+    win: 'Gana',
+    coach: 'COACH',
+    seeCounters: 'Mira lo que ven los contadores',
+    nextHand: 'Siguiente mano',
+  },
+});
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double'];
 /** Practice chips for the walkthrough; your real stack isn't touched. */
@@ -65,23 +129,23 @@ export default function Welcome() {
 
   const skip = (
     <Text style={styles.skip} onPress={() => finish()} accessibilityRole="button">
-      Skip the tour
+      {T.skip}
     </Text>
   );
 
   if (stage.kind === 'intro') {
     return (
       <Screen ads={false}>
-        <Stack.Screen options={{ title: 'Welcome', headerBackVisible: false }} />
+        <Stack.Screen options={{ title: T.welcome, headerBackVisible: false }} />
         <View style={styles.hero}>
           <Text style={styles.logo}>♠ ♥ 21 ♣ ♦</Text>
-          <H1>Welcome to Blackjack Coach</H1>
+          <H1>{T.welcomeTitle}</H1>
         </View>
         <Panel>
-          <P>Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.</P>
-          <P muted>Takes about a minute. Practice chips only: your real stack of ${formatChips(STARTING_CHIPS)} is waiting for you after.</P>
+          <P>{T.introBody}</P>
+          <P muted>{T.introNote(formatChips(STARTING_CHIPS))}</P>
         </Panel>
-        <Button title="Let's play" onPress={() => deal(0)} />
+        <Button title={T.letsPlay} onPress={() => deal(0)} />
         {skip}
       </Screen>
     );
@@ -91,36 +155,30 @@ export default function Welcome() {
     const rc = seen.reduce((sum, c) => sum + hiLoValue(c.rank), 0);
     return (
       <Screen ads={false}>
-        <Stack.Screen options={{ title: 'Nice playing!', headerBackVisible: false }} />
-        <H1>Two hands, two wins</H1>
-        <P>You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.</P>
+        <Stack.Screen options={{ title: T.nicePlaying, headerBackVisible: false }} />
+        <H1>{T.twoWins}</H1>
+        <P>{T.heart}</P>
         <Panel>
-          <Text style={styles.coachTitle}>Your first look at counting</Text>
-          <P>
-            Card counters give every card a tag: low cards (2–6) are +1, 7–9 are 0, and 10s and Aces are −1. Here are the cards from
-            your two hands:
-          </P>
-          <View style={styles.seen} accessibilityLabel={`Cards seen. Running count ${rc > 0 ? '+' : ''}${rc}`}>
+          <Text style={styles.coachTitle}>{T.firstLook}</Text>
+          <P>{T.tags}</P>
+          <View style={styles.seen} accessibilityLabel={T.seenA11y(`${rc > 0 ? '+' : ''}${rc}`)}>
             {seen.map((c, i) => (
               <PlayingCard key={i} card={c} size="sm" showTag />
             ))}
           </View>
           <Text style={styles.rc}>
-            Running count: {rc > 0 ? '+' : ''}
+            {T.runningCount} {rc > 0 ? '+' : ''}
             {rc}
           </Text>
           <P muted>
-            {rc > 0
-              ? 'Positive means more low cards than high ones have gone, so the cards left are rich in 10s and Aces. That favors you, so counters bet more.'
-              : 'Negative means lots of 10s and Aces have gone, which is bad news for you. When the count is high, counters bet more.'}{' '}
-            The Counting Academy teaches you to keep this count in your head.
+            {rc > 0 ? T.positive : T.negative} {T.academyNote}
           </P>
         </Panel>
-        <Button title="Start the lessons" onPress={() => finish('/learn')} />
-        <Button title="Go to the casino floor" variant="secondary" onPress={() => finish('/tables')} />
-        <Button title="Learn to count" variant="secondary" onPress={() => finish('/academy')} />
+        <Button title={T.startLessons} onPress={() => finish('/learn')} />
+        <Button title={T.goFloor} variant="secondary" onPress={() => finish('/tables')} />
+        <Button title={T.learnCount} variant="secondary" onPress={() => finish('/academy')} />
         <Text style={styles.skip} onPress={() => finish()} accessibilityRole="button">
-          Home
+          {T.home}
         </Text>
       </Screen>
     );
@@ -133,7 +191,7 @@ export default function Welcome() {
 
   return (
     <Screen ads={false}>
-      <Stack.Screen options={{ title: `Practice hand ${stage.index + 1} of ${TUTORIAL.length}`, headerBackVisible: false }} />
+      <Stack.Screen options={{ title: T.practiceHand(stage.index + 1, TUTORIAL.length), headerBackVisible: false }} />
       <Text style={styles.coachTitle}>{hand.title}</Text>
       <View style={styles.felt}>
         {game && (
@@ -141,7 +199,7 @@ export default function Welcome() {
             <HandView
               cards={game.dealer}
               hideHole={!game.holeRevealed}
-              label="Dealer"
+              label={T.dealer}
               size="sm"
               dealDelay={(i) => cardDelay(schedule, 'dealer', i)}
               flipDelay={schedule?.holeFlipAt ?? 0}
@@ -150,9 +208,9 @@ export default function Welcome() {
             />
             <HandView
               cards={game.hands[0].cards}
-              label="You"
+              label={T.you}
               active={game.phase === 'playing'}
-              result={game.hands[0].outcome === 'win' ? 'Win' : `$${TUTORIAL_BET}`}
+              result={game.hands[0].outcome === 'win' ? T.win : `$${TUTORIAL_BET}`}
               dealDelay={(c) => cardDelay(schedule, 0, c)}
               settling={!settled}
               instant={reduceMotion}
@@ -164,7 +222,7 @@ export default function Welcome() {
 
       {settled && (
         <Panel style={styles.coach}>
-          <Text style={styles.coachLabel}>COACH</Text>
+          <Text style={styles.coachLabel}>{T.coach}</Text>
           <P>{over ? hand.outro : coachStep?.say ?? hand.intro}</P>
         </Panel>
       )}
@@ -186,7 +244,7 @@ export default function Welcome() {
       )}
 
       {settled && over && (
-        <Button title={last ? 'See what counters see' : 'Next hand'} onPress={() => (last ? setStage({ kind: 'finish' }) : deal(stage.index + 1))} />
+        <Button title={last ? T.seeCounters : T.nextHand} onPress={() => (last ? setStage({ kind: 'finish' }) : deal(stage.index + 1))} />
       )}
       {skip}
     </Screen>

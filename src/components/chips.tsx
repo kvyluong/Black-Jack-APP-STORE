@@ -1,7 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHIP_COLORS, chipBreakdown, chipLabel, levelInfo } from '../engine/progression';
+import { localized } from '../i18n/lang';
 import { colors } from '../theme';
+
+const T = localized({
+  en: { addChip: (v: number) => `Add a ${v} chip`, level: 'Lv' },
+  es: { addChip: (v: number) => `Agregar una ficha de ${v}`, level: 'Nv' },
+});
 
 /** A casino chip you can tap to add to your bet. */
 export function ChipButton({ value, onPress, disabled }: { value: number; onPress: () => void; disabled?: boolean }) {
@@ -9,7 +15,7 @@ export function ChipButton({ value, onPress, disabled }: { value: number; onPres
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Add a ${value} chip`}
+      accessibilityLabel={T.addChip(value)}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -47,7 +53,7 @@ export function LevelBar({ xp, compact }: { xp: number; compact?: boolean }) {
     <View style={{ gap: 3 }}>
       <View style={styles.levelRow}>
         <Text style={[styles.level, compact && { fontSize: 12 }]}>
-          Lv {level} · {title}
+          {T.level} {level} · {title}
         </Text>
         {!compact && (
           <Text style={styles.xp}>

@@ -5,8 +5,28 @@ import { BonusAdButton } from '../components/BonusAdButton';
 import { LevelBar } from '../components/chips';
 import { P, Panel, Screen } from '../components/ui';
 import { TABLES, canSit, formatChips, isUnlocked } from '../engine/progression';
+import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
+
+const T = localized({
+  en: {
+    chips: 'chips',
+    best: (peak: string, win: string) => `Best ever: $${peak} · Biggest win: $${win}`,
+    intro: 'Grow your chips to unlock bigger tables. Chips are play money and can’t be bought.',
+    yourTable: 'your table',
+    reach: (n: string) => `Reach $${n} chips to unlock`,
+    need: (n: string) => `You need $${n} to sit here`,
+  },
+  es: {
+    chips: 'fichas',
+    best: (peak: string, win: string) => `Récord: $${peak} · Mayor ganancia: $${win}`,
+    intro: 'Haz crecer tus fichas para desbloquear mesas más grandes. Las fichas son dinero de juego y no se pueden comprar.',
+    yourTable: 'tu mesa',
+    reach: (n: string) => `Llega a $${n} en fichas para desbloquear`,
+    need: (n: string) => `Necesitas $${n} para sentarte aquí`,
+  },
+});
 
 /** The casino floor: pick a table. Higher-stakes rooms unlock as your chips grow. */
 export default function Tables() {
@@ -19,16 +39,16 @@ export default function Tables() {
       <Panel>
         <View style={styles.header}>
           <Text style={styles.chips}>${formatChips(chips)}</Text>
-          <Text style={styles.chipsLabel}>chips</Text>
+          <Text style={styles.chipsLabel}>{T.chips}</Text>
         </View>
         <LevelBar xp={stats.xp} />
         <Text style={styles.small}>
-          Best ever: ${formatChips(peak)} · Biggest win: ${formatChips(stats.biggestWin)}
+          {T.best(formatChips(peak), formatChips(stats.biggestWin))}
         </Text>
         <BonusAdButton onGranted={() => {}} />
       </Panel>
 
-      <P muted>Grow your chips to unlock bigger tables. Chips are play money and can’t be bought.</P>
+      <P muted>{T.intro}</P>
 
       {TABLES.map((t) => {
         const unlocked = isUnlocked(t, peak);
@@ -51,7 +71,7 @@ export default function Tables() {
               <Text style={styles.name}>
                 {unlocked ? '' : '🔒 '}
                 {t.name}
-                {here ? '  · your table' : ''}
+                {here ? `  · ${T.yourTable}` : ''}
               </Text>
               <Text style={styles.limits}>
                 ${formatChips(t.minBet)} – ${formatChips(t.maxBet)}
@@ -59,13 +79,13 @@ export default function Tables() {
               <Text style={styles.blurb}>{t.blurb}</Text>
               {!unlocked && (
                 <View style={{ gap: 3, marginTop: 4 }}>
-                  <Text style={styles.need}>Reach ${formatChips(t.unlockAt)} chips to unlock</Text>
+                  <Text style={styles.need}>{T.reach(formatChips(t.unlockAt))}</Text>
                   <View style={styles.track}>
                     <View style={[styles.fill, { width: `${progress * 100}%` }]} />
                   </View>
                 </View>
               )}
-              {unlocked && !sit && <Text style={styles.need}>You need ${formatChips(t.minBet)} to sit here</Text>}
+              {unlocked && !sit && <Text style={styles.need}>{T.need(formatChips(t.minBet))}</Text>}
             </View>
             {sit && <Text style={styles.chev}>›</Text>}
           </Pressable>

@@ -3,11 +3,33 @@ import { Modal, StyleSheet, Text, View } from 'react-native';
 
 import { useRewarded } from '../ads/useRewarded';
 import { bonusAdsLeft, bonusChips, formatChips, recordBonusClaim } from '../engine/progression';
+import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 import { Button } from './ui';
 
 const TEST_AD_SECONDS = 5;
+
+const T = localized({
+  en: {
+    tomorrow: 'Bonus chips: come back tomorrow for more.',
+    watch: (amount: string, left: number) => `▶ Watch an ad: +$${amount} chips (${left} left today)`,
+    testAd: 'Test ad',
+    testBody: 'Real rewarded ads only play in a development or store build. This stand-in lets you try the flow.',
+    rewardIn: (s: number) => `Reward in ${s}s`,
+    claim: (amount: string) => `Claim +$${amount}`,
+    close: 'Close without reward',
+  },
+  es: {
+    tomorrow: 'Fichas extra: vuelve mañana por más.',
+    watch: (amount: string, left: number) => `▶ Mira un anuncio: +$${amount} en fichas (te quedan ${left} hoy)`,
+    testAd: 'Anuncio de prueba',
+    testBody: 'Los anuncios con recompensa reales solo se muestran en una build de desarrollo o de la tienda. Este sustituto te deja probar el flujo.',
+    rewardIn: (s: number) => `Recompensa en ${s} s`,
+    claim: (amount: string) => `Reclamar +$${amount}`,
+    close: 'Cerrar sin recompensa',
+  },
+});
 
 /**
  * "Watch an ad for bonus chips" button. Grants chips only after the ad is
@@ -37,35 +59,33 @@ export function BonusAdButton({ onGranted }: { onGranted: (amount: number) => vo
     return () => clearTimeout(id);
   }, [testAd]);
 
-  if (left === 0) return <Text style={styles.note}>Bonus chips: come back tomorrow for more.</Text>;
+  if (left === 0) return <Text style={styles.note}>{T.tomorrow}</Text>;
   if (!rewarded.ready) return null;
 
   return (
     <>
       <Button
-        title={`▶ Watch an ad: +$${formatChips(amount)} chips (${left} left today)`}
+        title={T.watch(formatChips(amount), left)}
         variant="secondary"
         onPress={() => (rewarded.simulated ? setTestAd(TEST_AD_SECONDS) : rewarded.show(grant))}
       />
       <Modal visible={testAd !== null} transparent animationType="fade" onRequestClose={() => setTestAd(null)}>
         <View style={styles.backdrop}>
           <View style={styles.box}>
-            <Text style={styles.title}>Test ad</Text>
-            <Text style={styles.body}>
-              Real rewarded ads only play in a development or store build. This stand-in lets you try the flow.
-            </Text>
+            <Text style={styles.title}>{T.testAd}</Text>
+            <Text style={styles.body}>{T.testBody}</Text>
             {testAd !== null && testAd > 0 ? (
-              <Text style={styles.count}>Reward in {testAd}s</Text>
+              <Text style={styles.count}>{T.rewardIn(testAd)}</Text>
             ) : (
               <Button
-                title={`Claim +$${formatChips(amount)}`}
+                title={T.claim(formatChips(amount))}
                 onPress={() => {
                   setTestAd(null);
                   grant();
                 }}
               />
             )}
-            <Button title="Close without reward" variant="ghost" onPress={() => setTestAd(null)} />
+            <Button title={T.close} variant="ghost" onPress={() => setTestAd(null)} />
           </View>
         </View>
       </Modal>

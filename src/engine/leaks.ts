@@ -3,18 +3,29 @@
 import { Card, RANKS, Rank, Rng, SUITS, pointValue } from './cards';
 import { StrategyQuestion } from './drills';
 import { handValue, isPair } from './hand';
+import { getLang, localized, tr } from '../i18n/lang';
 import { ACTION_LABEL, Action, upValue } from './strategy';
 
 export type LeakCategory = 'hardLow' | 'stiff' | 'hardHigh' | 'soft' | 'pair' | 'insurance';
 
-export const CATEGORY_INFO: Record<LeakCategory, { title: string; example: string }> = {
-  hardLow: { title: 'Hard 11 or less', example: 'e.g. 9, 10 or 11: when to double' },
-  stiff: { title: 'Stiff hands (hard 12–16)', example: 'e.g. 16 vs 10: hit, stand or surrender' },
-  hardHigh: { title: 'Hard 17 and up', example: 'e.g. 17 vs Ace' },
-  soft: { title: 'Soft hands', example: 'e.g. A-7: stand, hit or double' },
-  pair: { title: 'Pairs', example: 'e.g. 9-9 vs 7: split or stand' },
-  insurance: { title: 'Insurance', example: 'Decline unless the true count is +3 or more' },
-};
+export const CATEGORY_INFO: Record<LeakCategory, { title: string; example: string }> = localized({
+  en: {
+    hardLow: { title: 'Hard 11 or less', example: 'e.g. 9, 10 or 11: when to double' },
+    stiff: { title: 'Stiff hands (hard 12–16)', example: 'e.g. 16 vs 10: hit, stand or surrender' },
+    hardHigh: { title: 'Hard 17 and up', example: 'e.g. 17 vs Ace' },
+    soft: { title: 'Soft hands', example: 'e.g. A-7: stand, hit or double' },
+    pair: { title: 'Pairs', example: 'e.g. 9-9 vs 7: split or stand' },
+    insurance: { title: 'Insurance', example: 'Decline unless the true count is +3 or more' },
+  },
+  es: {
+    hardLow: { title: '11 duro o menos', example: 'p. ej. 9, 10 u 11: cuándo doblar' },
+    stiff: { title: 'Manos rígidas (12–16 duro)', example: 'p. ej. 16 vs 10: pedir, plantarse o rendirse' },
+    hardHigh: { title: '17 duro o más', example: 'p. ej. 17 vs As' },
+    soft: { title: 'Manos blandas', example: 'p. ej. A-7: plantarse, pedir o doblar' },
+    pair: { title: 'Parejas', example: 'p. ej. 9-9 vs 7: dividir o plantarse' },
+    insurance: { title: 'Seguro', example: 'Recházalo salvo que el conteo real sea +3 o más' },
+  },
+});
 
 /** Categories you can drill (insurance is practiced at the table). */
 export const DRILLABLE: LeakCategory[] = ['hardLow', 'stiff', 'hardHigh', 'soft', 'pair'];
@@ -25,13 +36,17 @@ export interface Tally {
 }
 
 export interface Spot extends Tally {
+  /**
+   * The situation, e.g. "Soft 18 vs 9". Stored in English (it doubles as the key);
+   * topMissedSpots returns it in the current language.
+   */
   label: string;
   best: Action;
 }
 
 export interface LeakStats {
   byCategory: Partial<Record<LeakCategory, Tally>>;
-  /** Specific situations, e.g. "Soft 18 vs 9", keyed for counting repeats. */
+  /** Specific situations, keyed by their English label (e.g. "Soft 18 vs 9") so every language shares them. */
   spots: Record<string, Spot>;
 }
 
@@ -49,8 +64,8 @@ export function categorize(cards: Card[], canSplit: boolean): LeakCategory {
   return 'hardHigh';
 }
 
-/** A readable name for the exact situation, e.g. "8,8 vs 10", "Soft 18 vs 9", "Hard 16 vs 10". */
-export function spotLabel(cards: Card[], dealerUp: Rank, canSplit: boolean): string {
+/** The language-independent key for a situation: its English label, e.g. "Soft 18 vs 9". */
+function spotKey(cards: Card[], dealerUp: Rank, canSplit: boolean): string {
   const up = upName(dealerUp);
   if (canSplit && isPair(cards)) {
     const r = pointValue(cards[0].rank) === 10 ? '10' : cards[0].rank;
@@ -60,13 +75,29 @@ export function spotLabel(cards: Card[], dealerUp: Rank, canSplit: boolean): str
   return `${soft ? 'Soft' : 'Hard'} ${total} vs ${up}`;
 }
 
+/** A spot key (English label) in the current language: "Soft 18 vs 9" → "18 blando vs 9". Pairs read the same. */
+export function localizeSpotLabel(key: string): string {
+  if (getLang() !== 'es') return key;
+  const m = /^(Soft|Hard) (\d+) vs (\S+)$/.exec(key);
+  return m ? `${m[2]} ${m[1] === 'Soft' ? 'blando' : 'duro'} vs ${m[3]}` : key;
+}
+
+/**
+ * A readable name for the exact situation in the current language,
+ * e.g. "8,8 vs 10", "Soft 18 vs 9" ("18 blando vs 9"), "Hard 16 vs 10" ("16 duro vs 10").
+ */
+export function spotLabel(cards: Card[], dealerUp: Rank, canSplit: boolean): string {
+  return localizeSpotLabel(spotKey(cards, dealerUp, canSplit));
+}
+
 /** Records one decision at the table or in a drill. */
 export function recordDecision(
   stats: LeakStats,
   d: { cards: Card[]; dealerUp: Rank; canSplit: boolean; chosen: Action; best: Action },
 ): LeakStats {
   const category = categorize(d.cards, d.canSplit);
-  const label = spotLabel(d.cards, d.dealerUp, d.canSplit);
+  // Keyed and stored in English so stats from either language merge.
+  const label = spotKey(d.cards, d.dealerUp, d.canSplit);
   const ok = d.chosen === d.best;
   const cat = stats.byCategory[category] ?? { right: 0, total: 0 };
   const spot = stats.spots[label] ?? { label, best: d.best, right: 0, total: 0 };
@@ -99,15 +130,16 @@ export function weakestDrillable(stats: LeakStats): LeakCategory | undefined {
   return rankedCategories(stats).find((c) => DRILLABLE.includes(c.category) && accuracy(c.tally) < 1)?.category;
 }
 
-/** Spots you've missed, most misses first. */
+/** Spots you've missed, most misses first, labeled in the current language. */
 export function topMissedSpots(stats: LeakStats, n = 5): Spot[] {
   return Object.values(stats.spots)
     .filter((s) => s.right < s.total)
     .sort((a, b) => b.total - b.right - (a.total - a.right) || accuracy(a) - accuracy(b))
-    .slice(0, n);
+    .slice(0, n)
+    .map((s) => ({ ...s, label: localizeSpotLabel(s.label) }));
 }
 
-export const describeBest = (s: Spot) => `Best play: ${ACTION_LABEL[s.best]}`;
+export const describeBest = (s: Spot) => `${tr('Best play', 'Mejor jugada')}: ${ACTION_LABEL[s.best]}`;
 
 // ---------- Targeted practice ----------
 

@@ -2,6 +2,8 @@
 // unlock as your chips grow, and player levels earned by playing well.
 // Chips are play money only: they can't be bought or cashed out.
 
+import { localized, tr } from '../i18n/lang';
+
 export const STARTING_CHIPS = 1000;
 
 export interface CasinoTable {
@@ -19,57 +21,88 @@ export interface CasinoTable {
   felt: string;
 }
 
+type TableText = Pick<CasinoTable, 'name' | 'blurb'>;
+
+/** A table whose name and blurb are getters that read the current language. */
+function table(base: Omit<CasinoTable, keyof TableText>, text: { en: TableText; es: TableText }): CasinoTable {
+  const t = localized(text);
+  return Object.defineProperties(base as CasinoTable, {
+    name: { get: () => t.name, enumerable: true },
+    blurb: { get: () => t.blurb, enumerable: true },
+  });
+}
+
 export const TABLES: CasinoTable[] = [
-  {
-    id: 'floor',
-    name: 'Main Floor',
-    blurb: 'Friendly $5 table by the slots. Everyone starts here.',
-    minBet: 5,
-    maxBet: 100,
-    unlockAt: 0,
-    chips: [5, 25, 100],
-    felt: '#0B5D3B',
-  },
-  {
-    id: 'downtown',
-    name: 'Downtown',
-    blurb: 'Busier crowd, $25 minimum.',
-    minBet: 25,
-    maxBet: 500,
-    unlockAt: 2500,
-    chips: [25, 100, 500],
-    felt: '#123F6B',
-  },
-  {
-    id: 'strip',
-    name: 'The Strip',
-    blurb: 'Bright lights and $100 hands.',
-    minBet: 100,
-    maxBet: 2000,
-    unlockAt: 10000,
-    chips: [100, 500, 1000],
-    felt: '#6B1530',
-  },
-  {
-    id: 'highlimit',
-    name: 'High Limit Room',
-    blurb: 'Quiet, roped off, $500 a hand.',
-    minBet: 500,
-    maxBet: 10000,
-    unlockAt: 50000,
-    chips: [500, 1000, 5000],
-    felt: '#3D1F5C',
-  },
-  {
-    id: 'salon',
-    name: 'Private Salon',
-    blurb: 'By invitation only. $2,500 minimum.',
-    minBet: 2500,
-    maxBet: 50000,
-    unlockAt: 250000,
-    chips: [1000, 5000, 25000],
-    felt: '#1F1F1F',
-  },
+  table(
+    {
+      id: 'floor',
+      minBet: 5,
+      maxBet: 100,
+      unlockAt: 0,
+      chips: [5, 25, 100],
+      felt: '#0B5D3B',
+    },
+    {
+      en: { name: 'Main Floor', blurb: 'Friendly $5 table by the slots. Everyone starts here.' },
+      es: { name: 'Sala principal', blurb: 'Mesa amistosa de $5 junto a las tragamonedas. Todos empiezan aquí.' },
+    },
+  ),
+  table(
+    {
+      id: 'downtown',
+      minBet: 25,
+      maxBet: 500,
+      unlockAt: 2500,
+      chips: [25, 100, 500],
+      felt: '#123F6B',
+    },
+    {
+      en: { name: 'Downtown', blurb: 'Busier crowd, $25 minimum.' },
+      es: { name: 'Centro', blurb: 'Más gente, mínimo de $25.' },
+    },
+  ),
+  table(
+    {
+      id: 'strip',
+      minBet: 100,
+      maxBet: 2000,
+      unlockAt: 10000,
+      chips: [100, 500, 1000],
+      felt: '#6B1530',
+    },
+    {
+      en: { name: 'The Strip', blurb: 'Bright lights and $100 hands.' },
+      es: { name: 'El Strip', blurb: 'Luces brillantes y manos de $100.' },
+    },
+  ),
+  table(
+    {
+      id: 'highlimit',
+      minBet: 500,
+      maxBet: 10000,
+      unlockAt: 50000,
+      chips: [500, 1000, 5000],
+      felt: '#3D1F5C',
+    },
+    {
+      en: { name: 'High Limit Room', blurb: 'Quiet, roped off, $500 a hand.' },
+      es: { name: 'Sala de límites altos', blurb: 'Tranquila, acordonada, $500 por mano.' },
+    },
+  ),
+  table(
+    {
+      id: 'salon',
+      minBet: 2500,
+      maxBet: 50000,
+      unlockAt: 250000,
+      chips: [1000, 5000, 25000],
+      felt: '#1F1F1F',
+    },
+    {
+      en: { name: 'Private Salon', blurb: 'By invitation only. $2,500 minimum.' },
+      es: { name: 'Salón privado', blurb: 'Solo con invitación. Mínimo de $2,500.' },
+    },
+  ),
 ];
 
 export function getTable(id: string): CasinoTable {
@@ -155,17 +188,18 @@ export const XP_PER_CORRECT = 5;
 /** Total XP needed to reach a level: 0, 100, 300, 600, 1000, ... */
 export const xpForLevel = (level: number) => 50 * (level - 1) * level;
 
-const TITLES: [number, string][] = [
-  [1, 'Rookie'],
-  [3, 'Regular'],
-  [5, 'Card Sharp'],
-  [8, 'Counter'],
-  [12, 'Advantage Player'],
-  [16, 'Legend'],
+const TITLES: [number, string, string][] = [
+  [1, 'Rookie', 'Novato'],
+  [3, 'Regular', 'Habitual'],
+  [5, 'Card Sharp', 'Tahúr'],
+  [8, 'Counter', 'Contador'],
+  [12, 'Advantage Player', 'Jugador con ventaja'],
+  [16, 'Legend', 'Leyenda'],
 ];
 
 export function titleFor(level: number): string {
-  return [...TITLES].reverse().find(([min]) => level >= min)![1];
+  const [, en, es] = [...TITLES].reverse().find(([min]) => level >= min)!;
+  return tr(en, es);
 }
 
 export interface LevelInfo {
