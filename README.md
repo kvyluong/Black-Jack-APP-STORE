@@ -33,19 +33,23 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Game feel** (inspired by Balatro): cards land with a bounce and sway gently while idle; wins pop up as big tilted text with a burst of chips, and the bankroll counts up with ticking; blackjacks, big wins and busts shake the table; a streak badge grows with every correct play and the chime climbs in pitch. In the browser, cards also tilt toward your mouse and the felt slowly swirls. Effects can be turned off in Settings ("Big effects") and respect Reduce Motion.
 - **Strategy chart**: generated from the same engine as the coach, so it always matches your table rules.
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
+- **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the banner and the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Optional bonus-chip videos stay, since players choose to watch those. Development builds without a store simulate the purchase.
+- **English and Spanish**: everything, including the lessons, coach explanations, Academy stories and spoken counts, is in both languages. The app follows the phone's language, or players pick one in Settings.
 - **Ads**: an anchored adaptive banner, plus an interstitial shown only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
 
 ## Test it in a browser (Windows, Mac, anything)
 
-`html/blackjack-coach.html` is the whole app in one file. Download it and double-click it: no install, no server. It has every lesson, the practice table, drills, chart and settings, and saves progress in your browser. Ads appear as labelled placeholders (a banner strip, and an interstitial preview every 10 hands / 3 minutes) so you can judge how they feel.
+`html/blackjack-coach.html` is the whole app in one file, built from the same code as the phone app. Download it and double-click it: no install, no server. Progress saves in your browser. Ads and the Remove ads purchase are phone-only, so they don't appear.
 
-Desktop extras: keyboard shortcuts at the table and in the strategy drill (H hit, S stand, D double, P split, R surrender, Enter to deal / next hand).
+Desktop extras: keyboard shortcuts at the table (H hit, S stand, D double, P split, R surrender, Enter to deal / next hand).
 
-It is built from the same `src/engine` and `src/content` code as the phone app, so advice and rules always match. After changing either, rebuild it with:
+Rebuild it after changing the app:
 
 ```bash
-npm run build:html
+npm run build:web
 ```
+
+This runs `expo export --platform web` and folds the result into one file (`scripts/build-web.mjs`): sounds and images are inlined, and the current screen is kept in the address bar's `#` part (e.g. `blackjack-coach.html#/tables`) because browsers don't let a file opened from disk change its path. The same file works as the website demo.
 
 ## Project layout
 
@@ -57,10 +61,13 @@ src/
   content/        Lesson text and quizzes
   components/     Cards, hands, buttons and layout
   audio/          Sound effect playback (expo-audio)
+  components/table/  Pieces of the table screen (felt, betting panel, turn controls, count quiz)
   ads/            AdMob setup, banner, interstitial frequency cap (web stub for previews)
+  purchases/      The Remove ads in-app purchase (expo-iap; web stub)
+  i18n/           Language setting and localized() text helper (English / Spanish)
   state/          Saved settings, bankroll and progress (AsyncStorage)
-web-html/         UI for the single-file HTML build (reuses src/engine and src/content)
-scripts/          build-html.mjs bundles web-html into html/blackjack-coach.html;
+locales/          Localized app name for the stores
+scripts/          build-web.mjs builds html/blackjack-coach.html from the app;
                   make-sounds.py synthesizes assets/sounds/*.wav (no licensed audio)
 html/             The built single-file HTML app
 ```
@@ -73,6 +80,7 @@ The engine has no React dependencies, so it is easy to test and reuse.
 npm install
 npm test            # engine unit tests
 npm run typecheck
+npm run lint
 npx expo start      # dev server
 ```
 
@@ -85,19 +93,21 @@ Development builds always use Google's test ad units.
 ## Before you publish
 
 1. **Pick your app ID.** Replace `com.REPLACE_ME.blackjackcoach` in `app.json` (`ios.bundleIdentifier` and `android.package`).
-2. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
+2. **Remove ads product.** In App Store Connect and the Google Play Console, create a non-consumable in-app product with the ID `remove_ads` (or change `extra.iap.removeAds` in `app.json`), and set its price ($2.99–$4.99 is typical). Test with a sandbox account (iOS) or a license tester (Android) on a development build.
+3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
    - Put the **app IDs** in `app.json` under the `react-native-google-mobile-ads` plugin (`androidAppId`, `iosAppId`). They are currently Google's sample IDs.
    - Put the **ad unit IDs** (banner, interstitial and rewarded for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
    - In AdMob, set up a GDPR consent message (Privacy & messaging) and, for iOS, an IDFA explainer message so the ATT prompt shows.
    - Publish an `app-ads.txt` on your developer website.
-3. **Art.** Replace the placeholder icons and splash image in `assets/`.
-4. **Privacy policy.** Both stores require a privacy policy URL, and AdMob collects device identifiers. Fill in Google Play's Data safety form and Apple's App Privacy labels to match (advertising data, device ID, diagnostics).
-5. **Build and submit** with EAS:
+4. **Art.** Replace the placeholder icons and splash image in `assets/`.
+5. **Privacy policy.** Both stores require a privacy policy URL, and AdMob collects device identifiers. Fill in Google Play's Data safety form and Apple's App Privacy labels to match (advertising data, device ID, diagnostics).
+6. **Build and submit** with EAS:
    ```bash
    npx eas-cli@latest build --platform all --profile production
    npx eas-cli@latest submit --platform all
    ```
    You need an Apple Developer account ($99/year) and a Google Play developer account ($25 one-time).
+7. **Spanish store listings.** Add a Spanish description and screenshots in both stores so Spanish-speaking players find the app.
 
 ## App store policy notes
 
@@ -108,7 +118,6 @@ Development builds always use Google's test ad units.
 
 ## Ideas for next steps
 
-- "Remove ads" in-app purchase
 - Daily practice streaks and achievements
 - More counting systems (KO, Hi-Opt I) and a full Illustrious 18 / Fab 4 trainer
 - Bet-spread and bankroll simulator

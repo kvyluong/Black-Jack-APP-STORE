@@ -71,6 +71,10 @@
       "iap": {
         "removeAds": "remove_ads"
       }
+    },
+    "locales": {
+      "en": "./locales/en.json",
+      "es": "./locales/es.json"
     }
   }
 }
