@@ -12,10 +12,48 @@ import {
   modesFor,
 } from '../../engine/academy';
 import { localDay } from '../../engine/progression';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
 
 const PREFS: LearningPreference[] = ['see', 'hear', 'do', 'read', 'mix'];
+
+const T = localized({
+  en: {
+    intro: 'Five ways to learn the Hi-Lo count. Start with the style you enjoy, then mix them.',
+    howLearn: 'How do you like to learn?',
+    prefNote:
+      'Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses several.',
+    workoutTitle: 'Today’s workout',
+    streak: (n: number) => `🔥 ${n}-day streak`,
+    startStreak: 'Start a streak',
+    workoutNote: 'Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.',
+    goAgain: 'Done for today. Go again',
+    startWorkout: 'Start workout',
+    allExercises: 'All exercises',
+    level: (n: number, max: number) => `Lv ${n}/${max}`,
+    levelA11y: (n: number, max: number) => `Level ${n} of ${max}`,
+    due: ' · due for review',
+    why: (w: string) => `Why it works: ${w}`,
+  },
+  es: {
+    intro: 'Cinco formas de aprender el conteo Hi-Lo. Empieza con el estilo que más te guste y luego combínalos.',
+    howLearn: '¿Cómo te gusta aprender?',
+    prefNote:
+      'Tu elección solo define qué ejercicios salen primero. Las investigaciones muestran que todos aprendemos mejor combinando, por eso el entrenamiento diario usa varios.',
+    workoutTitle: 'Entrenamiento de hoy',
+    streak: (n: number) => `🔥 Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
+    startStreak: 'Empieza una racha',
+    workoutNote: 'Tres ejercicios cortos, mezclados. Unos minutos al día valen más que una sesión larga: espaciar la práctica ayuda a recordar.',
+    goAgain: 'Listo por hoy. Otra vez',
+    startWorkout: 'Empezar entrenamiento',
+    allExercises: 'Todos los ejercicios',
+    level: (n: number, max: number) => `Nv ${n}/${max}`,
+    levelA11y: (n: number, max: number) => `Nivel ${n} de ${max}`,
+    due: ' · toca repasar',
+    why: (w: string) => `Por qué funciona: ${w}`,
+  },
+});
 
 /** Counting Academy hub: pick how you like to learn, do today's workout, or any mode. */
 export default function Academy() {
@@ -30,10 +68,10 @@ export default function Academy() {
 
   return (
     <Screen>
-      <P>Five ways to learn the Hi-Lo count. Start with the style you enjoy, then mix them.</P>
+      <P>{T.intro}</P>
 
       <Panel>
-        <Text style={styles.label}>How do you like to learn?</Text>
+        <Text style={styles.label}>{T.howLearn}</Text>
         <View style={styles.chips}>
           {PREFS.map((p) => (
             <Pressable
@@ -47,32 +85,27 @@ export default function Academy() {
             </Pressable>
           ))}
         </View>
-        <Text style={styles.small}>
-          Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses
-          several.
-        </Text>
+        <Text style={styles.small}>{T.prefNote}</Text>
       </Panel>
 
       <Panel style={styles.workout}>
         <View style={styles.row}>
-          <Text style={styles.workoutTitle}>Today’s workout</Text>
-          <Text style={styles.streak}>{academy.streak > 0 ? `🔥 ${academy.streak}-day streak` : 'Start a streak'}</Text>
+          <Text style={styles.workoutTitle}>{T.workoutTitle}</Text>
+          <Text style={styles.streak}>{academy.streak > 0 ? T.streak(academy.streak) : T.startStreak}</Text>
         </View>
-        <Text style={styles.small}>
-          Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.
-        </Text>
+        <Text style={styles.small}>{T.workoutNote}</Text>
         {workout.map((id, k) => (
           <Text key={id} style={styles.step}>
             {k + 1}. {MODES.find((m) => m.id === id)!.title}
           </Text>
         ))}
         <Button
-          title={doneToday ? 'Done for today. Go again' : 'Start workout'}
+          title={doneToday ? T.goAgain : T.startWorkout}
           onPress={() => router.push({ pathname: '/academy/[mode]', params: { mode: workout[0], workout: workout.join(','), step: '0' } })}
         />
       </Panel>
 
-      <H2>All exercises</H2>
+      <H2>{T.allExercises}</H2>
       {modesFor(pref).map((m) => {
         const p = academy.progress[m.id];
         const due = isDue(p, today) && (p?.played ?? 0) > 0;
@@ -86,16 +119,16 @@ export default function Academy() {
             <View style={{ flex: 1, gap: 3 }}>
               <View style={styles.row}>
                 <Text style={styles.modeTitle}>{m.title}</Text>
-                <Text style={styles.level}>
-                  Lv {p?.level ?? 1}/{MAX_LEVEL}
+                <Text style={styles.level} accessibilityLabel={T.levelA11y(p?.level ?? 1, MAX_LEVEL)}>
+                  {T.level(p?.level ?? 1, MAX_LEVEL)}
                 </Text>
               </View>
               <Text style={styles.forWho}>
                 {m.forWho}
-                {due ? ' · due for review' : ''}
+                {due ? T.due : ''}
               </Text>
               <Text style={styles.how}>{m.how}</Text>
-              <Text style={styles.why}>Why it works: {m.why}</Text>
+              <Text style={styles.why}>{T.why(m.why)}</Text>
             </View>
           </Pressable>
         );

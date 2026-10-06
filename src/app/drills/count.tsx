@@ -6,26 +6,79 @@ import { Button, P, Panel, Screen, Segmented } from '../../components/ui';
 import { Card } from '../../engine/cards';
 import { runningCount } from '../../engine/counting';
 import { countDrillCards } from '../../engine/drills';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
 
 type Phase = 'setup' | 'running' | 'answer' | 'result';
 
-const SPEEDS = [
-  { label: 'Slow', value: 1500 },
-  { label: 'Medium', value: 1000 },
-  { label: 'Fast', value: 600 },
-  { label: 'Pro', value: 350 },
-];
-const LENGTHS = [
-  { label: '10 cards', value: 10 },
-  { label: '20 cards', value: 20 },
-  { label: 'Full deck', value: 52 },
-];
+const T = localized({
+  en: {
+    intro: 'Keep the Hi-Lo running count as the cards flash by: +1 for 2–6, 0 for 7–9, −1 for 10s and Aces.',
+    speed: 'Speed',
+    slow: 'Slow',
+    medium: 'Medium',
+    fast: 'Fast',
+    pro: 'Pro',
+    length: 'Length',
+    cards: (n: number) => `${n} cards`,
+    fullDeck: 'Full deck',
+    perFlash: 'Cards at a time',
+    one: 'One',
+    two: 'Two (cancel pairs)',
+    start: 'Start',
+    stop: 'Stop',
+    question: 'What’s the running count?',
+    guess: (n: string) => `Your guess: ${n}`,
+    check: 'Check',
+    perfect: '✓ Perfect count!',
+    wrong: (n: string) => `✗ The count was ${n}`,
+    review: 'Here’s every card with its tag:',
+    again: 'Try again',
+    change: 'Change settings',
+  },
+  es: {
+    intro: 'Lleva el conteo continuo Hi-Lo mientras pasan las cartas: +1 para 2–6, 0 para 7–9, −1 para los 10 y los Ases.',
+    speed: 'Velocidad',
+    slow: 'Lenta',
+    medium: 'Media',
+    fast: 'Rápida',
+    pro: 'Pro',
+    length: 'Duración',
+    cards: (n: number) => `${n} cartas`,
+    fullDeck: 'Baraja completa',
+    perFlash: 'Cartas a la vez',
+    one: 'Una',
+    two: 'Dos (se anulan en pareja)',
+    start: 'Empezar',
+    stop: 'Detener',
+    question: '¿Cuál es el conteo continuo?',
+    guess: (n: string) => `Tu respuesta: ${n}`,
+    check: 'Comprobar',
+    perfect: '✓ ¡Conteo perfecto!',
+    wrong: (n: string) => `✗ El conteo era ${n}`,
+    review: 'Aquí está cada carta con su valor:',
+    again: 'Intentar de nuevo',
+    change: 'Cambiar ajustes',
+  },
+});
+
+const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 
 export default function CountDrill() {
   const { updateStats } = useSettings();
+  const speeds = [
+    { label: T.slow, value: 1500 },
+    { label: T.medium, value: 1000 },
+    { label: T.fast, value: 600 },
+    { label: T.pro, value: 350 },
+  ];
+  const lengths = [
+    { label: T.cards(10), value: 10 },
+    { label: T.cards(20), value: 20 },
+    { label: T.fullDeck, value: 52 },
+  ];
   const { good, bad } = useOutcomeColors();
   const [phase, setPhase] = useState<Phase>('setup');
   const [speed, setSpeed] = useState(1000);
@@ -74,16 +127,16 @@ export default function CountDrill() {
     <Screen>
       {phase === 'setup' && (
         <>
-          <P>Keep the Hi-Lo running count as the cards flash by: +1 for 2–6, 0 for 7–9, −1 for 10s and Aces.</P>
+          <P>{T.intro}</P>
           <Panel>
-            <Text style={styles.label}>Speed</Text>
-            <Segmented options={SPEEDS} value={speed} onChange={setSpeed} />
-            <Text style={styles.label}>Length</Text>
-            <Segmented options={LENGTHS} value={length} onChange={setLength} />
-            <Text style={styles.label}>Cards at a time</Text>
-            <Segmented options={[{ label: 'One', value: 1 }, { label: 'Two (cancel pairs)', value: 2 }]} value={perFlash} onChange={setPerFlash} />
+            <Text style={styles.label}>{T.speed}</Text>
+            <Segmented options={speeds} value={speed} onChange={setSpeed} />
+            <Text style={styles.label}>{T.length}</Text>
+            <Segmented options={lengths} value={length} onChange={setLength} />
+            <Text style={styles.label}>{T.perFlash}</Text>
+            <Segmented options={[{ label: T.one, value: 1 }, { label: T.two, value: 2 }]} value={perFlash} onChange={setPerFlash} />
           </Panel>
-          <Button title="Start" onPress={start} />
+          <Button title={T.start} onPress={start} />
         </>
       )}
 
@@ -97,40 +150,39 @@ export default function CountDrill() {
           <Text style={styles.progress}>
             {Math.min(index + perFlash, cards.length)} / {cards.length}
           </Text>
-          <Button title="Stop" variant="ghost" onPress={() => { clearTimer(); setPhase('setup'); }} />
+          <Button title={T.stop} variant="ghost" onPress={() => { clearTimer(); setPhase('setup'); }} />
         </View>
       )}
 
       {(phase === 'answer' || phase === 'result') && (
         <>
           <Panel>
-            <Text style={styles.prompt}>What’s the running count?</Text>
+            <Text style={styles.prompt}>{T.question}</Text>
             <View style={styles.stepper}>
               <Button title="−" variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess - 1)} style={styles.step} />
-              <Text style={styles.guess}>
-                {guess > 0 ? '+' : ''}
-                {guess}
+              <Text style={styles.guess} accessibilityLabel={T.guess(signed(guess))}>
+                {signed(guess)}
               </Text>
               <Button title="+" variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess + 1)} style={styles.step} />
             </View>
-            {phase === 'answer' && <Button title="Check" onPress={check} />}
+            {phase === 'answer' && <Button title={T.check} onPress={check} />}
           </Panel>
 
           {phase === 'result' && (
             <>
               <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
                 <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 18 }}>
-                  {ok ? '✓ Perfect count!' : `✗ The count was ${actual > 0 ? '+' : ''}${actual}`}
+                  {ok ? T.perfect : T.wrong(signed(actual))}
                 </Text>
-                <Text style={styles.label}>Here’s every card with its tag:</Text>
+                <Text style={styles.label}>{T.review}</Text>
                 <View style={styles.review}>
                   {cards.map((c, i) => (
                     <PlayingCard key={i} card={c} size="sm" showTag />
                   ))}
                 </View>
               </Panel>
-              <Button title="Try again" onPress={start} />
-              <Button title="Change settings" variant="ghost" onPress={() => setPhase('setup')} />
+              <Button title={T.again} onPress={start} />
+              <Button title={T.change} variant="ghost" onPress={() => setPhase('setup')} />
             </>
           )}
         </>

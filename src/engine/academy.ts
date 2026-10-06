@@ -4,6 +4,7 @@
 import { Card, Rank, Rng, createShoe } from './cards';
 import { hiLoValue } from './counting';
 import { localDay } from './progression';
+import { localized } from '../i18n/lang';
 
 export type LearningPreference = 'see' | 'hear' | 'do' | 'read' | 'mix';
 
@@ -21,56 +22,115 @@ export interface ModeInfo {
   preference: Exclude<LearningPreference, 'mix'>;
 }
 
-export const MODES: ModeInfo[] = [
-  {
-    id: 'colorCount',
-    title: 'See it: Color Count',
-    forWho: 'For visual learners',
-    how: 'Cards glow green (+1), gray (0) or red (−1) while a meter tracks the count. The hints fade as you level up.',
-    why: 'Pairs words with pictures (dual coding), then removes the support so you rely on memory.',
-    preference: 'see',
+const MODE_TEXT = localized<Record<AcademyMode, Pick<ModeInfo, 'title' | 'forWho' | 'how' | 'why'>>>({
+  en: {
+    colorCount: {
+      title: 'See it: Color Count',
+      forWho: 'For visual learners',
+      how: 'Cards glow green (+1), gray (0) or red (−1) while a meter tracks the count. The hints fade as you level up.',
+      why: 'Pairs words with pictures (dual coding), then removes the support so you rely on memory.',
+    },
+    soundCount: {
+      title: 'Hear it: Sound Count',
+      forWho: 'For people who learn by listening',
+      how: 'Each card plays a sound: a high pip for +1, a click for 0, a low pip for −1. Early levels also say the count out loud.',
+      why: 'Links each tag to a sound, and trains you to count without staring at a screen.',
+    },
+    tagTap: {
+      title: 'Do it: Tag Tap',
+      forWho: 'For hands-on learners',
+      how: 'A card appears. Tap −1, 0 or +1 before time runs out. The clock gets faster each level.',
+      why: 'Every card is a tiny quiz (retrieval practice), so the tags become automatic.',
+    },
+    pairCancel: {
+      title: 'Chunk it: Pair Cancel',
+      forWho: 'For everyone who wants speed',
+      how: 'Cards come in pairs, then threes and fours. Call each group’s total in one go: a King and a 5 cancel to 0.',
+      why: 'Grouping cards into chunks is how fast counters work: fewer things to keep in your head.',
+    },
+    readCount: {
+      title: 'Read it: Count Story',
+      forWho: 'For readers',
+      how: 'A short written scene describes a round at the table. Read it and work out the running count.',
+      why: 'Turns the count into words you process slowly and precisely, a good first step before speed.',
+    },
   },
-  {
-    id: 'soundCount',
-    title: 'Hear it: Sound Count',
-    forWho: 'For people who learn by listening',
-    how: 'Each card plays a sound: a high pip for +1, a click for 0, a low pip for −1. Early levels also say the count out loud.',
-    why: 'Links each tag to a sound, and trains you to count without staring at a screen.',
-    preference: 'hear',
+  es: {
+    colorCount: {
+      title: 'Míralo: Conteo por colores',
+      forWho: 'Para quienes aprenden viendo',
+      how: 'Las cartas brillan en verde (+1), gris (0) o rojo (−1) mientras un medidor lleva el conteo. Las pistas desaparecen al subir de nivel.',
+      why: 'Une palabras con imágenes (codificación dual) y luego quita la ayuda para que uses tu memoria.',
+    },
+    soundCount: {
+      title: 'Escúchalo: Conteo por sonido',
+      forWho: 'Para quienes aprenden escuchando',
+      how: 'Cada carta suena: un tono agudo para +1, un clic para 0, un tono grave para −1. En los primeros niveles también se dice el conteo en voz alta.',
+      why: 'Asocia cada valor con un sonido y te entrena para contar sin mirar la pantalla.',
+    },
+    tagTap: {
+      title: 'Hazlo: Toca el valor',
+      forWho: 'Para quienes aprenden haciendo',
+      how: 'Aparece una carta. Toca −1, 0 o +1 antes de que se acabe el tiempo. El reloj va más rápido en cada nivel.',
+      why: 'Cada carta es un mini examen (práctica de recuperación), así los valores se vuelven automáticos.',
+    },
+    pairCancel: {
+      title: 'Agrúpalo: Parejas que se anulan',
+      forWho: 'Para todos los que quieren velocidad',
+      how: 'Las cartas salen en parejas, luego de tres y de cuatro. Di el total de cada grupo de una vez: un Rey y un 5 se anulan y dan 0.',
+      why: 'Agrupar cartas es lo que hacen los contadores rápidos: menos cosas que recordar.',
+    },
+    readCount: {
+      title: 'Léelo: Historia de conteo',
+      forWho: 'Para lectores',
+      how: 'Una escena corta describe una ronda en la mesa. Léela y calcula el conteo continuo.',
+      why: 'Convierte el conteo en palabras que procesas con calma y precisión, un buen primer paso antes de la velocidad.',
+    },
   },
-  {
-    id: 'tagTap',
-    title: 'Do it: Tag Tap',
-    forWho: 'For hands-on learners',
-    how: 'A card appears. Tap −1, 0 or +1 before time runs out. The clock gets faster each level.',
-    why: 'Every card is a tiny quiz (retrieval practice), so the tags become automatic.',
-    preference: 'do',
-  },
-  {
-    id: 'pairCancel',
-    title: 'Chunk it: Pair Cancel',
-    forWho: 'For everyone who wants speed',
-    how: 'Cards come in pairs, then threes and fours. Call each group’s total in one go: a King and a 5 cancel to 0.',
-    why: 'Grouping cards into chunks is how fast counters work: fewer things to keep in your head.',
-    preference: 'do',
-  },
-  {
-    id: 'readCount',
-    title: 'Read it: Count Story',
-    forWho: 'For readers',
-    how: 'A short written scene describes a round at the table. Read it and work out the running count.',
-    why: 'Turns the count into words you process slowly and precisely, a good first step before speed.',
-    preference: 'read',
-  },
+});
+
+const MODE_ORDER: [AcademyMode, ModeInfo['preference']][] = [
+  ['colorCount', 'see'],
+  ['soundCount', 'hear'],
+  ['tagTap', 'do'],
+  ['pairCancel', 'do'],
+  ['readCount', 'read'],
 ];
 
-export const PREFERENCE_LABEL: Record<LearningPreference, string> = {
-  see: 'Seeing it',
-  hear: 'Hearing it',
-  do: 'Doing it',
-  read: 'Reading it',
-  mix: 'A bit of everything',
-};
+/** Every mode. The text fields follow the current language. */
+export const MODES: ModeInfo[] = MODE_ORDER.map(([id, preference]) => ({
+  id,
+  get title() {
+    return MODE_TEXT[id].title;
+  },
+  get forWho() {
+    return MODE_TEXT[id].forWho;
+  },
+  get how() {
+    return MODE_TEXT[id].how;
+  },
+  get why() {
+    return MODE_TEXT[id].why;
+  },
+  preference,
+}));
+
+export const PREFERENCE_LABEL: Record<LearningPreference, string> = localized({
+  en: {
+    see: 'Seeing it',
+    hear: 'Hearing it',
+    do: 'Doing it',
+    read: 'Reading it',
+    mix: 'A bit of everything',
+  },
+  es: {
+    see: 'Viendo',
+    hear: 'Escuchando',
+    do: 'Haciendo',
+    read: 'Leyendo',
+    mix: 'Un poco de todo',
+  },
+});
 
 /** Modes ordered so the ones matching your preference come first. */
 export function modesFor(pref: LearningPreference): ModeInfo[] {
@@ -189,22 +249,54 @@ export function groupChoices(size: number): number[] {
 
 // ---------- Count Story ----------
 
-const RANK_WORD: Record<Rank, string> = {
-  A: 'an Ace',
-  '2': 'a 2',
-  '3': 'a 3',
-  '4': 'a 4',
-  '5': 'a 5',
-  '6': 'a 6',
-  '7': 'a 7',
-  '8': 'an 8',
-  '9': 'a 9',
-  '10': 'a 10',
-  J: 'a Jack',
-  Q: 'a Queen',
-  K: 'a King',
-};
-const NAMES = ['Maria', 'Big Tony', 'Priya', 'Hank', 'Mei', 'Oscar'];
+const STORY = localized({
+  en: {
+    rank: {
+      A: 'an Ace',
+      '2': 'a 2',
+      '3': 'a 3',
+      '4': 'a 4',
+      '5': 'a 5',
+      '6': 'a 6',
+      '7': 'a 7',
+      '8': 'an 8',
+      '9': 'a 9',
+      '10': 'a 10',
+      J: 'a Jack',
+      Q: 'a Queen',
+      K: 'a King',
+    } as Record<Rank, string>,
+    names: ['Maria', 'Big Tony', 'Priya', 'Hank', 'Mei', 'Oscar'],
+    dealt: (n: string, a: string, b: string) => `${n} is dealt ${a} and ${b}.`,
+    shows: (c: string) => `The dealer shows ${c}.`,
+    stands: (n: string) => `${n} stands.`,
+    hits: (n: string, cards: string[]) => `${n} hits and gets ${cards.join(', then ')}.`,
+    turns: (hole: string, draws: string[]) => `The dealer turns over ${hole}${draws.length ? ` and draws ${draws.join(' and ')}` : ''}.`,
+  },
+  es: {
+    rank: {
+      A: 'un As',
+      '2': 'un 2',
+      '3': 'un 3',
+      '4': 'un 4',
+      '5': 'un 5',
+      '6': 'un 6',
+      '7': 'un 7',
+      '8': 'un 8',
+      '9': 'un 9',
+      '10': 'un 10',
+      J: 'una Jota',
+      Q: 'una Reina',
+      K: 'un Rey',
+    },
+    names: ['María', 'Tony el Grande', 'Priya', 'Hank', 'Mei', 'Óscar'],
+    dealt: (n: string, a: string, b: string) => `${n} recibe ${a} y ${b}.`,
+    shows: (c: string) => `El crupier muestra ${c}.`,
+    stands: (n: string) => `${n} se planta.`,
+    hits: (n: string, cards: string[]) => `${n} pide y recibe ${cards.join(', luego ')}.`,
+    turns: (hole: string, draws: string[]) => `El crupier voltea ${hole}${draws.length ? ` y saca ${draws.join(' y ')}` : ''}.`,
+  },
+});
 
 export interface Story {
   lines: string[];
@@ -222,24 +314,23 @@ export function countStory(level: number, rng: Rng = Math.random): Story {
   let i = 0;
   const next = () => deck[i++];
   const lines: string[] = [];
-  const names = NAMES.slice(0, players);
-  const firsts = names.map((n) => [next(), next()] as Card[]);
+  const word = (c: Card) => STORY.rank[c.rank];
+  const names = STORY.names.slice(0, players);
+  const firsts = names.map(() => [next(), next()] as Card[]);
   const up = next();
-  names.forEach((n, k) => lines.push(`${n} is dealt ${RANK_WORD[firsts[k][0].rank]} and ${RANK_WORD[firsts[k][1].rank]}.`));
-  lines.push(`The dealer shows ${RANK_WORD[up.rank]}.`);
+  names.forEach((n, k) => lines.push(STORY.dealt(n, word(firsts[k][0]), word(firsts[k][1]))));
+  lines.push(STORY.shows(word(up)));
   names.forEach((n) => {
     const hits = Math.floor(rng() * (level >= 3 ? 3 : 2));
-    if (hits === 0) lines.push(`${n} stands.`);
+    if (hits === 0) lines.push(STORY.stands(n));
     else {
       const drawn = Array.from({ length: hits }, next);
-      lines.push(`${n} hits and gets ${drawn.map((c) => RANK_WORD[c.rank]).join(', then ')}.`);
+      lines.push(STORY.hits(n, drawn.map(word)));
     }
   });
   const hole = next();
   const dealerHits = level >= 2 ? Array.from({ length: Math.floor(rng() * 2) + 1 }, next) : [];
-  lines.push(
-    `The dealer turns over ${RANK_WORD[hole.rank]}${dealerHits.length ? ` and draws ${dealerHits.map((c) => RANK_WORD[c.rank]).join(' and ')}` : ''}.`,
-  );
+  lines.push(STORY.turns(word(hole), dealerHits.map(word)));
   const cards = deck.slice(0, i);
   return { lines, cards, answer: cards.reduce((s, c) => s + tagOf(c), 0) };
 }

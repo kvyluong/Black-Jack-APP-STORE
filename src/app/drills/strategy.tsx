@@ -11,9 +11,33 @@ import { strategyQuestion } from '../../engine/drills';
 import { CATEGORY_INFO, LeakCategory, focusedQuestion, recordDecision } from '../../engine/leaks';
 import { streakPitch } from '../../engine/juice';
 import { ACTION_LABEL, Action, recommend } from '../../engine/strategy';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
+
+const T = localized({
+  en: {
+    correctOf: (right: number, total: number) => `${right}/${total} correct`,
+    streak: (streak: number, best: number) => `Streak ${streak} · Best ${best}`,
+    drillTitle: (category: string) => `Drill: ${category}`,
+    dealerShows: 'Dealer shows',
+    you: 'You',
+    correct: '✓ Correct',
+    best: (action: string) => `✗ The best play is ${action}`,
+    next: 'Next hand',
+  },
+  es: {
+    correctOf: (right: number, total: number) => `${right}/${total} correctas`,
+    streak: (streak: number, best: number) => `Racha ${streak} · Mejor ${best}`,
+    drillTitle: (category: string) => `Ejercicio: ${category}`,
+    dealerShows: 'El crupier muestra',
+    you: 'Tú',
+    correct: '✓ Correcto',
+    best: (action: string) => `✗ La mejor jugada es ${action}`,
+    next: 'Siguiente mano',
+  },
+});
 
 export default function StrategyDrill() {
   const { settings, stats, updateStats } = useSettings();
@@ -63,21 +87,19 @@ export default function StrategyDrill() {
     <Screen>
       <View style={styles.scoreRow}>
         <Text style={styles.score}>
-          {score.right}/{score.total} correct
+          {T.correctOf(score.right, score.total)}
         </Text>
-        <Text style={styles.score}>
-          Streak {score.streak} · Best {Math.max(stats.bestStrategyStreak, score.streak)}
-        </Text>
+        <Text style={styles.score}>{T.streak(score.streak, Math.max(stats.bestStrategyStreak, score.streak))}</Text>
       </View>
 
-      {focus && focus in CATEGORY_INFO && <Stack.Screen options={{ title: `Drill: ${CATEGORY_INFO[focus].title}` }} />}
+      {focus && focus in CATEGORY_INFO && <Stack.Screen options={{ title: T.drillTitle(CATEGORY_INFO[focus].title) }} />}
       <StreakBadge streak={score.streak} />
 
       <View style={styles.table}>
-        <Text style={styles.label}>Dealer shows</Text>
+        <Text style={styles.label}>{T.dealerShows}</Text>
         <PlayingCard card={q.dealerUp} />
         <View style={{ height: spacing(2) }} />
-        <HandView cards={q.cards} label="You" />
+        <HandView cards={q.cards} label={T.you} />
       </View>
 
       <View style={styles.actions}>
@@ -95,10 +117,10 @@ export default function StrategyDrill() {
       {picked && (
         <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
           <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 17 }}>
-            {ok ? '✓ Correct' : `✗ The best play is ${ACTION_LABEL[advice.action]}`}
+            {ok ? T.correct : T.best(ACTION_LABEL[advice.action])}
           </Text>
           <Text style={styles.reason}>{advice.reason}</Text>
-          <Button title="Next hand" onPress={next} />
+          <Button title={T.next} onPress={next} />
         </Panel>
       )}
     </Screen>

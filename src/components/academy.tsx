@@ -19,6 +19,7 @@ import {
   visualHints,
 } from '../engine/academy';
 import { Card } from '../engine/cards';
+import { localized } from '../i18n/lang';
 import type { SoundName } from '../engine/dealSchedule';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing, tagColor, tagSymbol } from '../theme';
@@ -38,6 +39,63 @@ interface ModeProps {
   onFinish: (r: RoundResult) => void;
 }
 
+const T = localized({
+  en: {
+    prompt: 'What’s the running count?',
+    guessA11y: (n: string) => `Your count: ${n}`,
+    check: 'Check',
+    exact: '✓ Exactly right',
+    close: (n: string) => `Close: it was ${n}`,
+    wrong: (n: string) => `✗ it was ${n}`,
+    finish: 'Finish',
+    combo: (n: number) => `Combo ×${n}`,
+    perCard: (s: string) => `${s}s per card`,
+    timeLeft: 'Time left',
+    runningA11y: (n: number) => `Running count ${n}`,
+    colorMeta: (i: number, n: number, level: number, glow: boolean) =>
+      `Card ${i}/${n} · Level ${level}: ${glow ? 'color hints on' : 'no color hints'}`,
+    legendCb: 'Blue ▲ = +1 · Gray ● = 0 · Orange ▼ = −1',
+    legend: 'Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1',
+    soundMeta: (i: number, n: number, every: number | null, eyesFree: boolean) =>
+      `Card ${i}/${n} · ${every ? `Count spoken every ${every === 1 ? 'card' : `${every} cards`}` : 'No spoken count'}${eyesFree ? ' · Eyes-free' : ''}`,
+    soundLegend: 'High pip = +1 · Click = 0 · Low pip = −1. Turn your sound on.',
+    groupMeta: (i: number, n: number, size: number) => `Group ${i}/${n} · ${size === 2 ? 'Pairs' : `Groups of ${size}`}`,
+    groupWas: (n: string) => `That group is ${n}`,
+    groupTip: 'Tip: a high card and a low card cancel to 0. Count only what’s left.',
+    oneAtATime: 'One line at a time: keep the count as you read',
+    readAll: 'Read the round, then give the count',
+    nextLine: 'Next line',
+    haveCount: 'I have the count',
+  },
+  es: {
+    prompt: '¿Cuál es el conteo continuo?',
+    guessA11y: (n: string) => `Tu conteo: ${n}`,
+    check: 'Comprobar',
+    exact: '✓ ¡Exacto!',
+    close: (n: string) => `Casi: era ${n}`,
+    wrong: (n: string) => `✗ era ${n}`,
+    finish: 'Terminar',
+    combo: (n: number) => `Combo ×${n}`,
+    perCard: (s: string) => `${s} s por carta`,
+    timeLeft: 'Tiempo restante',
+    runningA11y: (n: number) => `Conteo continuo ${n}`,
+    colorMeta: (i: number, n: number, level: number, glow: boolean) =>
+      `Carta ${i}/${n} · Nivel ${level}: ${glow ? 'con pistas de color' : 'sin pistas de color'}`,
+    legendCb: 'Azul ▲ = +1 · Gris ● = 0 · Naranja ▼ = −1',
+    legend: 'Verde ▲ = +1 · Gris ● = 0 · Rojo ▼ = −1',
+    soundMeta: (i: number, n: number, every: number | null, eyesFree: boolean) =>
+      `Carta ${i}/${n} · ${every ? `Conteo en voz alta cada ${every === 1 ? 'carta' : `${every} cartas`}` : 'Sin conteo en voz alta'}${eyesFree ? ' · Sin mirar' : ''}`,
+    soundLegend: 'Tono agudo = +1 · Clic = 0 · Tono grave = −1. Activa el sonido.',
+    groupMeta: (i: number, n: number, size: number) => `Grupo ${i}/${n} · ${size === 2 ? 'Parejas' : `Grupos de ${size}`}`,
+    groupWas: (n: string) => `Ese grupo vale ${n}`,
+    groupTip: 'Consejo: una carta alta y una baja se anulan y dan 0. Cuenta solo lo que queda.',
+    oneAtATime: 'Una línea a la vez: lleva el conteo mientras lees',
+    readAll: 'Lee la ronda y luego da el conteo',
+    nextLine: 'Siguiente línea',
+    haveCount: 'Ya tengo el conteo',
+  },
+});
+
 const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
 const TAG_SOUND = (t: number): SoundName => (t > 0 ? 'tag_plus' : t < 0 ? 'tag_minus' : 'tag_zero');
 
@@ -56,15 +114,17 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
   const acc = countAccuracy(guess, actual);
   return (
     <Panel>
-      <Text style={styles.prompt}>What’s the running count?</Text>
+      <Text style={styles.prompt}>{T.prompt}</Text>
       <View style={styles.stepper}>
         <Button title="−" variant="ghost" disabled={checked} onPress={() => setGuess(guess - 1)} style={styles.step} />
-        <Text style={styles.guess}>{signed(guess)}</Text>
+        <Text style={styles.guess} accessibilityLabel={T.guessA11y(signed(guess))}>
+          {signed(guess)}
+        </Text>
         <Button title="+" variant="ghost" disabled={checked} onPress={() => setGuess(guess + 1)} style={styles.step} />
       </View>
       {!checked ? (
         <Button
-          title="Check"
+          title={T.check}
           onPress={() => {
             setChecked(true);
             if (settings.soundEffects) playSound(acc === 1 ? 'correct' : 'wrong');
@@ -73,14 +133,14 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
       ) : (
         <>
           <Text style={[styles.verdict, { color: acc === 1 ? oc.good : acc > 0 ? colors.warn : oc.bad }]}>
-            {acc === 1 ? '✓ Exactly right' : `${acc > 0 ? 'Close: ' : '✗ '}it was ${signed(actual)}`}
+            {acc === 1 ? T.exact : acc > 0 ? T.close(signed(actual)) : T.wrong(signed(actual))}
           </Text>
           <View style={styles.review}>
             {cards.map((c, i) => (
               <PlayingCard key={i} card={c} size="xs" showTag />
             ))}
           </View>
-          <Button title="Finish" onPress={() => onDone({ accuracy: acc, correct: Math.round(acc * cards.length * 0.5) })} />
+          <Button title={T.finish} onPress={() => onDone({ accuracy: acc, correct: Math.round(acc * cards.length * 0.5) })} />
         </>
       )}
     </Panel>
@@ -129,9 +189,9 @@ export function TagTap({ level, onFinish }: ModeProps) {
         <Text style={styles.meta}>
           {i + 1}/{cards.length}
         </Text>
-        <Text style={styles.meta}>{combo >= 3 ? `Combo ×${combo}` : `${seconds.toFixed(1)}s per card`}</Text>
+        <Text style={styles.meta}>{combo >= 3 ? T.combo(combo) : T.perCard(seconds.toFixed(1))}</Text>
       </View>
-      <View style={styles.track}>
+      <View style={styles.track} accessibilityLabel={T.timeLeft}>
         <Animated.View style={[styles.fill, { width: clock.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />
       </View>
       <View style={[styles.stage, flash === 'ok' && styles.ok, flash === 'no' && styles.no]}>
@@ -171,12 +231,10 @@ export function ColorCount({ level, onFinish }: ModeProps) {
   const tag = tagOf(cards[i]);
   return (
     <View style={{ gap: spacing(2) }}>
-      <Text style={styles.meta}>
-        Card {i + 1}/{cards.length} · Level {level}: {hints.glow ? 'color hints on' : 'no color hints'}
-      </Text>
+      <Text style={styles.meta}>{T.colorMeta(i + 1, cards.length, level, hints.glow)}</Text>
       <View style={styles.colorStage}>
         {hints.meter && (
-          <View style={styles.meter} accessibilityLabel={`Running count ${running}`}>
+          <View style={styles.meter} accessibilityLabel={T.runningA11y(running)}>
             <View style={[styles.meterFill, { height: `${50 + Math.max(-10, Math.min(10, running)) * 5}%`, backgroundColor: tagColor(running, cb) }]} />
             <Text style={styles.meterText}>{signed(running)}</Text>
           </View>
@@ -186,7 +244,7 @@ export function ColorCount({ level, onFinish }: ModeProps) {
         </View>
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        {cb ? 'Blue ▲ = +1 · Gray ● = 0 · Orange ▼ = −1' : 'Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1'}
+        {cb ? T.legendCb : T.legend}
       </P>
     </View>
   );
@@ -204,15 +262,12 @@ export function SoundCount({ level, onFinish }: ModeProps) {
   if (done) return <CountAnswer cards={cards} onDone={onFinish} />;
   return (
     <View style={{ gap: spacing(2) }}>
-      <Text style={styles.meta}>
-        Card {i + 1}/{cards.length} · {every ? `Count spoken every ${every === 1 ? 'card' : `${every} cards`}` : 'No spoken count'}
-        {eyesFree ? ' · Eyes-free' : ''}
-      </Text>
+      <Text style={styles.meta}>{T.soundMeta(i + 1, cards.length, every, eyesFree)}</Text>
       <View style={styles.stage}>
         <PlayingCard key={i} card={cards[i]} size="lg" faceDown={eyesFree} />
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        High pip = +1 · Click = 0 · Low pip = −1. Turn your sound on.
+        {T.soundLegend}
       </P>
     </View>
   );
@@ -248,22 +303,20 @@ export function PairCancel({ level, onFinish }: ModeProps) {
 
   return (
     <View style={{ gap: spacing(2) }}>
-      <Text style={styles.meta}>
-        Group {i + 1}/{groups.length} · {group.length === 2 ? 'Pairs' : `Groups of ${group.length}`}
-      </Text>
+      <Text style={styles.meta}>{T.groupMeta(i + 1, groups.length, group.length)}</Text>
       <View style={[styles.groupRow, shown && (shown.ok ? styles.ok : styles.no)]}>
         {group.map((c, k) => (
           <PlayingCard key={`${i}-${k}`} card={c} size="md" showTag={!!shown} />
         ))}
       </View>
-      {shown && !shown.ok && <Text style={[styles.verdict, { color: colors.bad }]}>That group is {signed(shown.value)}</Text>}
+      {shown && !shown.ok && <Text style={[styles.verdict, { color: colors.bad }]}>{T.groupWas(signed(shown.value))}</Text>}
       <View style={styles.tagButtons}>
         {choices.map((v) => (
           <Button key={v} title={signed(v)} variant="secondary" onPress={() => answer(v)} style={styles.choice} />
         ))}
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        Tip: a high card and a low card cancel to 0. Count only what’s left.
+        {T.groupTip}
       </P>
     </View>
   );
@@ -278,7 +331,7 @@ export function ReadCount({ level, onFinish }: ModeProps) {
   if (answering) return <CountAnswer cards={story.cards} onDone={onFinish} />;
   return (
     <View style={{ gap: spacing(2) }}>
-      <Text style={styles.meta}>{oneAtATime ? 'One line at a time: keep the count as you read' : 'Read the round, then give the count'}</Text>
+      <Text style={styles.meta}>{oneAtATime ? T.oneAtATime : T.readAll}</Text>
       <Panel style={styles.story}>
         {story.lines.map((l, k) => {
           const visible = oneAtATime ? k === line : true;
@@ -290,9 +343,9 @@ export function ReadCount({ level, onFinish }: ModeProps) {
         })}
       </Panel>
       {oneAtATime && line < story.lines.length - 1 ? (
-        <Button title="Next line" onPress={() => setLine(line + 1)} />
+        <Button title={T.nextLine} onPress={() => setLine(line + 1)} />
       ) : (
-        <Button title="I have the count" onPress={() => setAnswering(true)} />
+        <Button title={T.haveCount} onPress={() => setAnswering(true)} />
       )}
     </View>
   );

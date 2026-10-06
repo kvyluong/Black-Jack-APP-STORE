@@ -1,6 +1,9 @@
+import { spokenCount } from '../../audio/speak';
+import { setLang } from '../../i18n/lang';
 import { seededRng } from '../cards';
 import {
   MODES,
+  PREFERENCE_LABEL,
   REVIEW_INTERVALS,
   cardGroups,
   countStory,
@@ -76,5 +79,44 @@ describe('round content', () => {
     const words = s.lines.join(' ');
     expect(s.cards.length).toBeGreaterThan(5);
     expect(words).toMatch(/dealer shows/);
+  });
+});
+
+describe('Spanish', () => {
+  afterEach(() => setLang('en'));
+
+  it('writes the count story in Spanish with no English words', () => {
+    setLang('es');
+    const s = countStory(4, seededRng(9));
+    const text = s.lines.join(' ');
+    expect(text).toMatch(/El crupier muestra/);
+    expect(text).not.toMatch(/\b(dealer|you|is dealt|stands|hits|and|then|an|Ace|Jack|Queen|King|Big)\b/i);
+    expect(s.answer).toBe(s.cards.reduce((sum, c) => sum + hiLoValue(c.rank), 0));
+  });
+
+  it('gives the same cards in either language', () => {
+    const en = countStory(3, seededRng(4));
+    setLang('es');
+    const es = countStory(3, seededRng(4));
+    expect(es.cards).toEqual(en.cards);
+    expect(es.lines).not.toEqual(en.lines);
+  });
+
+  it('translates mode text and labels, keeping the same modes', () => {
+    setLang('es');
+    expect(MODES.map((m) => m.id)).toEqual(['colorCount', 'soundCount', 'tagTap', 'pairCancel', 'readCount']);
+    expect(MODES[0].title).toBe('Míralo: Conteo por colores');
+    expect(PREFERENCE_LABEL.mix).toBe('Un poco de todo');
+    setLang('en');
+    expect(MODES[0].title).toBe('See it: Color Count');
+  });
+
+  it('speaks counts in Spanish', () => {
+    setLang('es');
+    expect(spokenCount(2)).toBe('más 2');
+    expect(spokenCount(-1)).toBe('menos 1');
+    expect(spokenCount(0)).toBe('cero');
+    setLang('en');
+    expect(spokenCount(3)).toBe('plus 3');
   });
 });

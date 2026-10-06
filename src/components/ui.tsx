@@ -27,6 +27,7 @@ export function Button({
   disabled,
   highlighted,
   style,
+  accessibilityLabel,
 }: {
   title: string;
   onPress: () => void;
@@ -35,10 +36,13 @@ export function Button({
   /** Draws a gold ring, used by the coach to point at the right play. */
   highlighted?: boolean;
   style?: ViewStyle;
+  /** What screen readers say, when the title alone (e.g. "−") isn't enough. */
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}

@@ -3,9 +3,33 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, P, Panel, Screen } from '../../components/ui';
 import { trueCountQuestion } from '../../engine/drills';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
+
+const T = localized({
+  en: {
+    formula: 'True count = running count ÷ decks remaining.',
+    correctOf: (right: number, total: number) => `${right}/${total} correct`,
+    running: (n: string) => `Running count ${n}`,
+    decksLeft: (d: number) => `${d} deck${d === 1 ? '' : 's'} left`,
+    question: 'What’s the true count?',
+    correct: '✓ Correct',
+    wrong: (n: string) => `✗ It’s ${n}`,
+    next: 'Next',
+  },
+  es: {
+    formula: 'Conteo real = conteo continuo ÷ barajas restantes.',
+    correctOf: (right: number, total: number) => `${right}/${total} correctas`,
+    running: (n: string) => `Conteo continuo ${n}`,
+    decksLeft: (d: number) => `${d === 1 ? 'Queda' : 'Quedan'} ${d} baraja${d === 1 ? '' : 's'}`,
+    question: '¿Cuál es el conteo real?',
+    correct: '✓ Correcto',
+    wrong: (n: string) => `✗ Es ${n}`,
+    next: 'Siguiente',
+  },
+});
 
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 
@@ -32,16 +56,14 @@ export default function TrueCountDrill() {
 
   return (
     <Screen>
-      <P muted>True count = running count ÷ decks remaining.</P>
+      <P muted>{T.formula}</P>
       <Text style={styles.score}>
-        {score.right}/{score.total} correct
+        {T.correctOf(score.right, score.total)}
       </Text>
       <Panel style={{ alignItems: 'center' }}>
-        <Text style={styles.big}>Running count {signed(q.running)}</Text>
-        <Text style={styles.big}>
-          {q.decks} deck{q.decks === 1 ? '' : 's'} left
-        </Text>
-        <Text style={styles.muted}>What’s the true count?</Text>
+        <Text style={styles.big}>{T.running(signed(q.running))}</Text>
+        <Text style={styles.big}>{T.decksLeft(q.decks)}</Text>
+        <Text style={styles.muted}>{T.question}</Text>
       </Panel>
       <View style={styles.options}>
         {q.options.map((n) => (
@@ -57,12 +79,12 @@ export default function TrueCountDrill() {
       {picked !== null && (
         <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
           <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 17 }}>
-            {ok ? '✓ Correct' : `✗ It's ${signed(q.answer)}`}
+            {ok ? T.correct : T.wrong(signed(q.answer))}
           </Text>
           <Text style={styles.explain}>
             {signed(q.running)} ÷ {q.decks} = {signed(q.answer)}
           </Text>
-          <Button title="Next" onPress={next} />
+          <Button title={T.next} onPress={next} />
         </Panel>
       )}
     </Screen>

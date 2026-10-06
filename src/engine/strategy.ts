@@ -1,16 +1,14 @@
 import { Card, Rank, pointValue } from './cards';
 import { handValue, isPair } from './hand';
 import { Rules } from './rules';
+import { getLang, localized, tr } from '../i18n/lang';
 
 export type Action = 'hit' | 'stand' | 'double' | 'split' | 'surrender';
 
-export const ACTION_LABEL: Record<Action, string> = {
-  hit: 'Hit',
-  stand: 'Stand',
-  double: 'Double',
-  split: 'Split',
-  surrender: 'Surrender',
-};
+export const ACTION_LABEL: Record<Action, string> = localized<Record<Action, string>>({
+  en: { hit: 'Hit', stand: 'Stand', double: 'Double', split: 'Split', surrender: 'Surrender' },
+  es: { hit: 'Pedir', stand: 'Plantarse', double: 'Doblar', split: 'Dividir', surrender: 'Rendirse' },
+});
 
 /** Dealer upcard as 2–11 (ace = 11). */
 export function upValue(rank: Rank): number {
@@ -108,7 +106,7 @@ const isTenPair = (cards: Card[]) => isPair(cards) && pointValue(cards[0].rank) 
  * The most valuable Hi-Lo index plays for multi-deck S17 games (a subset of the
  * "Illustrious 18"). Insurance is handled separately in counting.ts.
  */
-export const DEVIATIONS: Deviation[] = [
+const RAW_DEVIATIONS: Deviation[] = [
   { id: '16v10', label: '16 vs 10', index: 0, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 16 && !isPair(c) },
   { id: '15v10', label: '15 vs 10', index: 4, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 15 },
   { id: 'TTv5', label: '10,10 vs 5', index: 5, atOrAbove: 'split', below: 'stand', match: (c, u) => u === 5 && isTenPair(c) },
@@ -127,6 +125,16 @@ export const DEVIATIONS: Deviation[] = [
   { id: '12v6', label: '12 vs 6', index: -1, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 6 && hardTotal(c) === 12 && !isPair(c) },
   { id: '13v3', label: '13 vs 3', index: -2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 3 && hardTotal(c) === 13 },
 ];
+
+/** Labels are stored in English ("16 vs 10") and read in the current language. */
+export const DEVIATIONS: Deviation[] = RAW_DEVIATIONS.map((d) => {
+  const english = d.label;
+  // defineProperty (not an object-literal getter) so transpiled spreads can't freeze the value.
+  return Object.defineProperty({ ...d }, 'label', {
+    get: () => tr(english, english.replace(' vs ', ' contra ')),
+    enumerable: true,
+  });
+});
 
 export interface DecisionContext {
   cards: Card[];
@@ -196,10 +204,14 @@ export function recommend(ctx: DecisionContext): Recommendation {
       const action = ctx.trueCount >= dev.index ? dev.atOrAbove : dev.below;
       if (action !== basic && isAllowed(action, ctx)) {
         const tc = formatTrueCount(ctx.trueCount);
+        const index = `${dev.index >= 0 ? '+' : ''}${dev.index}`;
         return {
           action,
           deviation: dev,
-          reason: `Count play: ${dev.label} changes at a true count of ${dev.index >= 0 ? '+' : ''}${dev.index}. The true count is ${tc}, so ${action} instead of the usual ${basic}.`,
+          reason: tr(
+            `Count play: ${dev.label} changes at a true count of ${index}. The true count is ${tc}, so ${action} instead of the usual ${basic}.`,
+            `Jugada por conteo: ${dev.label} cambia con un conteo real de ${index}. El conteo real es ${tc}, así que toca ${ACTION_LABEL[action].toLowerCase()} en lugar de ${ACTION_LABEL[basic].toLowerCase()}, que es lo habitual.`,
+          ),
         };
       }
     }
@@ -213,11 +225,16 @@ export function formatTrueCount(tc: number): string {
 }
 
 function upName(rank: Rank): string {
+  if (getLang() === 'es') return rank === 'A' ? 'un As' : `un ${pointValue(rank)}`;
   return rank === 'A' ? 'an Ace' : rank === '8' ? 'an 8' : `a ${pointValue(rank)}`;
 }
 
-/** Plain-English coaching explanation for a basic-strategy decision. */
+/** Coaching explanation for a basic-strategy decision, in the current language. */
 export function explain(action: Action, ctx: DecisionContext): string {
+  return getLang() === 'es' ? explainEs(action, ctx) : explainEn(action, ctx);
+}
+
+function explainEn(action: Action, ctx: DecisionContext): string {
   const up = upValue(ctx.dealerUp);
   const dealer = upName(ctx.dealerUp);
   const { total, soft } = handValue(ctx.cards);
@@ -247,5 +264,38 @@ export function explain(action: Action, ctx: DecisionContext): string {
       if (!weakDealer)
         return `Hit: the dealer shows ${dealer}, a strong card. Assume a 10 underneath, so ${total} probably loses if you stand.`;
       return `Hit: ${total} is too weak to stand here, even against ${dealer}.`;
+  }
+}
+
+function explainEs(action: Action, ctx: DecisionContext): string {
+  const up = upValue(ctx.dealerUp);
+  const dealer = upName(ctx.dealerUp);
+  const { total, soft } = handValue(ctx.cards);
+  const weakDealer = up >= 2 && up <= 6;
+  const pair = isPair(ctx.cards) ? pointValue(ctx.cards[0].rank) : 0;
+
+  switch (action) {
+    case 'split':
+      if (pair === 1) return 'Divide siempre los Ases. Dos manos que empiezan en 11 valen más que un 12 blando.';
+      if (pair === 8) return 'Divide siempre los 8. El 16 es el peor total del blackjack; dos manos que empiezan en 8 rinden mucho más.';
+      return `Dividir: el crupier muestra ${dealer}, así que dos manos que empiezan con un ${pair} valen más que una sola mano de ${total}.`;
+    case 'surrender':
+      return `Rendirse: ${total} contra ${dealer} pierde tan seguido que entregar la mitad de tu apuesta te cuesta menos a la larga.`;
+    case 'double':
+      if (soft)
+        return `Doblar: un ${total} blando no se pasa con una carta, y el crupier muestra ${dealer}, una carta débil. Pon más dinero en la mesa mientras tienes la ventaja.`;
+      return `Doblar: ${total} es un buen total para empezar y el crupier muestra ${dealer}. Eres el favorito, así que dobla tu apuesta.`;
+    case 'stand':
+      if (total >= 17 && !soft) return `Plantarse: ${total} es suficiente. Si pides, te pasarás demasiadas veces.`;
+      if (soft) return `Plantarse: un ${total} blando es buena mano contra ${dealer}.`;
+      if (weakDealer)
+        return `Plantarse: el crupier muestra ${dealer}, una carta con la que se pasa a menudo. No te arriesgues a pasarte; deja que el crupier pida y quizá se pase.`;
+      return `Plántate con ${total}.`;
+    case 'hit':
+      if (soft) return `Pedir: un ${total} blando no se pasa con una carta, así que pide sin riesgo para intentar mejorar.`;
+      if (total <= 11) return `Pedir: con ${total} no puedes pasarte, así que siempre pide carta.`;
+      if (!weakDealer)
+        return `Pedir: el crupier muestra ${dealer}, una carta fuerte. Asume que tiene un 10 oculto; si te plantas con ${total}, lo más probable es que pierdas.`;
+      return `Pedir: ${total} es muy poco para plantarse aquí, incluso contra ${dealer}.`;
   }
 }

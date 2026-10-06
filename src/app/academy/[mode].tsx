@@ -6,8 +6,40 @@ import { ColorCount, PairCancel, ReadCount, RoundResult, SoundCount, TagTap } fr
 import { Button, P, Panel, Screen } from '../../components/ui';
 import { AcademyMode, MAX_LEVEL, MODES, academyXp, newProgress, recordRound } from '../../engine/academy';
 import { levelInfo, localDay } from '../../engine/progression';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors } from '../../theme';
+
+const T = localized({
+  en: {
+    progress: (step: number, total: number | null, level: number, max: number) =>
+      `${total ? `Workout ${step}/${total} · ` : ''}Level ${level}/${max}`,
+    accurate: (pct: number) => `${pct}% accurate`,
+    levelUp: (n: number) => `★ Level up! Now level ${n}`,
+    topLevel: 'Top level. Keep it sharp.',
+    scoreToLevel: 'Score 90% or more to level up.',
+    xp: (xp: number, newLevel?: number) => `+${xp} XP${newLevel ? ` · You’re now player level ${newLevel}!` : ''}`,
+    nextReview: (due: string | null) => `Next review: ${due ?? 'today'}`,
+    next: (title: string) => `Next: ${title}`,
+    workoutDone: 'Workout complete! See you tomorrow.',
+    again: 'Again',
+    back: 'Back to the Academy',
+  },
+  es: {
+    progress: (step: number, total: number | null, level: number, max: number) =>
+      `${total ? `Entrenamiento ${step}/${total} · ` : ''}Nivel ${level}/${max}`,
+    accurate: (pct: number) => `${pct}% de aciertos`,
+    levelUp: (n: number) => `★ ¡Subiste de nivel! Ahora nivel ${n}`,
+    topLevel: 'Nivel máximo. Mantente en forma.',
+    scoreToLevel: 'Consigue 90% o más para subir de nivel.',
+    xp: (xp: number, newLevel?: number) => `+${xp} XP${newLevel ? ` · ¡Ya eres jugador nivel ${newLevel}!` : ''}`,
+    nextReview: (due: string | null) => `Próximo repaso: ${due ?? 'hoy'}`,
+    next: (title: string) => `Siguiente: ${title}`,
+    workoutDone: '¡Entrenamiento completo! Nos vemos mañana.',
+    again: 'Otra vez',
+    back: 'Volver a la Academia',
+  },
+});
 
 const COMPONENTS = { tagTap: TagTap, colorCount: ColorCount, soundCount: SoundCount, pairCancel: PairCancel, readCount: ReadCount };
 
@@ -56,41 +88,39 @@ export default function AcademyExercise() {
       {!result ? (
         <>
           <P muted style={{ textAlign: 'center' }}>
-            {workout ? `Workout ${step + 1}/${workout.length} · ` : ''}Level {progress.level}/{MAX_LEVEL}
+            {T.progress(step + 1, workout ? workout.length : null, progress.level, MAX_LEVEL)}
           </P>
           <Mode key={round} level={progress.level} onFinish={finish} />
         </>
       ) : (
         <Panel style={{ alignItems: 'stretch' }}>
-          <Text style={styles.big}>{Math.round(result.r.accuracy * 100)}% accurate</Text>
+          <Text style={styles.big}>{T.accurate(Math.round(result.r.accuracy * 100))}</Text>
           {result.leveledUp ? (
-            <Text style={styles.up}>★ Level up! Now level {result.modeLevel}</Text>
+            <Text style={styles.up}>{T.levelUp(result.modeLevel)}</Text>
           ) : (
             <Text style={styles.note}>
-              {result.r.accuracy >= 0.9 ? 'Top level. Keep it sharp.' : 'Score 90% or more to level up.'}
+              {result.r.accuracy >= 0.9 ? T.topLevel : T.scoreToLevel}
             </Text>
           )}
-          <Text style={styles.note}>
-            +{result.xp} XP{result.newLevel ? ` · You're now player level ${result.newLevel}!` : ''}
-          </Text>
-          <Text style={styles.note}>Next review: {result.due === today ? 'today' : result.due}</Text>
+          <Text style={styles.note}>{T.xp(result.xp, result.newLevel)}</Text>
+          <Text style={styles.note}>{T.nextReview(result.due === today ? null : result.due)}</Text>
           {nextInWorkout ? (
             <Button
-              title={`Next: ${MODES.find((m) => m.id === nextInWorkout)!.title}`}
+              title={T.next(MODES.find((m) => m.id === nextInWorkout)!.title)}
               onPress={() => router.replace({ pathname: '/academy/[mode]', params: { mode: nextInWorkout, workout: params.workout!, step: String(step + 1) } })}
             />
           ) : (
             <>
-              {workout && <Text style={styles.up}>Workout complete! See you tomorrow.</Text>}
+              {workout && <Text style={styles.up}>{T.workoutDone}</Text>}
               <Button
-                title="Again"
+                title={T.again}
                 variant="secondary"
                 onPress={() => {
                   setResult(null);
                   setRound(round + 1);
                 }}
               />
-              <Button title="Back to the Academy" variant="ghost" onPress={() => router.back()} />
+              <Button title={T.back} variant="ghost" onPress={() => router.back()} />
             </>
           )}
         </Panel>
