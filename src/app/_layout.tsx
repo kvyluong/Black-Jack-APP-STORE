@@ -36,6 +36,8 @@ export default function RootLayout() {
           <Stack.Screen name="drills/count" options={{ title: 'Running Count Drill' }} />
           <Stack.Screen name="drills/true-count" options={{ title: 'True Count Drill' }} />
           <Stack.Screen name="chart" options={{ title: 'Strategy Chart' }} />
+          <Stack.Screen name="leaks" options={{ title: 'Your Leaks' }} />
+          <Stack.Screen name="welcome" options={{ title: 'Welcome' }} />
           <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         </Stack>
       </SettingsProvider>

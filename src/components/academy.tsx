@@ -21,7 +21,8 @@ import {
 import { Card } from '../engine/cards';
 import type { SoundName } from '../engine/dealSchedule';
 import { useSettings } from '../state/settings';
-import { colors, radius, spacing } from '../theme';
+import { colors, radius, spacing, tagColor, tagSymbol } from '../theme';
+import { useOutcomeColors } from './useColors';
 import { PlayingCard } from './PlayingCard';
 import { Button, P, Panel } from './ui';
 
@@ -38,7 +39,6 @@ interface ModeProps {
 }
 
 const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
-const TAG_COLOR = (t: number) => (t > 0 ? colors.good : t < 0 ? colors.bad : colors.muted);
 const TAG_SOUND = (t: number): SoundName => (t > 0 ? 'tag_plus' : t < 0 ? 'tag_minus' : 'tag_zero');
 
 /** Scoring for "what's the count?" answers: exact is full marks, off by one is half. */
@@ -49,6 +49,7 @@ function countAccuracy(guess: number, actual: number) {
 /** Stepper to enter a running count, then reveal the answer with every card's tag. */
 function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult) => void }) {
   const { settings } = useSettings();
+  const oc = useOutcomeColors();
   const actual = cards.reduce((s, c) => s + tagOf(c), 0);
   const [guess, setGuess] = useState(0);
   const [checked, setChecked] = useState(false);
@@ -71,7 +72,7 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
         />
       ) : (
         <>
-          <Text style={[styles.verdict, { color: acc === 1 ? colors.good : acc > 0 ? colors.warn : colors.bad }]}>
+          <Text style={[styles.verdict, { color: acc === 1 ? oc.good : acc > 0 ? colors.warn : oc.bad }]}>
             {acc === 1 ? '✓ Exactly right' : `${acc > 0 ? 'Close: ' : '✗ '}it was ${signed(actual)}`}
           </Text>
           <View style={styles.review}>
@@ -89,6 +90,7 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
 /** Do it: tap each card's tag before the clock runs out. */
 export function TagTap({ level, onFinish }: ModeProps) {
   const { settings } = useSettings();
+  const cb = settings.colorblind;
   const cards = useMemo(() => cardRun(roundLength('tagTap', level)), [level]);
   const [i, setI] = useState(0);
   const [right, setRight] = useState(0);
@@ -137,7 +139,7 @@ export function TagTap({ level, onFinish }: ModeProps) {
       </View>
       <View style={styles.tagButtons}>
         {[-1, 0, 1].map((v) => (
-          <Button key={v} title={signed(v)} variant="secondary" onPress={() => answer(v)} style={{ ...styles.tagButton, borderColor: TAG_COLOR(v) }} />
+          <Button key={v} title={`${tagSymbol(v)} ${signed(v)}`} variant="secondary" onPress={() => answer(v)} style={{ ...styles.tagButton, borderColor: tagColor(v, cb) }} />
         ))}
       </View>
     </View>
@@ -162,6 +164,7 @@ function useFlashRun(level: number, onCard: (card: Card, index: number, running:
 
 /** See it: color-coded cards and a count meter, with the hints fading as you level up. */
 export function ColorCount({ level, onFinish }: ModeProps) {
+  const cb = useSettings().settings.colorblind;
   const hints = visualHints(level);
   const { cards, i, done, running } = useFlashRun(level, () => {});
   if (done) return <CountAnswer cards={cards} onDone={onFinish} />;
@@ -174,16 +177,16 @@ export function ColorCount({ level, onFinish }: ModeProps) {
       <View style={styles.colorStage}>
         {hints.meter && (
           <View style={styles.meter} accessibilityLabel={`Running count ${running}`}>
-            <View style={[styles.meterFill, { height: `${50 + Math.max(-10, Math.min(10, running)) * 5}%`, backgroundColor: TAG_COLOR(running) }]} />
+            <View style={[styles.meterFill, { height: `${50 + Math.max(-10, Math.min(10, running)) * 5}%`, backgroundColor: tagColor(running, cb) }]} />
             <Text style={styles.meterText}>{signed(running)}</Text>
           </View>
         )}
-        <View style={[styles.glow, hints.glow && { borderColor: TAG_COLOR(tag), shadowColor: TAG_COLOR(tag) }]}>
+        <View style={[styles.glow, hints.glow && { borderColor: tagColor(tag, cb), shadowColor: tagColor(tag, cb) }]}>
           <PlayingCard key={i} card={cards[i]} size="lg" showTag={hints.badge} />
         </View>
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        Green = +1 · Gray = 0 · Red = −1
+        {cb ? 'Blue ▲ = +1 · Gray ● = 0 · Orange ▼ = −1' : 'Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1'}
       </P>
     </View>
   );

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
+import { LeakStats, emptyLeaks } from '../engine/leaks';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 
@@ -21,6 +22,10 @@ export interface Stats {
   /** Rewarded-ad bonus claims today (resets daily). */
   bonusClaims?: BonusClaims;
   bonusChipsEarned: number;
+  /** Which decisions you get right and wrong, by kind and by exact spot. */
+  leaks: LeakStats;
+  /** Finished (or skipped) the guided first hand. */
+  onboarded: boolean;
   /** Counting Academy: chosen learning preference and per-mode progress. */
   academy: {
     pref?: LearningPreference;
@@ -49,6 +54,8 @@ export interface Settings {
   bigEffects: boolean;
   /** Vibration as your cards land and when you win. */
   haptics: boolean;
+  /** Blue/orange instead of green/red for count tags and results. */
+  colorblind: boolean;
   /** How many seats you play at the practice table (1 or 2). */
   yourHands: number;
   /** Computer players who come and go at the practice table. */
@@ -69,6 +76,7 @@ const DEFAULT_SETTINGS: Settings = {
   soundEffects: true,
   bigEffects: true,
   haptics: true,
+  colorblind: false,
   yourHands: 2,
   otherPlayers: true,
   bankroll: STARTING_CHIPS,
@@ -88,6 +96,8 @@ const DEFAULT_STATS: Stats = {
   refills: 0,
   bonusChipsEarned: 0,
   academy: { progress: {}, streak: 0 },
+  leaks: emptyLeaks(),
+  onboarded: false,
 };
 
 const STORAGE_KEY = 'blackjack-coach/v1';

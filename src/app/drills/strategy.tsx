@@ -1,3 +1,4 @@
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -7,15 +8,21 @@ import { StreakBadge } from '../../components/juice';
 import { PlayingCard } from '../../components/PlayingCard';
 import { Button, Panel, Screen } from '../../components/ui';
 import { strategyQuestion } from '../../engine/drills';
+import { CATEGORY_INFO, LeakCategory, focusedQuestion, recordDecision } from '../../engine/leaks';
 import { streakPitch } from '../../engine/juice';
 import { ACTION_LABEL, Action, recommend } from '../../engine/strategy';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
+import { useOutcomeColors } from '../../components/useColors';
 
 export default function StrategyDrill() {
   const { settings, stats, updateStats } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const { rules } = settings;
-  const [q, setQ] = useState(() => strategyQuestion());
+  // Opened from Your Leaks with ?focus=soft etc. to drill only that kind of hand.
+  const { focus } = useLocalSearchParams<{ focus?: LeakCategory }>();
+  const nextQuestion = () => (focus && focus in CATEGORY_INFO ? focusedQuestion(focus) : strategyQuestion());
+  const [q, setQ] = useState(nextQuestion);
   const [picked, setPicked] = useState<Action | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0, streak: 0 });
 
@@ -38,6 +45,7 @@ export default function StrategyDrill() {
     setScore({ right: score.right + (ok ? 1 : 0), total: score.total + 1, streak });
     updateStats((s) => ({
       ...s,
+      leaks: recordDecision(s.leaks, { cards: q.cards, dealerUp: q.dealerUp.rank, canSplit: true, chosen: a, best: advice.action }),
       decisions: s.decisions + 1,
       correctDecisions: s.correctDecisions + (ok ? 1 : 0),
       bestStrategyStreak: Math.max(s.bestStrategyStreak, streak),
@@ -46,7 +54,7 @@ export default function StrategyDrill() {
 
   const next = () => {
     setPicked(null);
-    setQ(strategyQuestion());
+    setQ(nextQuestion());
   };
 
   const ok = picked === advice.action;
@@ -62,6 +70,7 @@ export default function StrategyDrill() {
         </Text>
       </View>
 
+      {focus && focus in CATEGORY_INFO && <Stack.Screen options={{ title: `Drill: ${CATEGORY_INFO[focus].title}` }} />}
       <StreakBadge streak={score.streak} />
 
       <View style={styles.table}>
@@ -84,8 +93,8 @@ export default function StrategyDrill() {
       </View>
 
       {picked && (
-        <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? colors.good : colors.bad }}>
-          <Text style={{ color: ok ? colors.good : colors.bad, fontWeight: '800', fontSize: 17 }}>
+        <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
+          <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 17 }}>
             {ok ? '✓ Correct' : `✗ The best play is ${ACTION_LABEL[advice.action]}`}
           </Text>
           <Text style={styles.reason}>{advice.reason}</Text>

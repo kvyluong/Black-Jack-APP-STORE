@@ -8,6 +8,7 @@ import { runningCount } from '../../engine/counting';
 import { countDrillCards } from '../../engine/drills';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
+import { useOutcomeColors } from '../../components/useColors';
 
 type Phase = 'setup' | 'running' | 'answer' | 'result';
 
@@ -25,6 +26,7 @@ const LENGTHS = [
 
 export default function CountDrill() {
   const { updateStats } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const [phase, setPhase] = useState<Phase>('setup');
   const [speed, setSpeed] = useState(1000);
   const [length, setLength] = useState(20);
@@ -116,8 +118,8 @@ export default function CountDrill() {
 
           {phase === 'result' && (
             <>
-              <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? colors.good : colors.bad }}>
-                <Text style={{ color: ok ? colors.good : colors.bad, fontWeight: '800', fontSize: 18 }}>
+              <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
+                <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 18 }}>
                   {ok ? '✓ Perfect count!' : `✗ The count was ${actual > 0 ? '+' : ''}${actual}`}
                 </Text>
                 <Text style={styles.label}>Here's every card with its tag:</Text>

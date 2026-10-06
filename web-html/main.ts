@@ -38,6 +38,25 @@ import {
 import { DEAL_STEP_MS, DealSchedule, HapticKind, SoundName, cardDelay, dealSchedule, hapticSchedule } from '../src/engine/dealSchedule';
 import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/engine/drills';
 import {
+  CATEGORY_INFO,
+  DRILLABLE,
+  LeakCategory,
+  LeakStats,
+  MIN_SAMPLE,
+  Tally,
+  accuracy,
+  describeBest,
+  emptyLeaks,
+  focusedQuestion,
+  rankedCategories,
+  recordDecision,
+  recordInsurance,
+  topMissedSpots,
+  weakestDrillable,
+} from '../src/engine/leaks';
+import { TUTORIAL, TUTORIAL_BET, tutorialGame } from '../src/engine/tutorial';
+import { tagSymbol, tagText } from '../src/theme';
+import {
   GameState,
   Outcome,
   YOU,
@@ -110,6 +129,8 @@ interface Stats {
   refills: number;
   bonusClaims?: BonusClaims;
   bonusChipsEarned: number;
+  leaks: LeakStats;
+  onboarded: boolean;
   academy: {
     pref?: LearningPreference;
     progress: Partial<Record<AcademyMode, ModeProgress>>;
@@ -132,6 +153,7 @@ interface Settings {
   otherPlayers: boolean;
   bankroll: number;
   tableId: string;
+  colorblind: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -148,6 +170,7 @@ const DEFAULT_SETTINGS: Settings = {
   otherPlayers: true,
   bankroll: STARTING_CHIPS,
   tableId: 'floor',
+  colorblind: false,
 };
 const DEFAULT_STATS: Stats = {
   handsPlayed: 0,
@@ -161,6 +184,8 @@ const DEFAULT_STATS: Stats = {
   biggestWin: 0,
   refills: 0,
   bonusChipsEarned: 0,
+  leaks: emptyLeaks(),
+  onboarded: false,
   academy: { progress: {}, streak: 0 },
 };
 const STORAGE_KEY = 'blackjack-coach/v1';
@@ -223,7 +248,7 @@ function cardHtml(card: Card | null, opts: { size?: 'xs' | 'sm' | 'md' | 'lg'; t
   }
   const t = hiLoValue(card.rank);
   const tag = opts.tag
-    ? `<span class="tag ${t > 0 ? 'plus' : t < 0 ? 'minus' : ''}">${t > 0 ? '+1' : t < 0 ? '−1' : '0'}</span>`
+    ? `<span class="tag ${t > 0 ? 'plus' : t < 0 ? 'minus' : ''}" aria-label="Count tag ${t > 0 ? 'plus 1' : t < 0 ? 'minus 1' : 'zero'}">${tagText(t)}</span>`
     : '';
   const deal = opts.dealAt !== undefined;
   return `<div class="card-wrap ${deal ? 'deal-in' : ''}" style="${deal ? `animation-delay:${opts.dealAt}ms` : ''}"><div class="card ${size} ${isRed(card) ? 'red' : ''}" aria-label="${card.rank} of ${SUIT_NAME[card.suit]}">
@@ -277,6 +302,10 @@ function route(): View {
     const mode = MODES.find((m) => m.id === hash.slice(8));
     if (mode) return { title: mode.title, back: 'academy', render: () => renderAcademyMode(mode.id) };
   }
+  if (hash.startsWith('drill-strategy-')) {
+    const focus = hash.slice(15) as LeakCategory;
+    if (DRILLABLE.includes(focus)) return { title: `Drill: ${CATEGORY_INFO[focus].title}`, back: 'leaks', render: () => renderStrategyDrill(focus) };
+  }
   if (hash.startsWith('lesson-')) {
     const lesson = getLesson(hash.slice(7));
     if (lesson) return { title: lesson.title, back: 'learn', render: () => renderLesson(lesson) };
@@ -287,7 +316,9 @@ function route(): View {
     tables: { title: 'Casino Floor', back: 'home', render: renderTables },
     play: { title: getTable(settings.tableId).name, back: 'tables', render: renderPlay },
     drills: { title: 'Drills', back: 'home', render: renderDrills },
-    'drill-strategy': { title: 'Strategy Drill', back: 'drills', render: renderStrategyDrill },
+    'drill-strategy': { title: 'Strategy Drill', back: 'drills', render: () => renderStrategyDrill() },
+    leaks: { title: 'Your Leaks', back: 'home', render: renderLeaks },
+    welcome: { title: 'Welcome', render: renderWelcome },
     'drill-count': { title: 'Running Count Drill', back: 'drills', render: renderCountDrill },
     'drill-true-count': { title: 'True Count Drill', back: 'drills', render: renderTrueCountDrill },
     academy: { title: 'Counting Academy', back: 'home', render: renderAcademy },
@@ -298,6 +329,11 @@ function route(): View {
 }
 
 function navigate() {
+  // Brand-new players get the guided first hands before anything else.
+  if (!stats.onboarded && stats.handsPlayed === 0 && (location.hash === '' || location.hash === '#home')) {
+    location.replace('#welcome');
+    return;
+  }
   cleanup?.();
   cleanup = null;
   settleTable();
@@ -310,6 +346,12 @@ function navigate() {
 }
 
 window.addEventListener('hashchange', navigate);
+
+/** Color-blind mode swaps green/red for blue/orange everywhere via CSS variables. */
+function applyTheme() {
+  document.documentElement.classList.toggle('cb', settings.colorblind);
+}
+applyTheme();
 // Warm up audio on the first interaction so the first deal isn't silent.
 document.addEventListener('pointerdown', unlockAudio, { once: true });
 document.addEventListener('keydown', unlockAudio, { once: true });
@@ -323,6 +365,7 @@ function renderHome() {
     ['tables', 'Casino Floor', 'Play with a coach. Win chips to unlock bigger tables', '02'],
     ['academy', 'Counting Academy', 'Learn to count your way: see it, hear it, tap it, chunk it or read it', '03'],
     ['drills', 'Drills', 'Basic strategy, running count and true count drills', '03'],
+    ['leaks', 'Your Leaks', 'The decisions you miss most, and a drill aimed at them', '04'],
     ['chart', 'Strategy Chart', 'The full basic strategy chart for your table rules', '04'],
     ['settings', 'Settings', 'Table rules, coaching options and progress', '05'],
   ];
@@ -1036,6 +1079,11 @@ function playerAction(action: Action) {
   if (ctx) {
     const advice = recommend(ctx);
     grade(action === advice.action, `Best play: ${ACTION_LABEL[advice.action]}. ${advice.reason}`);
+    // Track which kinds of decisions you miss (see Your Leaks).
+    updateStats((s) => ({
+      ...s,
+      leaks: recordDecision(s.leaks, { cards: ctx.cards, dealerUp: ctx.dealerUp, canSplit: ctx.canSplit, chosen: action, best: advice.action }),
+    }));
   }
   afterChange(act(table.game, action));
 }
@@ -1043,6 +1091,7 @@ function playerAction(action: Action) {
 function insurance(take: boolean) {
   const tc = currentTrueCount(table.game);
   const best = settings.useDeviations && shouldTakeInsurance(tc);
+  updateStats((s) => ({ ...s, leaks: recordInsurance(s.leaks, take === best) }));
   grade(
     take === best,
     best
@@ -1169,8 +1218,9 @@ function renderDrills() {
     '</div>';
 }
 
-function renderStrategyDrill() {
-  let q = strategyQuestion();
+function renderStrategyDrill(focus?: LeakCategory) {
+  const nextQuestion = () => (focus ? focusedQuestion(focus) : strategyQuestion());
+  let q = nextQuestion();
   let picked: Action | null = null;
   const score = { right: 0, total: 0, streak: 0 };
   const rules = settings.rules;
@@ -1214,13 +1264,14 @@ function renderStrategyDrill() {
         decisions: s.decisions + 1,
         correctDecisions: s.correctDecisions + (correct ? 1 : 0),
         bestStrategyStreak: Math.max(s.bestStrategyStreak, score.streak),
+        leaks: recordDecision(s.leaks, { cards: q.cards, dealerUp: q.dealerUp.rank, canSplit: true, chosen: a, best: advice.action }),
       }));
       draw();
     }
   };
   const next = () => {
     picked = null;
-    q = strategyQuestion();
+    q = nextQuestion();
     draw();
   };
   const keys = (e: KeyboardEvent) => {
@@ -1588,7 +1639,7 @@ function renderAcademyMode(mode: AcademyMode) {
       app.innerHTML = `${header}<div class="row-between muted"><span>${i + 1}/${cards.length}</span><span>${combo >= 3 ? `Combo ×${combo}` : `${secs.toFixed(1)}s per card`}</span></div>
         <div class="track"><div class="fill tap-clock" style="animation-duration:${secs}s"></div></div>
         <div class="flash stage ${flash}">${cardHtml(cards[i], { size: 'lg' })}</div>
-        <div class="btn-row tag-buttons">${[-1, 0, 1].map((v) => `<button class="btn secondary tagb ${tagClass(v)}" data-tag="${v}">${sgn(v)}</button>`).join('')}</div>
+        <div class="btn-row tag-buttons">${[-1, 0, 1].map((v) => `<button class="btn secondary tagb ${tagClass(v)}" data-tag="${v}">${tagSymbol(v)} ${sgn(v)}</button>`).join('')}</div>
         <p class="keys">Keys: ← or 1 = −1 · ↓ or 2 = 0 · → or 3 = +1</p>`;
       on('[data-tag]', 'click', (el) => answer(Number(el.dataset.tag)));
     };
@@ -1753,6 +1804,11 @@ function renderSettings() {
         ${toggle('haptics', 'Haptics', 'Vibrate as your cards land and when you win (Android browsers)')}
         ${toggle('bigEffects', 'Big effects', 'Screen shake, chip bursts and score pop-ups')}
       </div>
+      <h2>Accessibility</h2>
+      <div class="panel">
+        ${toggle('colorblind', 'Color-blind mode', 'Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too.')}
+        <button class="btn secondary" id="replay-tour">Replay the welcome tour</button>
+      </div>
       <h2>The table</h2>
       <div class="panel">
         <span class="lbl">Hands you play</span>${seg('hands', [['1 hand', 1], ['2 hands', 2]], settings.yourHands)}
@@ -1778,11 +1834,12 @@ function renderSettings() {
       <h2>About</h2>
       <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
 
-    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'haptics', 'bigEffects', 'otherPlayers'] as const).forEach((id) =>
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'haptics', 'bigEffects', 'otherPlayers', 'colorblind'] as const).forEach((id) =>
       on(`#${id}`, 'change', (el) => {
         updateSettings({ [id]: (el as HTMLInputElement).checked });
         if (id === 'showCount') table.countVisible = settings.showCount;
         if (id === 'otherPlayers') applySeating();
+        if (id === 'colorblind') applyTheme();
       }),
     );
     (['dealerHitsSoft17', 'doubleAfterSplit', 'lateSurrender'] as const).forEach((id) =>
@@ -1796,6 +1853,10 @@ function renderSettings() {
     on('#decks button', 'click', (el) => (setRules({ decks: Number(el.dataset.v) }), draw()));
     on('#payout button', 'click', (el) => (setRules({ blackjackPayout: Number(el.dataset.v) }), draw()));
     on('#reset', 'click', () => ((confirmReset = true), draw()));
+    on('#replay-tour', 'click', () => {
+      updateStats((s) => ({ ...s, onboarded: false }));
+      location.hash = 'welcome';
+    });
     on('#reset-no', 'click', () => ((confirmReset = false), draw()));
     on('#reset-yes', 'click', () => {
       stats = DEFAULT_STATS;
@@ -1804,6 +1865,181 @@ function renderSettings() {
       confirmReset = false;
       draw();
     });
+  };
+  draw();
+}
+
+// ---------- Your leaks ----------
+
+function renderLeaks() {
+  const leaks = stats.leaks ?? emptyLeaks();
+  const ranked = rankedCategories(leaks);
+  if (ranked.length === 0) {
+    app.innerHTML = `
+      <div class="panel"><h2>Not enough hands yet</h2>
+        <p>Every decision you make at the table and in the strategy drill is tracked here. After ${MIN_SAMPLE} decisions of a kind (stiff hands, soft hands, pairs and so on), you'll see how often you get it right and which spots trip you up.</p></div>
+      <a class="btn primary" href="#tables">Play a few hands</a>
+      <a class="btn secondary" href="#drill-strategy">Strategy drill</a>`;
+    return;
+  }
+  const weakest = weakestDrillable(leaks);
+  const missed = topMissedSpots(leaks);
+  const pending = (Object.entries(leaks.byCategory) as [LeakCategory, Tally][]).filter(([, t]) => t.total < MIN_SAMPLE);
+  const pct = (t: Tally) => Math.round(accuracy(t) * 100);
+  app.innerHTML = `
+    ${
+      weakest
+        ? `<div class="panel focus"><span class="eyebrow">Biggest leak</span><h2 class="plain">${CATEGORY_INFO[weakest].title}</h2>
+            <p class="muted">${CATEGORY_INFO[weakest].example}</p><a class="btn primary" href="#drill-strategy-${weakest}">Drill my weakest spot</a></div>`
+        : `<div class="panel focus"><h2 class="plain">No leaks found</h2><p class="muted">Every category you've played is at 100%. Keep it up.</p></div>`
+    }
+    <h2>By decision type</h2>
+    <div class="panel">
+      ${ranked
+        .map(({ category, tally }) => {
+          const p = pct(tally);
+          const cls = p >= 90 ? 'good' : p >= 75 ? 'warn' : 'bad';
+          return `<div class="leak" aria-label="${CATEGORY_INFO[category].title}: ${p} percent correct, ${tally.right} of ${tally.total}">
+            <div class="leak-head"><b>${CATEGORY_INFO[category].title}</b><span class="${cls}">${p}% <small class="muted">(${tally.right}/${tally.total})</small></span></div>
+            <div class="leak-track"><div class="leak-bar ${cls}" style="width:${p}%"></div></div>
+            ${DRILLABLE.includes(category) && p < 100 ? `<a href="#drill-strategy-${category}" class="small">Drill this</a>` : ''}
+          </div>`;
+        })
+        .join('')}
+      ${pending.length ? `<p class="muted small">Still learning about you: ${pending.map(([c, t]) => `${CATEGORY_INFO[c].title} (${t.total}/${MIN_SAMPLE})`).join(', ')}.</p>` : ''}
+    </div>
+    ${
+      missed.length
+        ? `<h2>Spots you miss most</h2><div class="panel">${missed
+            .map(
+              (m) => `<div class="spot"><span><b>${esc(m.label)}</b><small class="muted">${describeBest(m)}</small></span><span class="bad">✗ ${m.total - m.right}/${m.total}</span></div>`,
+            )
+            .join('')}</div>`
+        : ''
+    }
+    <p class="muted small">Graded against basic strategy for your table rules. Insurance is graded at the table only.</p>`;
+}
+
+// ---------- Welcome tour ----------
+
+function renderWelcome() {
+  type Stage = { kind: 'intro' } | { kind: 'hand'; index: number } | { kind: 'finish' };
+  let stage: Stage = { kind: 'intro' };
+  let game: GameState | null = null;
+  let step = 0;
+  let sched: DealSchedule | null = null;
+  let settled = true;
+  let seen: Card[] = [];
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  const done = (to = 'home') => {
+    updateStats((s) => ({ ...s, onboarded: true }));
+    location.hash = to;
+  };
+
+  const commit = (prev: GameState, next: GameState) => {
+    unlockAudio();
+    timers.forEach(clearTimeout);
+    clearFanfare();
+    const s = dealSchedule(prev, next, reducedMotionPref() ? 0 : DEAL_STEP_MS);
+    if (settings.soundEffects) for (const sound of s.sounds) timers.push(setTimeout(() => playSound(sound.name), sound.at));
+    for (const h of hapticSchedule(next, s, reducedMotionPref() ? 0 : DEAL_STEP_MS)) timers.push(setTimeout(() => vibrate(h.kind), h.at));
+    game = next;
+    sched = s;
+    settled = false;
+    draw();
+    timers.push(
+      setTimeout(() => {
+        settled = true;
+        if (next.phase === 'roundOver') seen = [...seen, ...next.hands.flatMap((h) => h.cards), ...next.dealer];
+        draw();
+        const f = roundFanfare(next);
+        if (f) playFanfare(f, app.querySelector('.felt'), settings.bigEffects);
+      }, s.doneAt),
+    );
+  };
+  const dealHand = (index: number) => {
+    const fresh = tutorialGame(TUTORIAL[index], 100);
+    stage = { kind: 'hand', index };
+    step = 0;
+    commit(fresh, startRound(fresh, TUTORIAL_BET));
+  };
+
+  const skip = '<p class="center"><a href="#home" id="skip" class="small">Skip the tour</a></p>';
+  const draw = () => {
+    if (stage.kind === 'intro') {
+      titleEl.textContent = 'Welcome';
+      app.innerHTML = `
+        <section class="hero">
+          <div class="hero-cards">${cardHtml({ rank: 'A', suit: '♠' }, { size: 'sm' })}${cardHtml({ rank: 'K', suit: '♥' }, { size: 'sm' })}</div>
+          <h1>Welcome to Blackjack Coach</h1>
+        </section>
+        <div class="panel"><p>Let's play two quick practice hands together. I'll tell you exactly what to do and why.</p>
+          <p class="muted">Takes about a minute. Practice chips only: your real stack of $${formatChips(STARTING_CHIPS)} is waiting for you after.</p></div>
+        <button class="btn primary" id="start">Let's play</button>${skip}`;
+      on('#start', 'click', () => dealHand(0));
+    } else if (stage.kind === 'finish') {
+      titleEl.textContent = 'Nice playing!';
+      const rc = runningCount(seen);
+      app.innerHTML = `
+        <h1>Two hands, two wins</h1>
+        <p>You already know the heart of the game: stand when the dealer is likely to bust, hit when you can't.</p>
+        <div class="panel">
+          <h2>Your first look at counting</h2>
+          <p>Card counters give every card a tag: low cards (2–6) are +1, 7–9 are 0, and 10s and Aces are −1. Here are the cards from your two hands:</p>
+          <div class="seen-cards">${seen.map((c) => cardHtml(c, { size: 'sm', tag: true })).join('')}</div>
+          <p class="rc-big">Running count: ${signed(rc)}</p>
+          <p class="muted">${
+            rc > 0
+              ? 'Positive means more low cards than high ones have gone, so the cards left are rich in 10s and Aces. That favors you, so counters bet more.'
+              : 'Negative means lots of 10s and Aces have gone, which is bad news for you. When the count is high, counters bet more.'
+          } The Counting Academy teaches you to keep this count in your head.</p>
+        </div>
+        <button class="btn primary" data-go="learn">Start the lessons</button>
+        <button class="btn secondary" data-go="tables">Go to the casino floor</button>
+        <button class="btn secondary" data-go="academy">Learn to count</button>
+        <p class="center"><a href="#home" id="skip" class="small">Home</a></p>`;
+      on('[data-go]', 'click', (el) => done(el.dataset.go));
+    } else {
+      const hand = TUTORIAL[stage.index];
+      const g = game!;
+      titleEl.textContent = `Practice hand ${stage.index + 1} of ${TUTORIAL.length}`;
+      const coachStep = g.phase === 'playing' ? hand.steps[step] : undefined;
+      const over = g.phase === 'roundOver';
+      const last = stage.index === TUTORIAL.length - 1;
+      const anim = settled ? null : sched;
+      const inSchedule = (seat: 'dealer' | number) => (i: number) =>
+        anim?.cards.some((c) => c.seat === seat && c.index === i) ? cardDelay(anim, seat, i) : undefined;
+      app.innerHTML = `
+        <h2 class="center">${hand.title}</h2>
+        <div class="felt tour">
+          ${handHtml(g.dealer, { label: 'Dealer', size: 'sm', hideHole: !g.holeRevealed, dealAt: inSchedule('dealer'), flipAt: anim?.holeFlipAt ?? undefined, settling: !settled && g.holeRevealed })}
+          ${handHtml(g.hands[0].cards, { label: 'You', active: g.phase === 'playing', result: g.hands[0].outcome === 'win' ? 'Win' : `$${TUTORIAL_BET}`, dealAt: inSchedule(0), settling: !settled })}
+        </div>
+        ${settled ? `<div class="coach"><span class="eyebrow">Coach</span><p>${esc(over ? hand.outro : coachStep?.say ?? hand.intro)}</p></div>` : ''}
+        ${
+          settled && coachStep
+            ? `<div class="btn-row actions">${(['hit', 'stand', 'double'] as Action[])
+                .map((a) => `<button class="btn ${a === coachStep.action ? 'primary pulse' : 'secondary'}" data-a="${a}" ${a === coachStep.action ? '' : 'disabled'}>${ACTION_LABEL[a]}</button>`)
+                .join('')}</div>`
+            : ''
+        }
+        ${settled && over ? `<button class="btn primary" id="next">${last ? 'See what counters see' : 'Next hand'}</button>` : ''}
+        ${skip}`;
+      on('[data-a]', 'click', (el) => {
+        if (settings.soundEffects) playSound('correct');
+        step++;
+        commit(g, act(g, el.dataset.a as Action));
+      });
+      on('#next', 'click', () => (last ? ((stage = { kind: 'finish' }), draw()) : dealHand(stage.kind === 'hand' ? stage.index + 1 : 0)));
+    }
+    on('#skip', 'click', (_el, e) => {
+      e.preventDefault();
+      done();
+    });
+  };
+  cleanup = () => {
+    timers.forEach(clearTimeout);
+    clearFanfare();
   };
   draw();
 }

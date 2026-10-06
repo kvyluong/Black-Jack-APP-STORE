@@ -25,6 +25,8 @@
   --font-display: "Cinzel", "Georgia", "Times New Roman", serif;
   --font-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+/* Color-blind mode: blue/orange instead of green/red. */
+:root.cb { --good: #4c9aff; --bad: #ffb020; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { min-height: 100%; }
@@ -142,6 +144,30 @@ kbd { font: 600 11px var(--font-body); border: 1px solid currentColor; border-ra
 .tag { margin-top: 4px; font-weight: 800; font-size: 14px; color: var(--muted); }
 .tag.plus { color: var(--good); }
 .tag.minus { color: var(--bad); }
+/* Your leaks */
+.panel.focus { border: 2px solid var(--gold); }
+.eyebrow { color: var(--gold); font-weight: 800; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; }
+h2.plain { color: var(--ink); margin: 0; }
+.warn { color: var(--warn); font-weight: 700; }
+.leak { display: flex; flex-direction: column; gap: 4px; }
+.leak-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.leak-track { height: 8px; background: var(--felt-deep); border-radius: 6px; overflow: hidden; }
+.leak-bar { height: 100%; border-radius: 6px; }
+.leak-bar.good { background: var(--good); }
+.leak-bar.warn { background: var(--warn); }
+.leak-bar.bad { background: var(--bad); }
+.spot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.spot > span:first-child { display: flex; flex-direction: column; }
+/* Welcome tour */
+.felt.tour { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 16px; min-height: 260px; }
+.coach { background: var(--shade); border-left: 4px solid var(--gold); border-radius: 12px; padding: 12px 14px; }
+.coach p { margin: 4px 0 0; }
+.center { text-align: center; }
+.seen-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.rc-big { color: var(--gold); font: 800 22px/1.3 var(--font-display); text-align: center; margin: 0; }
+@keyframes pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 197, 71, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(232, 197, 71, 0); } }
+.btn.pulse { animation: pulse-ring 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .btn.pulse { animation: none; } }
 
 /* Table */
 .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }

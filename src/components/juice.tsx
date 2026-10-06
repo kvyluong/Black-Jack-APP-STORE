@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { Fanfare, FanfareTier, countUpTicks } from '../engine/juice';
-import { colors } from '../theme';
+import { useSettings } from '../state/settings';
+import { colorblindColors, colors } from '../theme';
 
 const TIER_COLOR: Record<FanfareTier, string> = {
   blackjack: colors.gold,
@@ -41,6 +42,7 @@ interface Particle {
 
 /** Big pop-up text plus a burst of chips, played once per new `fanfare.key`. */
 export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key: number }) | null; effects: boolean }) {
+  const colorblind = useSettings().settings.colorblind;
   const pop = useRef(new Animated.Value(0)).current;
   const burst = useRef(new Animated.Value(0)).current;
 
@@ -75,6 +77,12 @@ export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key
 
   if (!fanfare) return null;
   const big = fanfare.tier === 'blackjack' || fanfare.tier === 'bigWin';
+  const tierColor =
+    colorblind && (fanfare.tier === 'win' || fanfare.tier === 'bust' || fanfare.tier === 'lose')
+      ? fanfare.tier === 'win'
+        ? colorblindColors.good
+        : colorblindColors.bad
+      : TIER_COLOR[fanfare.tier];
   // Each chip flies out and falls under gravity: y(t) = dy·t + g·t².
   const T = [0, 0.2, 0.4, 0.6, 0.8, 1];
   return (
@@ -105,7 +113,7 @@ export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key
             styles.label,
             big && styles.big,
             {
-              color: TIER_COLOR[fanfare.tier],
+              color: tierColor,
               opacity: pop.interpolate({ inputRange: [0, 0.2, 1, 2], outputRange: [0, 1, 1, 0] }),
               transform: [
                 { scale: pop.interpolate({ inputRange: [0, 1, 2], outputRange: [0.3, 1, 1.1] }) },

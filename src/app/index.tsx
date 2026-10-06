@@ -1,4 +1,4 @@
-import { Href, router } from 'expo-router';
+import { Href, Redirect, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LevelBar } from '../components/chips';
@@ -13,14 +13,18 @@ const TILES: { title: string; subtitle: string; href: Href; icon: string }[] = [
   { title: 'Casino Floor', subtitle: 'Play with a coach. Win chips to unlock bigger tables', href: '/tables', icon: '🃏' },
   { title: 'Counting Academy', subtitle: 'Learn to count your way: see it, hear it, tap it, chunk it or read it', href: '/academy', icon: '🧠' },
   { title: 'Drills', subtitle: 'Basic strategy, running count and true count drills', href: '/drills', icon: '🎯' },
+  { title: 'Your Leaks', subtitle: 'The decisions you miss most, and a drill aimed at them', href: '/leaks', icon: '🔍' },
   { title: 'Strategy Chart', subtitle: 'The full basic strategy chart for your rules', href: '/chart', icon: '📊' },
   { title: 'Settings', subtitle: 'Table rules, coaching options and progress', href: '/settings', icon: '⚙️' },
 ];
 
 export default function Home() {
-  const { stats, settings } = useSettings();
+  const { ready, stats, settings } = useSettings();
   const accuracy = stats.decisions ? Math.round((stats.correctDecisions / stats.decisions) * 100) : null;
   const done = stats.lessonsCompleted.length;
+
+  // Brand-new players get the guided first hands before anything else.
+  if (ready && !stats.onboarded && stats.handsPlayed === 0) return <Redirect href="/welcome" />;
 
   return (
     <Screen>

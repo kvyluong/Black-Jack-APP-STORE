@@ -28,6 +28,7 @@ import {
   startRound,
 } from '../engine/game';
 import { Fanfare, roundFanfare, streakPitch } from '../engine/juice';
+import { recordDecision, recordInsurance } from '../engine/leaks';
 import {
   CasinoTable,
   STARTING_CHIPS,
@@ -55,6 +56,7 @@ import {
 } from '../engine/table';
 import { useSettings } from '../state/settings';
 import { colors, spacing } from '../theme';
+import { useOutcomeColors } from '../components/useColors';
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
 const OUTCOME_LABEL: Record<Outcome, string> = {
@@ -76,6 +78,7 @@ type Feedback = { ok: boolean; text: string } | null;
 
 export default function Play() {
   const { ready, settings, stats, updateSettings, updateStats } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const { rules, showHints, correctMistakes, showCount, countQuizzes, useDeviations } = settings;
   // The casino table you're sitting at sets the bet limits.
   const casino = getTable(settings.tableId);
@@ -242,9 +245,15 @@ export default function Play() {
   };
 
   const onAction = (action: Action) => {
-    if (advice) {
+    const ctx = decisionContext(game, false);
+    if (advice && ctx) {
       const ok = action === advice.action;
       grade(ok, `Best play: ${ACTION_LABEL[advice.action]}. ${advice.reason}`);
+      // Track which kinds of decisions you miss (see the Your Leaks screen).
+      updateStats((s) => ({
+        ...s,
+        leaks: recordDecision(s.leaks, { cards: ctx.cards, dealerUp: ctx.dealerUp, canSplit: ctx.canSplit, chosen: action, best: advice.action }),
+      }));
     }
     const next = act(game, action);
     commit(next);
@@ -253,6 +262,7 @@ export default function Play() {
 
   const onInsurance = (take: boolean) => {
     const best = useDeviations && shouldTakeInsurance(tc);
+    updateStats((s) => ({ ...s, leaks: recordInsurance(s.leaks, take === best) }));
     grade(
       take === best,
       best
@@ -440,8 +450,8 @@ export default function Play() {
       )}
 
       {feedback && (
-        <Panel style={{ borderLeftWidth: 4, borderLeftColor: feedback.ok ? colors.good : colors.bad }}>
-          <Text style={{ color: feedback.ok ? colors.good : colors.bad, fontWeight: '700' }}>
+        <Panel style={{ borderLeftWidth: 4, borderLeftColor: feedback.ok ? good : bad }}>
+          <Text style={{ color: feedback.ok ? good : bad, fontWeight: '700' }}>
             {feedback.ok ? '✓ ' : '✗ '}
             {feedback.text}
           </Text>
@@ -492,7 +502,7 @@ export default function Play() {
 
       {settled && game.phase === 'roundOver' && (
         <Panel>
-          <Text style={[styles.prompt, { color: game.lastNet > 0 ? colors.good : game.lastNet < 0 ? colors.bad : colors.text }]}>
+          <Text style={[styles.prompt, { color: game.lastNet > 0 ? good : game.lastNet < 0 ? bad : colors.text }]}>
             {game.lastNet > 0 ? `You won $${game.lastNet}` : game.lastNet < 0 ? `You lost $${-game.lastNet}` : 'Push'}
           </Text>
           {quiz && <CountQuiz quiz={quiz} setQuiz={setQuiz} actual={game.runningCount} />}
@@ -584,6 +594,7 @@ function CountQuiz({
   actual: number;
 }) {
   const { updateStats } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const { guess, revealed } = quiz;
   const ok = guess === actual;
   return (
@@ -608,7 +619,7 @@ function CountQuiz({
         )}
       </View>
       {revealed && (
-        <Text style={{ color: ok ? colors.good : colors.bad, fontWeight: '700' }}>
+        <Text style={{ color: ok ? good : bad, fontWeight: '700' }}>
           {ok ? '✓ Spot on!' : `✗ It was ${actual > 0 ? '+' : ''}${actual}.`}
         </Text>
       )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
 import { Alert, Text } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
@@ -7,7 +8,7 @@ import { useSettings } from '../state/settings';
 import { colors } from '../theme';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, updateRules, resetProgress } = useSettings();
+  const { settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
   const { rules } = settings;
   const [showPrivacy, setShowPrivacy] = useState(false);
 
@@ -72,6 +73,24 @@ export default function SettingsScreen() {
           hint="Screen shake, chip bursts and score pop-ups"
           value={settings.bigEffects}
           onChange={(v) => updateSettings({ bigEffects: v })}
+        />
+      </Panel>
+
+      <H2>Accessibility</H2>
+      <Panel>
+        <ToggleRow
+          label="Color-blind mode"
+          hint="Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too."
+          value={settings.colorblind}
+          onChange={(v) => updateSettings({ colorblind: v })}
+        />
+        <Button
+          title="Replay the welcome tour"
+          variant="secondary"
+          onPress={() => {
+            updateStats((s) => ({ ...s, onboarded: false }));
+            router.push('/welcome');
+          }}
         />
       </Panel>
 

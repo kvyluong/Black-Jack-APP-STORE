@@ -6,6 +6,7 @@ import { describeHand } from '../engine/hand';
 import { Occupant, STYLE_LABEL, isNpc } from '../engine/table';
 import { colors } from '../theme';
 import { AnimatedCard } from './AnimatedCard';
+import { useOutcomeColors } from './useColors';
 
 const OUTCOME_SHORT: Record<Outcome, string> = { win: 'Win', lose: 'Lose', push: 'Push', blackjack: 'BJ!', surrender: 'Surr.' };
 
@@ -22,10 +23,11 @@ interface Props {
 
 /** One seat at the table: a computer player's avatar, bet and small cards, your spot, or an open seat. */
 export function SeatView({ seat, occupant, game, schedule, settled, instant, bubble }: Props) {
+  const { good, bad } = useOutcomeColors();
   const label = <Text style={styles.seatNo}>{seat + 1}</Text>;
   if (occupant === null) {
     return (
-      <View style={styles.seat}>
+      <View style={styles.seat} accessible accessibilityLabel={`Seat ${seat + 1}, open`}>
         <View style={[styles.avatar, styles.empty]} />
         <Text style={styles.open}>open</Text>
         {label}
@@ -35,7 +37,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
   if (occupant === YOU) {
     const bet = game.hands.filter((h) => h.seat === seat).reduce((sum, h) => sum + h.bet, 0);
     return (
-      <View style={styles.seat}>
+      <View style={styles.seat} accessible accessibilityLabel={`Seat ${seat + 1}, your seat${bet > 0 ? `, bet $${bet}` : ''}`}>
         <View style={[styles.avatar, styles.you]}>
           <Text style={styles.youText}>YOU</Text>
         </View>
@@ -52,8 +54,19 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
     .map((w) => w[0])
     .join('')
     .slice(0, 2);
+  // One sentence for screen readers instead of a dozen tiny labels.
+  const summary = [
+    `Seat ${seat + 1}, ${occupant.name}, ${STYLE_LABEL[occupant.style]}`,
+    ...hands.map(({ h }) =>
+      `bet $${h.bet}, ${settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards)}`) : 'dealing'}`,
+    ),
+    theirTurn ? 'their turn' : '',
+    bubble ?? '',
+  ]
+    .filter(Boolean)
+    .join('. ');
   return (
-    <View style={styles.seat}>
+    <View style={styles.seat} accessible accessibilityLabel={summary}>
       <View style={[styles.avatar, { backgroundColor: `hsl(${occupant.hue}, 45%, 38%)` }, theirTurn && styles.turn]}>
         <Text style={styles.initials}>{initials}</Text>
       </View>
@@ -73,7 +86,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
               </View>
             ))}
           </View>
-          <Text style={[styles.total, h.outcome && { color: h.payout! > h.bet ? colors.good : h.payout === h.bet ? colors.text : colors.bad }]}>
+          <Text style={[styles.total, h.outcome && { color: h.payout! > h.bet ? good : h.payout === h.bet ? colors.text : bad }]}>
             {!settled ? ' ' : h.outcome ? OUTCOME_SHORT[h.outcome] : describeHand(h.cards)}
           </Text>
         </View>

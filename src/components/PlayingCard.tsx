@@ -2,7 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, isRed } from '../engine/cards';
 import { hiLoValue } from '../engine/counting';
-import { colors, radius } from '../theme';
+import { useSettings } from '../state/settings';
+import { colors, radius, tagColor, tagText } from '../theme';
 
 interface Props {
   card?: Card;
@@ -15,6 +16,7 @@ interface Props {
 const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
 
 export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
+  const { settings } = useSettings();
   const s = SIZES[size];
   if (faceDown || !card) {
     return (
@@ -50,8 +52,8 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
         <Text style={[styles.rank, { color, fontSize: s.f }]}>{card.rank}</Text>
       </View>
       {showTag && (
-        <Text style={[styles.tag, { color: tag > 0 ? colors.good : tag < 0 ? colors.bad : colors.muted }]}>
-          {tag > 0 ? '+1' : tag < 0 ? '−1' : '0'}
+        <Text style={[styles.tag, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={`count ${tag > 0 ? 'plus one' : tag < 0 ? 'minus one' : 'zero'}`}>
+          {tagText(tag)}
         </Text>
       )}
     </View>

@@ -7,11 +7,13 @@ import { Button, H2, P, Panel, Screen } from '../../components/ui';
 import { LESSONS, getLesson } from '../../content/lessons';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
+import { useOutcomeColors } from '../../components/useColors';
 
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const lesson = getLesson(id);
   const { updateStats } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
   if (!lesson) {
@@ -73,7 +75,7 @@ export default function LessonScreen() {
               ))}
             </View>
             {answered && (
-              <Text style={{ color: correct ? colors.good : colors.bad, fontSize: 15 }}>
+              <Text style={{ color: correct ? good : bad, fontSize: 15 }}>
                 {correct ? '✓ Correct. ' : '✗ Not quite. Try again. '}
                 {correct ? q.explanation : ''}
               </Text>

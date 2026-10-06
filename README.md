@@ -6,6 +6,9 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
 ## Features
 
+- **Guided first hands**: on first launch, a coach walks new players through two scripted practice hands: standing on 17 against a weak dealer 6, then hitting 8 against a 9. Only the right button is enabled, and every step matches basic strategy (a unit test checks this). It ends with a first look at counting: the cards from both hands with their Hi-Lo tags and the running count. It can be skipped at any time and replayed from Settings.
+- **Your leaks**: every decision at the table and in the strategy drill is sorted into a type (hard 11 or less, stiff 12–16, hard 17+, soft hands, pairs, insurance). After 5 decisions of a type you see your accuracy for it, weakest first, plus the exact spots you miss most (e.g. "Soft 18 vs 9: best play Hit"). "Drill my weakest spot" opens a strategy drill that deals only that kind of hand.
+- **Accessibility**: count tags always pair a shape with the number (▲ +1, ● 0, ▼ −1), so they never rely on color alone. A color-blind mode in Settings swaps green/red for blue/orange throughout. Seats at the table read out as one sentence to screen readers (player, style, bet, cards, result).
 - **Lessons**: 10 short lessons from the rules to true count and index plays, each ending in a quiz.
 - **Chip progression**: you start with 1,000 chips, and your stack carries over between sessions. Five tables with rising limits (Main Floor $5–$100, Downtown $25–$500, The Strip $100–$2,000, High Limit Room $500–$10,000, Private Salon $2,500–$50,000) unlock permanently the first time your chips reach 2.5K, 10K, 50K and 250K. Bets are built from a casino chip tray. XP from hands played and correct decisions raises your level (Rookie → Regular → Card Sharp → Counter → Advantage Player → Legend). If you can't cover a table's minimum you're offered a cheaper table, and if you go broke you get a free refill to 1,000. Chips can't be bought or cashed out, which keeps the app clear of the stores' social-casino rules.
 - **Haptics**: a light tap as each of your cards lands (other players' cards stay quiet), a soft tap when the hole card flips, and patterns for wins, big wins, blackjacks and busts. Chip taps and bonus chips buzz too. Toggle in Settings; the HTML build vibrates on Android browsers.
@@ -18,7 +21,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
   - can quiz you on the running count between hands
   - can switch to count-based advice (Hi-Lo index plays, insurance at +3)
 - **Counting Academy**: five ways to learn the Hi-Lo count, one per way people like to learn, each built on a technique with research behind it:
-  - *See it, Color Count* (visual): cards glow green/gray/red beside a count meter; the hints fade out over five levels.
+  - *See it, Color Count* (visual): cards glow green/gray/red (blue/gray/orange in color-blind mode) beside a count meter; the hints fade out over five levels.
   - *Hear it, Sound Count* (listening): a tag sound per card plus the count spoken aloud at early levels, ending eyes-free.
   - *Do it, Tag Tap* (hands-on): tap −1/0/+1 on each card against a shrinking clock (retrieval practice).
   - *Chunk it, Pair Cancel*: call the total of pairs, then groups of three and four, the way fast counters work.

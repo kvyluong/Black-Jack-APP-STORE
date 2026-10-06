@@ -5,11 +5,13 @@ import { Button, P, Panel, Screen } from '../../components/ui';
 import { trueCountQuestion } from '../../engine/drills';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
+import { useOutcomeColors } from '../../components/useColors';
 
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 
 export default function TrueCountDrill() {
   const { settings } = useSettings();
+  const { good, bad } = useOutcomeColors();
   const maxDecks = Math.max(2, settings.rules.decks);
   const [q, setQ] = useState(() => trueCountQuestion(maxDecks));
   const [picked, setPicked] = useState<number | null>(null);
@@ -53,8 +55,8 @@ export default function TrueCountDrill() {
         ))}
       </View>
       {picked !== null && (
-        <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? colors.good : colors.bad }}>
-          <Text style={{ color: ok ? colors.good : colors.bad, fontWeight: '800', fontSize: 17 }}>
+        <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
+          <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 17 }}>
             {ok ? '✓ Correct' : `✗ It's ${signed(q.answer)}`}
           </Text>
           <Text style={styles.explain}>
