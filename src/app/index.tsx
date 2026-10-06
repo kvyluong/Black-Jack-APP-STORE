@@ -5,6 +5,7 @@ import { LevelBar } from '../components/chips';
 import { H1, P, Panel, Screen } from '../components/ui';
 import { formatChips } from '../engine/progression';
 import { LESSONS } from '../content/lessons';
+import { useRemoveAds } from '../purchases/RemoveAds';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 
@@ -20,6 +21,7 @@ const TILES: { title: string; subtitle: string; href: Href; icon: string }[] = [
 
 export default function Home() {
   const { ready, stats, settings } = useSettings();
+  const removeAds = useRemoveAds();
   const accuracy = stats.decisions ? Math.round((stats.correctDecisions / stats.decisions) * 100) : null;
   const done = stats.lessonsCompleted.length;
 
@@ -59,6 +61,12 @@ export default function Home() {
         </Pressable>
       ))}
 
+      {!settings.adsRemoved && (removeAds.available || __DEV__) && (
+        <Text style={styles.removeAds} onPress={() => router.push('/settings')} accessibilityRole="link">
+          Remove ads{removeAds.price ? ` · ${removeAds.price}` : ''}
+        </Text>
+      )}
+
       <P muted style={styles.disclaimer}>
         For entertainment and education only. No real money gambling. Play responsibly.
       </P>
@@ -92,5 +100,6 @@ const styles = StyleSheet.create({
   tileTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
   tileSub: { color: colors.muted, fontSize: 14, marginTop: 2 },
   chev: { color: colors.muted, fontSize: 28 },
+  removeAds: { color: colors.gold, textAlign: 'center', textDecorationLine: 'underline', marginTop: spacing(1) },
   disclaimer: { textAlign: 'center', fontSize: 12, marginTop: spacing(1) },
 });

@@ -1,10 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { getLocales } from 'expo-localization';
+
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
 import { LeakStats, emptyLeaks } from '../engine/leaks';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
+import { Lang, LanguageSetting, resolveLang, setLang } from '../i18n/lang';
 
 export interface Stats {
   handsPlayed: number;
@@ -64,6 +67,10 @@ export interface Settings {
   bankroll: number;
   /** The casino table you're sitting at (see TABLES in engine/progression). */
   tableId: string;
+  /** Bought "Remove ads": no banner or between-hand ads. Kept on reset (it was paid for). */
+  adsRemoved: boolean;
+  /** App language; "system" follows the phone. */
+  language: LanguageSetting;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -80,6 +87,8 @@ const DEFAULT_SETTINGS: Settings = {
   yourHands: 2,
   otherPlayers: true,
   bankroll: STARTING_CHIPS,
+  adsRemoved: false,
+  language: 'system',
   tableId: 'floor',
 };
 
@@ -104,6 +113,8 @@ const STORAGE_KEY = 'blackjack-coach/v1';
 
 interface Store {
   ready: boolean;
+  /** The language in use right now (resolved from the setting and the phone's language). */
+  lang: Lang;
   settings: Settings;
   stats: Stats;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -149,11 +160,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings((s) => ({ ...s, bankroll: STARTING_CHIPS, tableId: 'floor' }));
   }, []);
 
+  // Text everywhere (including the engine) reads the current language; set it before children render.
+  const lang: Lang = resolveLang(settings.language, deviceLanguage());
+  setLang(lang);
+
   const value = useMemo(
-    () => ({ ready, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
-    [ready, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress],
+    () => ({ ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
+    [ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+function deviceLanguage(): string | null {
+  try {
+    return getLocales()[0]?.languageCode ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function useSettings(): Store {

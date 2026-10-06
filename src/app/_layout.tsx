@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { initAds } from '../ads/init';
+import { RemoveAdsProvider } from '../purchases/RemoveAds';
 import { SettingsProvider } from '../state/settings';
 import { colors } from '../theme';
 
@@ -15,6 +16,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SettingsProvider>
+        <RemoveAdsProvider>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -40,6 +42,7 @@ export default function RootLayout() {
           <Stack.Screen name="welcome" options={{ title: 'Welcome' }} />
           <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         </Stack>
+        </RemoveAdsProvider>
       </SettingsProvider>
     </SafeAreaProvider>
   );

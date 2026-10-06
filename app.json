@@ -67,6 +67,9 @@
           "interstitial": "REPLACE_WITH_ANDROID_INTERSTITIAL_UNIT_ID",
           "rewarded": "REPLACE_WITH_ANDROID_REWARDED_UNIT_ID"
         }
+      },
+      "iap": {
+        "removeAds": "remove_ads"
       }
     }
   }

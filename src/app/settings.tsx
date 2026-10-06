@@ -4,6 +4,8 @@ import { Alert, Text } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
+import { useRemoveAds } from '../purchases/RemoveAds';
+import { LANGUAGE_NAME, LanguageSetting } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors } from '../theme';
 
@@ -11,6 +13,7 @@ export default function SettingsScreen() {
   const { settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
   const { rules } = settings;
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const removeAds = useRemoveAds();
 
   useEffect(() => {
     privacyOptionsRequired().then(setShowPrivacy);
@@ -24,6 +27,19 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
+      <H2>Language · Idioma</H2>
+      <Panel>
+        <Segmented<LanguageSetting>
+          options={[
+            { label: 'System · Sistema', value: 'system' },
+            { label: LANGUAGE_NAME.en, value: 'en' },
+            { label: LANGUAGE_NAME.es, value: 'es' },
+          ]}
+          value={settings.language}
+          onChange={(v) => updateSettings({ language: v })}
+        />
+      </Panel>
+
       <H2>Coaching</H2>
       <Panel>
         <ToggleRow
@@ -136,6 +152,49 @@ export default function SettingsScreen() {
         <P muted style={{ fontSize: 13 }}>
           The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.
         </P>
+      </Panel>
+
+      <H2>Remove ads</H2>
+      <Panel>
+        {settings.adsRemoved ? (
+          <>
+            <P>✓ Ads removed. Thanks for supporting Blackjack Coach!</P>
+            {__DEV__ && !removeAds.available && (
+              <Button title="Bring ads back (development only)" variant="ghost" onPress={() => updateSettings({ adsRemoved: false })} />
+            )}
+          </>
+        ) : (
+          <>
+            <P muted style={{ fontSize: 14 }}>
+              A one-time purchase that removes the banner and the ads between hands, on every device signed in to your store account.
+              The optional bonus-chip videos stay, since you choose when to watch those.
+            </P>
+            {removeAds.available || __DEV__ ? (
+              <Button
+                title={
+                  removeAds.status === 'buying'
+                    ? 'Opening the store…'
+                    : removeAds.available
+                      ? `Remove ads${removeAds.price ? ` · ${removeAds.price}` : ''}`
+                      : 'Remove ads (simulated in development)'
+                }
+                disabled={removeAds.status !== 'idle'}
+                onPress={removeAds.buy}
+              />
+            ) : (
+              <P muted style={{ fontSize: 14 }}>Available in the iPhone and Android apps.</P>
+            )}
+          </>
+        )}
+        {removeAds.available && !settings.adsRemoved && (
+          <Button
+            title={removeAds.status === 'restoring' ? 'Checking…' : 'Restore purchase'}
+            variant="ghost"
+            disabled={removeAds.status !== 'idle'}
+            onPress={removeAds.restore}
+          />
+        )}
+        {removeAds.message && <P muted style={{ fontSize: 14 }}>{removeAds.message}</P>}
       </Panel>
 
       <H2>Data</H2>
