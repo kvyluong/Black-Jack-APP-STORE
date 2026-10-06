@@ -2,8 +2,28 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { LegalActions } from '../../engine/game';
 import { ACTION_LABEL, Action, Recommendation } from '../../engine/strategy';
+import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
 import { Button, Panel } from '../ui';
+
+const T = localized({
+  en: {
+    coachSeat: (seat: number, action: string) => `Seat ${seat} · Coach: ${action}`,
+    countPlay: ' (count play)',
+    prompt: 'Dealer shows an Ace. Insurance?',
+    coach: (hint: string) => `Coach: ${hint}`,
+    take: 'Take insurance',
+    decline: 'No insurance',
+  },
+  es: {
+    coachSeat: (seat: number, action: string) => `Asiento ${seat} · Coach: ${action}`,
+    countPlay: ' (jugada por conteo)',
+    prompt: 'El crupier muestra un As. ¿Seguro?',
+    coach: (hint: string) => `Coach: ${hint}`,
+    take: 'Tomar seguro',
+    decline: 'Sin seguro',
+  },
+});
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
 
@@ -27,8 +47,8 @@ export function ActionBar({
     <>
       {showHints && advice && (
         <Text style={styles.hint}>
-          Seat {seat + 1} · Coach: {ACTION_LABEL[advice.action]}
-          {advice.deviation ? ' (count play)' : ''}
+          {T.coachSeat(seat + 1, ACTION_LABEL[advice.action])}
+          {advice.deviation ? T.countPlay : ''}
         </Text>
       )}
       <View style={styles.actions}>
@@ -52,11 +72,11 @@ export function ActionBar({
 export function InsurancePanel({ hint, onChoose }: { hint: string | null; onChoose: (take: boolean) => void }) {
   return (
     <Panel>
-      <Text style={styles.prompt}>Dealer shows an Ace. Insurance?</Text>
-      {hint && <Text style={styles.hint}>Coach: {hint}</Text>}
+      <Text style={styles.prompt}>{T.prompt}</Text>
+      {hint && <Text style={styles.hint}>{T.coach(hint)}</Text>}
       <View style={styles.actions}>
-        <Button title="Take insurance" variant="secondary" onPress={() => onChoose(true)} style={styles.actionButton} />
-        <Button title="No insurance" variant="secondary" onPress={() => onChoose(false)} style={styles.actionButton} />
+        <Button title={T.take} variant="secondary" onPress={() => onChoose(true)} style={styles.actionButton} />
+        <Button title={T.decline} variant="secondary" onPress={() => onChoose(false)} style={styles.actionButton} />
       </View>
     </Panel>
   );

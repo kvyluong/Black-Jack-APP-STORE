@@ -1,4 +1,10 @@
+import { localized } from '../i18n/lang';
 import { Card, pointValue } from './cards';
+
+const T = localized({
+  en: { blackjack: 'Blackjack', bust: (n: number) => `Bust (${n})`, soft: (n: number) => `Soft ${n}` },
+  es: { blackjack: 'Blackjack', bust: (n: number) => `Pasado (${n})`, soft: (n: number) => `${n} blando` },
+});
 
 export interface HandValue {
   total: number;
@@ -31,8 +37,8 @@ export function isPair(cards: Card[]): boolean {
 }
 
 export function describeHand(cards: Card[]): string {
-  if (isBlackjack(cards)) return 'Blackjack';
+  if (isBlackjack(cards)) return T.blackjack;
   const { total, soft } = handValue(cards);
-  if (total > 21) return `Bust (${total})`;
-  return soft ? `Soft ${total}` : `${total}`;
+  if (total > 21) return T.bust(total);
+  return soft ? T.soft(total) : `${total}`;
 }

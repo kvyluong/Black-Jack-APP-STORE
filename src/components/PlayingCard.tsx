@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, isRed } from '../engine/cards';
 import { hiLoValue } from '../engine/counting';
+import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, tagColor, tagText } from '../theme';
 
@@ -12,6 +13,19 @@ interface Props {
   /** Shows the card's Hi-Lo tag beneath it (used in lessons and drills). */
   showTag?: boolean;
 }
+
+const T = localized({
+  en: {
+    card: (rank: string, suit: string) => `${rank} of ${suit}`,
+    suits: { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' } as Record<Card['suit'], string>,
+    tag: (tag: number) => `count ${tag > 0 ? 'plus one' : tag < 0 ? 'minus one' : 'zero'}`,
+  },
+  es: {
+    card: (rank: string, suit: string) => `${rank} de ${suit}`,
+    suits: { '♠': 'picas', '♥': 'corazones', '♦': 'diamantes', '♣': 'tréboles' },
+    tag: (tag: number) => `conteo ${tag > 0 ? 'más uno' : tag < 0 ? 'menos uno' : 'cero'}`,
+  },
+});
 
 const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
 
@@ -33,7 +47,7 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
       <View
         style={[styles.card, styles.xs, { width: s.w, height: s.h }]}
         accessible
-        accessibilityLabel={`${card.rank} of ${suitName(card.suit)}`}
+        accessibilityLabel={T.card(card.rank, suitName(card.suit))}
       >
         <Text style={{ color, fontSize: s.f, fontWeight: '800', lineHeight: s.f + 2 }}>{card.rank}</Text>
         <Text style={{ color, fontSize: s.f, lineHeight: s.f + 2 }}>{card.suit}</Text>
@@ -45,14 +59,14 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
       <View
         style={[styles.card, { width: s.w, height: s.h }]}
         accessible
-        accessibilityLabel={`${card.rank} of ${suitName(card.suit)}`}
+        accessibilityLabel={T.card(card.rank, suitName(card.suit))}
       >
         <Text style={[styles.corner, { color, fontSize: s.f * 0.6 }]}>{card.rank}</Text>
         <Text style={[styles.center, { color, fontSize: s.f * 1.2 }]}>{card.suit}</Text>
         <Text style={[styles.rank, { color, fontSize: s.f }]}>{card.rank}</Text>
       </View>
       {showTag && (
-        <Text style={[styles.tag, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={`count ${tag > 0 ? 'plus one' : tag < 0 ? 'minus one' : 'zero'}`}>
+        <Text style={[styles.tag, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={T.tag(tag)}>
           {tagText(tag)}
         </Text>
       )}
@@ -61,7 +75,7 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
 }
 
 function suitName(suit: Card['suit']) {
-  return { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' }[suit];
+  return T.suits[suit];
 }
 
 const styles = StyleSheet.create({

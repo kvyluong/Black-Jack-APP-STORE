@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '../engine/cards';
 import { describeHand } from '../engine/hand';
+import { tr } from '../i18n/lang';
 import { colors } from '../theme';
 import { AnimatedCard } from './AnimatedCard';
 
@@ -52,7 +53,7 @@ export function HandView({
       {cards.length > 0 && (
         <Text style={styles.label}>
           {label ? `${label}: ` : ''}
-          {settling ? '…' : hideHole ? `showing ${cards[0].rank}` : describeHand(cards)}
+          {settling ? '…' : hideHole ? tr(`showing ${cards[0].rank}`, `muestra ${cards[0].rank}`) : describeHand(cards)}
           {result && !settling ? ` · ${result}` : ''}
         </Text>
       )}

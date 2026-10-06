@@ -3,11 +3,47 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { haptic } from '../../audio/haptics';
 import { CasinoTable, STARTING_CHIPS, formatChips } from '../../engine/progression';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { BonusAdButton } from '../BonusAdButton';
 import { ChipButton, ChipStack } from '../chips';
 import { Button, Panel, Segmented } from '../ui';
+
+const T = localized({
+  en: {
+    one: 'Play 1 hand',
+    two: 'Play 2 hands',
+    bet: (amount: string, seats: number) => `Bet $${amount}${seats > 1 ? ` on each of your ${seats} hands` : ''}`,
+    limits: (min: string, max: string) => `Table limits $${min}–$${max}`,
+    suggest: (units: number, amount: string) =>
+      `Count suggests ${units} unit${units > 1 ? 's' : ''} ($${amount}) per hand · tap to bet it`,
+    clear: 'Clear',
+    refill: (amount: string) => `Out of chips: free refill to $${amount}`,
+    move: (min: string, table: string) => `You need $${min} here. Move to ${table}`,
+    addChips: (min: string) => `Add chips: $${min} minimum`,
+    dealLow: 'Deal (1 hand: low on chips)',
+    deal: 'Deal',
+    lower: (min: string) => `Lower bet to $${min}`,
+    changeTable: 'Change table',
+  },
+  es: {
+    one: 'Jugar 1 mano',
+    two: 'Jugar 2 manos',
+    bet: (amount: string, seats: number) => `Apuesta $${amount}${seats > 1 ? ` en cada una de tus ${seats} manos` : ''}`,
+    limits: (min: string, max: string) => `Límites de la mesa $${min}–$${max}`,
+    suggest: (units: number, amount: string) =>
+      `El conteo sugiere ${units} unidad${units > 1 ? 'es' : ''} ($${amount}) por mano · toca para apostarla${units > 1 ? 's' : ''}`,
+    clear: 'Borrar',
+    refill: (amount: string) => `Sin fichas: recarga gratis a $${amount}`,
+    move: (min: string, table: string) => `Aquí necesitas $${min}. Cámbiate a ${table}`,
+    addChips: (min: string) => `Agrega fichas: mínimo $${min}`,
+    dealLow: 'Repartir (1 mano: pocas fichas)',
+    deal: 'Repartir',
+    lower: (min: string) => `Bajar apuesta a $${min}`,
+    changeTable: 'Cambiar de mesa',
+  },
+});
 
 interface Props {
   casino: CasinoTable;
@@ -36,8 +72,8 @@ export function BettingPanel(p: Props) {
       {/* Like spreading to a second betting spot at a real table: choose before each deal. */}
       <Segmented
         options={[
-          { label: 'Play 1 hand', value: 1 },
-          { label: 'Play 2 hands', value: 2 },
+          { label: T.one, value: 1 },
+          { label: T.two, value: 2 },
         ]}
         value={settings.yourHands}
         onChange={(v) => updateSettings({ yourHands: v })}
@@ -45,17 +81,15 @@ export function BettingPanel(p: Props) {
       <View style={styles.betRow}>
         <ChipStack amount={p.bet} />
         <Text style={styles.prompt}>
-          Bet ${formatChips(p.bet)}
-          {p.yourSeatCount > 1 ? ` on each of your ${p.yourSeatCount} hands` : ''}
+          {T.bet(formatChips(p.bet), p.yourSeatCount)}
         </Text>
       </View>
       <Text style={styles.limits}>
-        Table limits ${formatChips(unit)}–${formatChips(p.casino.maxBet)}
+        {T.limits(formatChips(unit), formatChips(p.casino.maxBet))}
       </Text>
       {p.suggestedUnits !== null && (
         <Text style={styles.hint} onPress={() => p.setBet(Math.min(p.maxPerHand, p.suggestedUnits! * unit))}>
-          Count suggests {p.suggestedUnits} unit{p.suggestedUnits > 1 ? 's' : ''} (${formatChips(p.suggestedUnits * unit)}) per hand · tap to
-          bet it
+          {T.suggest(p.suggestedUnits, formatChips(p.suggestedUnits * unit))}
         </Text>
       )}
       {/* Chip tray: tap chips to build your bet. */}
@@ -71,25 +105,25 @@ export function BettingPanel(p: Props) {
             }}
           />
         ))}
-        <Button title="Clear" variant="ghost" disabled={p.bet === 0} onPress={() => p.setBet(0)} style={styles.clear} />
+        <Button title={T.clear} variant="ghost" disabled={p.bet === 0} onPress={() => p.setBet(0)} style={styles.clear} />
       </View>
       {p.outOfChips ? (
-        <Button title={`Out of chips: free refill to $${formatChips(STARTING_CHIPS)}`} onPress={p.onRefill} />
+        <Button title={T.refill(formatChips(STARTING_CHIPS))} onPress={p.onRefill} />
       ) : p.moveTo ? (
         <Button
-          title={`You need $${formatChips(unit)} here. Move to ${p.moveTo.name}`}
+          title={T.move(formatChips(unit), p.moveTo.name)}
           onPress={() => updateSettings({ tableId: p.moveTo!.id })}
         />
       ) : p.bet < unit ? (
-        <Button title={`Add chips: $${formatChips(unit)} minimum`} disabled onPress={() => {}} />
+        <Button title={T.addChips(formatChips(unit))} disabled onPress={() => {}} />
       ) : p.affordableSeats >= 1 ? (
-        <Button title={p.affordableSeats < p.yourSeatCount ? 'Deal (1 hand: low on chips)' : 'Deal'} onPress={p.onDeal} />
+        <Button title={p.affordableSeats < p.yourSeatCount ? T.dealLow : T.deal} onPress={p.onDeal} />
       ) : (
-        <Button title={`Lower bet to $${formatChips(unit)}`} onPress={() => p.setBet(unit)} />
+        <Button title={T.lower(formatChips(unit))} onPress={() => p.setBet(unit)} />
       )}
       <BonusAdButton onGranted={p.onBonus} />
       <Text style={styles.lobby} onPress={() => router.push('/tables')} accessibilityRole="link">
-        Change table
+        {T.changeTable}
       </Text>
     </Panel>
   );

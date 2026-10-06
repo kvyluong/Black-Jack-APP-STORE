@@ -1,5 +1,6 @@
 // A casino table: seven seats, computer players who sit down, play in their
 // own style, win or lose, and leave, plus one or two seats for you.
+import { localized } from '../i18n/lang';
 import { Rng } from './cards';
 import { suggestedBetUnits } from './counting';
 import { GameState, SeatBet, YOU, currentTrueCount, decisionContext, legalActions } from './game';
@@ -11,14 +12,41 @@ export const SEAT_COUNT = 7;
 export type NpcStyle = 'book' | 'counter' | 'hunch' | 'neverBust' | 'mimic' | 'highRoller';
 
 /** Short description shown under a player's name. */
-export const STYLE_LABEL: Record<NpcStyle, string> = {
-  book: 'Plays by the book',
-  counter: 'Counts cards',
-  hunch: 'Plays hunches',
-  neverBust: 'Never busts',
-  mimic: 'Copies the dealer',
-  highRoller: 'High roller',
-};
+export const STYLE_LABEL: Record<NpcStyle, string> = localized<Record<NpcStyle, string>>({
+  en: {
+    book: 'Plays by the book',
+    counter: 'Counts cards',
+    hunch: 'Plays hunches',
+    neverBust: 'Never busts',
+    mimic: 'Copies the dealer',
+    highRoller: 'High roller',
+  },
+  es: {
+    book: 'Juega según el manual',
+    counter: 'Cuenta cartas',
+    hunch: 'Juega por corazonadas',
+    neverBust: 'Nunca se pasa',
+    mimic: 'Imita al crupier',
+    highRoller: 'Gran apostador',
+  },
+});
+
+const T = localized({
+  en: {
+    broke: 'is out of chips',
+    ahead: (n: number) => `colors up $${n} ahead`,
+    reasons: ['calls it a night', 'heads to the buffet', 'goes to try the slots', 'takes a break'],
+    leaves: (name: string, why: string) => `${name} ${why} and leaves.`,
+    joins: (name: string, seat: number, bet: number) => `${name} sits down at seat ${seat} with $${bet} bets.`,
+  },
+  es: {
+    broke: 'se quedó sin fichas',
+    ahead: (n: number) => `cambia sus fichas con $${n} de ganancia`,
+    reasons: ['da por terminada la noche', 'va al bufé', 'va a probar las tragamonedas', 'se toma un descanso'],
+    leaves: (name: string, why: string) => `${name} ${why} y se va.`,
+    joins: (name: string, seat: number, bet: number) => `${name} se sienta en el asiento ${seat} con apuestas de $${bet}.`,
+  },
+});
 
 export interface Npc {
   id: string;
@@ -130,11 +158,11 @@ export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean
     table.seats[seat] = null;
     const why =
       o.bankroll < minBet
-        ? 'is out of chips'
+        ? T.broke
         : o.bankroll > o.buyIn
-          ? `colors up $${o.bankroll - o.buyIn} ahead`
-          : pick(['calls it a night', 'heads to the buffet', 'goes to try the slots', 'takes a break'], rng);
-    events.push({ kind: 'leave', seat, text: `${o.name} ${why} and leaves.` });
+          ? T.ahead(o.bankroll - o.buyIn)
+          : pick(T.reasons, rng);
+    events.push({ kind: 'leave', seat, text: T.leaves(o.name, why) });
   }
 
   const open = table.seats.map((o, s) => (o === null ? s : -1)).filter((s) => s >= 0);
@@ -144,7 +172,7 @@ export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean
     const seat = pick(open, rng);
     const npc = makeNpc(table, minBet, rng);
     table.seats[seat] = npc;
-    events.push({ kind: 'join', seat, text: `${npc.name} sits down at seat ${seat + 1} with $${npc.baseBet} bets.` });
+    events.push({ kind: 'join', seat, text: T.joins(npc.name, seat + 1, npc.baseBet) });
   }
   return { table, events };
 }

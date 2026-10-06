@@ -4,11 +4,38 @@ import { DealSchedule, cardDelay } from '../engine/dealSchedule';
 import { GameState, Outcome, YOU } from '../engine/game';
 import { describeHand } from '../engine/hand';
 import { Occupant, STYLE_LABEL, isNpc } from '../engine/table';
+import { localized } from '../i18n/lang';
 import { colors } from '../theme';
 import { AnimatedCard } from './AnimatedCard';
 import { useOutcomeColors } from './useColors';
 
-const OUTCOME_SHORT: Record<Outcome, string> = { win: 'Win', lose: 'Lose', push: 'Push', blackjack: 'BJ!', surrender: 'Surr.' };
+const OUTCOME_SHORT: Record<Outcome, string> = localized<Record<Outcome, string>>({
+  en: { win: 'Win', lose: 'Lose', push: 'Push', blackjack: 'BJ!', surrender: 'Surr.' },
+  es: { win: 'Gana', lose: 'Pierde', push: 'Empate', blackjack: 'BJ!', surrender: 'Rend.' },
+});
+
+const T = localized({
+  en: {
+    open: 'open',
+    openSeat: (n: number) => `Seat ${n}, open`,
+    yourSeat: (n: number, bet: number) => `Seat ${n}, your seat${bet > 0 ? `, bet $${bet}` : ''}`,
+    you: 'YOU',
+    seat: (n: number, name: string, style: string) => `Seat ${n}, ${name}, ${style}`,
+    bet: (bet: number, rest: string) => `bet $${bet}, ${rest}`,
+    dealing: 'dealing',
+    theirTurn: 'their turn',
+  },
+  es: {
+    open: 'libre',
+    openSeat: (n: number) => `Asiento ${n}, libre`,
+    yourSeat: (n: number, bet: number) => `Asiento ${n}, tu asiento${bet > 0 ? `, apuesta $${bet}` : ''}`,
+    you: 'TÚ',
+    seat: (n: number, name: string, style: string) => `Asiento ${n}, ${name}, ${style}`,
+    bet: (bet: number, rest: string) => `apuesta $${bet}, ${rest}`,
+    dealing: 'repartiendo',
+    theirTurn: 'su turno',
+  },
+});
 
 interface Props {
   seat: number;
@@ -27,9 +54,9 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
   const label = <Text style={styles.seatNo}>{seat + 1}</Text>;
   if (occupant === null) {
     return (
-      <View style={styles.seat} accessible accessibilityLabel={`Seat ${seat + 1}, open`}>
+      <View style={styles.seat} accessible accessibilityLabel={T.openSeat(seat + 1)}>
         <View style={[styles.avatar, styles.empty]} />
-        <Text style={styles.open}>open</Text>
+        <Text style={styles.open}>{T.open}</Text>
         {label}
       </View>
     );
@@ -37,9 +64,9 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
   if (occupant === YOU) {
     const bet = game.hands.filter((h) => h.seat === seat).reduce((sum, h) => sum + h.bet, 0);
     return (
-      <View style={styles.seat} accessible accessibilityLabel={`Seat ${seat + 1}, your seat${bet > 0 ? `, bet $${bet}` : ''}`}>
+      <View style={styles.seat} accessible accessibilityLabel={T.yourSeat(seat + 1, bet)}>
         <View style={[styles.avatar, styles.you]}>
-          <Text style={styles.youText}>YOU</Text>
+          <Text style={styles.youText}>{T.you}</Text>
         </View>
         {bet > 0 && <Text style={styles.bet}>${bet}</Text>}
         {label}
@@ -56,11 +83,11 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
     .slice(0, 2);
   // One sentence for screen readers instead of a dozen tiny labels.
   const summary = [
-    `Seat ${seat + 1}, ${occupant.name}, ${STYLE_LABEL[occupant.style]}`,
+    T.seat(seat + 1, occupant.name, STYLE_LABEL[occupant.style]),
     ...hands.map(({ h }) =>
-      `bet $${h.bet}, ${settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards)}`) : 'dealing'}`,
+      T.bet(h.bet, settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards)}`) : T.dealing),
     ),
-    theirTurn ? 'their turn' : '',
+    theirTurn ? T.theirTurn : '',
     bubble ?? '',
   ]
     .filter(Boolean)

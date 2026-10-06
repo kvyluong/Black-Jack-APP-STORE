@@ -54,6 +54,7 @@ import {
   setYourHands,
   settleNpcs,
 } from '../engine/table';
+import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors } from '../theme';
 
@@ -61,6 +62,63 @@ const QUIZ_CHANCE = 0.25;
 /** How long a computer player "thinks" before acting. */
 const NPC_THINK_MS = 650;
 const KEY_ACTIONS: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split', r: 'surrender' };
+
+const T = localized({
+  en: {
+    level: (n: number, title: string) => `Level ${n}: ${title}`,
+    unlocked: (name: string) => `New table unlocked: ${name}`,
+    countPlay: ' · count play',
+    book: (a: string) => ` ✗ book: ${a}`,
+    correct: 'Correct!',
+    inARow: (n: number) => `Correct! ${n} in a row 🔥`,
+    best: (a: string, reason: string) => `Best play: ${a}. ${reason}`,
+    takeIns: (tc: string) =>
+      `Take insurance: the true count is ${tc} (+3 or more), so over a third of the remaining cards are 10s.`,
+    declineIns: 'Decline insurance. It loses money in the long run unless the true count is +3 or higher.',
+    takesIns: 'Takes insurance',
+    noIns: 'No insurance',
+    chips: (n: string) => `Chips $${n}`,
+    count: (rc: string, decks: number, tc: string) => `RC ${rc} · Decks ${decks} · TC ${tc}`,
+    tapCount: 'Tap to check count',
+    shuffled: 'New shoe shuffled · count resets to 0',
+    goTo: (name: string, min: string, max: string) => `Go to ${name} ($${min}–$${max})`,
+    playing: (name: string) => `${name} is playing…`,
+    hintTake: 'Take it (TC +3 or higher)',
+    hintDecline: 'Decline',
+    won: (n: number) => `You won $${n}`,
+    lost: (n: number) => `You lost $${n}`,
+    push: 'Push',
+    nextHand: 'Next hand',
+    bonus: (n: string) => `+$${n} BONUS`,
+  },
+  es: {
+    level: (n: number, title: string) => `Nivel ${n}: ${title}`,
+    unlocked: (name: string) => `Nueva mesa desbloqueada: ${name}`,
+    countPlay: ' · jugada por conteo',
+    book: (a: string) => ` ✗ manual: ${a}`,
+    correct: '¡Correcto!',
+    inARow: (n: number) => `¡Correcto! ${n} seguidas 🔥`,
+    best: (a: string, reason: string) => `Mejor jugada: ${a}. ${reason}`,
+    takeIns: (tc: string) =>
+      `Toma el seguro: el conteo real es ${tc} (+3 o más), así que más de un tercio de las cartas restantes son 10.`,
+    declineIns: 'Rechaza el seguro. A la larga pierde dinero, salvo que el conteo real sea +3 o más.',
+    takesIns: 'Toma seguro',
+    noIns: 'Sin seguro',
+    chips: (n: string) => `Fichas $${n}`,
+    count: (rc: string, decks: number, tc: string) => `CC ${rc} · Barajas ${decks} · CR ${tc}`,
+    tapCount: 'Toca para ver el conteo',
+    shuffled: 'Zapato nuevo barajado · el conteo vuelve a 0',
+    goTo: (name: string, min: string, max: string) => `Ir a ${name} ($${min}–$${max})`,
+    playing: (name: string) => `${name} está jugando…`,
+    hintTake: 'Tómalo (CR +3 o más)',
+    hintDecline: 'Recházalo',
+    won: (n: number) => `Ganaste $${n}`,
+    lost: (n: number) => `Perdiste $${n}`,
+    push: 'Empate',
+    nextHand: 'Siguiente mano',
+    bonus: (n: string) => `+$${n} EXTRA`,
+  },
+});
 
 type Feedback = { ok: boolean; text: string } | null;
 
@@ -72,7 +130,7 @@ export default function Play() {
 }
 
 function TableScreen() {
-  const { settings, stats, updateSettings, updateStats } = useSettings();
+  const { lang, settings, stats, updateSettings, updateStats } = useSettings();
   const { rules, showHints, correctMistakes, showCount, countQuizzes, useDeviations } = settings;
   const { good, bad } = useOutcomeColors();
   // The casino table you're sitting at sets the bet limits.
@@ -119,7 +177,9 @@ function TableScreen() {
   const advice = useMemo(() => {
     const ctx = yourTurn ? decisionContext(game, useDeviations) : null;
     return ctx ? recommend(ctx) : null;
-  }, [game, useDeviations, yourTurn]);
+    // `lang`: the coach's reason text follows the language.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, useDeviations, yourTurn, lang]);
 
   /** `correct`: right calls so far this round, passed in when this move just changed it. */
   const commit = (prev: GameState, next: GameState, correct = roundCorrect) => {
@@ -137,8 +197,8 @@ function TableScreen() {
     const before = levelInfo(stats.xp);
     const after = levelInfo(xp);
     const found: { text: string; table?: CasinoTable }[] = [];
-    if (after.level > before.level) found.push({ text: `Level ${after.level}: ${after.title}` });
-    for (const t of newlyUnlocked(stats.peakChips, g.bankroll)) found.push({ text: `New table unlocked: ${t.name}`, table: t });
+    if (after.level > before.level) found.push({ text: T.level(after.level, after.title) });
+    for (const t of newlyUnlocked(stats.peakChips, g.bankroll)) found.push({ text: T.unlocked(t.name), table: t });
     if (found.length) setMilestones(found);
     updateStats((s) => ({
       ...s,
@@ -164,7 +224,7 @@ function TableScreen() {
         const choice = npcAction(game, npc);
         action = choice.action;
         const note =
-          action === choice.book ? '' : npc.style === 'counter' ? ' · count play' : ` ✗ book: ${ACTION_LABEL[choice.book]}`;
+          action === choice.book ? '' : npc.style === 'counter' ? T.countPlay : T.book(ACTION_LABEL[choice.book]);
         setBubbles((b) => ({ ...b, [npc.id]: `${ACTION_LABEL[action]}${note}` }));
       }
       commit(game, act(game, action));
@@ -182,7 +242,7 @@ function TableScreen() {
     if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(nextStreak) : 1);
     updateStats((s) => ({ ...s, decisions: s.decisions + 1, correctDecisions: s.correctDecisions + (ok ? 1 : 0) }));
     if (!ok && correctMistakes) setFeedback({ ok, text });
-    else if (ok) setFeedback({ ok, text: nextStreak >= 5 ? `Correct! ${nextStreak} in a row 🔥` : 'Correct!' });
+    else if (ok) setFeedback({ ok, text: nextStreak >= 5 ? T.inARow(nextStreak) : T.correct });
     return ok ? 1 : 0;
   };
 
@@ -190,7 +250,7 @@ function TableScreen() {
     const ctx = decisionContext(game, false);
     let graded = 0;
     if (advice && ctx) {
-      graded = grade(action === advice.action, `Best play: ${ACTION_LABEL[advice.action]}. ${advice.reason}`);
+      graded = grade(action === advice.action, T.best(ACTION_LABEL[advice.action], advice.reason));
       // Track which kinds of decisions you miss (see the Your Leaks screen).
       updateStats((s) => ({
         ...s,
@@ -206,8 +266,8 @@ function TableScreen() {
     const graded = grade(
       take === best,
       best
-        ? `Take insurance: the true count is ${formatTrueCount(tc)} (+3 or more), so over a third of the remaining cards are 10s.`
-        : 'Decline insurance. It loses money in the long run unless the true count is +3 or higher.',
+        ? T.takeIns(formatTrueCount(tc))
+        : T.declineIns,
     );
     commit(game, resolveInsurance(game, take), roundCorrect + graded);
   };
@@ -235,7 +295,7 @@ function TableScreen() {
       // Card counters at the table take insurance when the count is high.
       const take = shouldTakeInsurance(currentTrueCount(next));
       const counters = seated.seats.filter((o) => isNpc(o) && o.style === 'counter');
-      setBubbles(Object.fromEntries(counters.map((o) => [isNpc(o) ? o.id : '', take ? 'Takes insurance' : 'No insurance'])));
+      setBubbles(Object.fromEntries(counters.map((o) => [isNpc(o) ? o.id : '', take ? T.takesIns : T.noIns])));
     }
     setCountSource(base);
     commit(base, next, 0);
@@ -282,15 +342,19 @@ function TableScreen() {
       <Stack.Screen options={{ title: casino.name }} />
       {/* Status bar: chips, level and count */}
       <View style={styles.topBar}>
-        <Text style={styles.bankroll}>Chips ${formatChips(shownBankroll)}</Text>
+        <Text style={styles.bankroll}>{T.chips(formatChips(shownBankroll))}</Text>
         <Text style={styles.count} onPress={() => setCountVisible(!countVisible)} accessibilityRole="button">
           {countVisible
-            ? `RC ${countSource.runningCount >= 0 ? '+' : ''}${countSource.runningCount} · Decks ${decksRemaining(countSource.shoe.length)} · TC ${formatTrueCount(shownTc)}`
-            : 'Tap to check count'}
+            ? T.count(
+                `${countSource.runningCount >= 0 ? '+' : ''}${countSource.runningCount}`,
+                decksRemaining(countSource.shoe.length),
+                formatTrueCount(shownTc),
+              )
+            : T.tapCount}
         </Text>
       </View>
       <LevelBar xp={stats.xp} compact />
-      {game.justShuffled && !betting && <Text style={styles.shuffle}>New shoe shuffled · count resets to 0</Text>}
+      {game.justShuffled && !betting && <Text style={styles.shuffle}>{T.shuffled}</Text>}
 
       <StreakBadge streak={streak} />
 
@@ -325,7 +389,7 @@ function TableScreen() {
               <Text style={styles.milestoneText}>★ {m.text}</Text>
               {m.table && (
                 <Button
-                  title={`Go to ${m.table.name} ($${formatChips(m.table.minBet)}–$${formatChips(m.table.maxBet)})`}
+                  title={T.goTo(m.table.name, formatChips(m.table.minBet), formatChips(m.table.maxBet))}
                   variant="secondary"
                   onPress={() => updateSettings({ tableId: m.table!.id })}
                 />
@@ -344,7 +408,7 @@ function TableScreen() {
         </Panel>
       )}
 
-      {settled && waitingOn && <Text style={styles.waiting}>{waitingOn.name} is playing…</Text>}
+      {settled && waitingOn && <Text style={styles.waiting}>{T.playing(waitingOn.name)}</Text>}
 
       {settled && yourTurn && (
         <ActionBar
@@ -359,7 +423,7 @@ function TableScreen() {
 
       {settled && game.phase === 'insurance' && (
         <InsurancePanel
-          hint={showHints ? (useDeviations && shouldTakeInsurance(tc) ? 'Take it (TC +3 or higher)' : 'Decline') : null}
+          hint={showHints ? (useDeviations && shouldTakeInsurance(tc) ? T.hintTake : T.hintDecline) : null}
           onChoose={onInsurance}
         />
       )}
@@ -367,10 +431,10 @@ function TableScreen() {
       {settled && game.phase === 'roundOver' && (
         <Panel>
           <Text style={[styles.prompt, { color: game.lastNet > 0 ? good : game.lastNet < 0 ? bad : colors.text }]}>
-            {game.lastNet > 0 ? `You won $${game.lastNet}` : game.lastNet < 0 ? `You lost $${-game.lastNet}` : 'Push'}
+            {game.lastNet > 0 ? T.won(game.lastNet) : game.lastNet < 0 ? T.lost(-game.lastNet) : T.push}
           </Text>
           {quiz && <CountQuiz quiz={quiz} setQuiz={setQuiz} actual={game.runningCount} />}
-          <Button title="Next hand" onPress={nextHand} />
+          <Button title={T.nextHand} onPress={nextHand} />
         </Panel>
       )}
 
@@ -389,7 +453,7 @@ function TableScreen() {
           onRefill={refill}
           onBonus={(amount) => {
             // Bonus chips land in your stack with the usual count-up and a chip burst.
-            anim.setFanfare({ tier: 'bigWin', label: `+$${formatChips(amount)} BONUS`, net: amount, shake: 0, particles: 28, key: Date.now() });
+            anim.setFanfare({ tier: 'bigWin', label: T.bonus(formatChips(amount)), net: amount, shake: 0, particles: 28, key: Date.now() });
             if (settings.soundEffects) playSound('chips');
             if (settings.haptics) haptic('bigWin');
           }}

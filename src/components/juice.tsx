@@ -5,6 +5,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { seededRng } from '../engine/cards';
 import { Fanfare, FanfareTier, countUpTicks } from '../engine/juice';
+import { tr } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colorblindColors, colors } from '../theme';
 
@@ -178,7 +179,7 @@ export function StreakBadge({ streak }: { streak: number }) {
   const hot = streak >= 10;
   return (
     <Animated.View style={[styles.badge, hot && styles.badgeHot, { transform: [{ scale }, { rotate: '-4deg' }] }]}>
-      <Text style={[styles.badgeText, hot && { color: colors.black }]}>STREAK ×{streak}</Text>
+      <Text style={[styles.badgeText, hot && { color: colors.black }]}>{tr('STREAK', 'RACHA')} ×{streak}</Text>
     </Animated.View>
   );
 }
