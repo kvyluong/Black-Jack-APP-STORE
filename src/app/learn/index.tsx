@@ -2,27 +2,41 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { H2, P, Screen } from '../../components/ui';
-import { LESSONS, Lesson } from '../../content/lessons';
+import { getLessons, LessonUnit, UNIT_LABEL } from '../../content/lessons';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
 
-const UNITS: Lesson['unit'][] = ['Basics', 'Strategy', 'Counting'];
+const UNITS: LessonUnit[] = ['Basics', 'Strategy', 'Counting'];
+
+const T = localized({
+  en: {
+    intro: 'Work through the lessons in order. Each one ends with a short quiz.',
+    a11y: (n: number, title: string, done: boolean) => `Lesson ${n}: ${title}${done ? ', completed' : ''}`,
+  },
+  es: {
+    intro: 'Sigue las lecciones en orden. Cada una termina con un breve cuestionario.',
+    a11y: (n: number, title: string, done: boolean) => `Lección ${n}: ${title}${done ? ', completada' : ''}`,
+  },
+});
 
 export default function LessonList() {
   const { stats } = useSettings();
+  const lessons = getLessons();
   return (
     <Screen>
-      <P muted>Work through the lessons in order. Each one ends with a short quiz.</P>
+      <P muted>{T.intro}</P>
       {UNITS.map((unit) => (
         <View key={unit} style={{ gap: spacing(1) }}>
-          <H2>{unit}</H2>
-          {LESSONS.filter((l) => l.unit === unit).map((l) => {
-            const n = LESSONS.indexOf(l) + 1;
+          <H2>{UNIT_LABEL[unit]}</H2>
+          {lessons.filter((l) => l.unit === unit).map((l) => {
+            const n = lessons.indexOf(l) + 1;
             const done = stats.lessonsCompleted.includes(l.id);
             return (
               <Pressable
                 key={l.id}
                 accessibilityRole="button"
+                accessibilityLabel={T.a11y(n, l.title, done)}
                 onPress={() => router.push({ pathname: '/learn/[id]', params: { id: l.id } })}
                 style={({ pressed }) => [styles.item, pressed && { opacity: 0.8 }]}
               >

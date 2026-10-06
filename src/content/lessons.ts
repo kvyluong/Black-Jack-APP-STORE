@@ -1,4 +1,6 @@
 import { Rank } from '../engine/cards';
+import { getLang, localized } from '../i18n/lang';
+import { LESSONS_ES } from './lessons.es';
 
 export interface LessonSection {
   heading?: string;
@@ -16,9 +18,17 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export type LessonUnit = 'Basics' | 'Strategy' | 'Counting';
+
+/** Display name for each unit (the `unit` field itself is a key, not display text). */
+export const UNIT_LABEL: Record<LessonUnit, string> = localized({
+  en: { Basics: 'Basics', Strategy: 'Strategy', Counting: 'Counting' },
+  es: { Basics: 'Conceptos básicos', Strategy: 'Estrategia', Counting: 'Conteo de cartas' },
+});
+
 export interface Lesson {
   id: string;
-  unit: 'Basics' | 'Strategy' | 'Counting';
+  unit: LessonUnit;
   title: string;
   summary: string;
   sections: LessonSection[];
@@ -27,6 +37,7 @@ export interface Lesson {
   practice?: { label: string; href: '/play' | '/drills/strategy' | '/drills/count' | '/drills/true-count' | '/chart' };
 }
 
+/** English lessons. Spanish versions (same ids, order and answers) are in ./lessons.es.ts. */
 export const LESSONS: Lesson[] = [
   {
     id: 'rules',
@@ -406,6 +417,12 @@ export const LESSONS: Lesson[] = [
   },
 ];
 
+/** The lessons in the current language. */
+export function getLessons(): Lesson[] {
+  return getLang() === 'es' ? LESSONS_ES : LESSONS;
+}
+
+/** A lesson in the current language. */
 export function getLesson(id: string): Lesson | undefined {
-  return LESSONS.find((l) => l.id === id);
+  return getLessons().find((l) => l.id === id);
 }

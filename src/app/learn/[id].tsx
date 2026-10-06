@@ -4,28 +4,50 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { PlayingCard } from '../../components/PlayingCard';
 import { Button, H2, P, Panel, Screen } from '../../components/ui';
-import { LESSONS, getLesson } from '../../content/lessons';
+import { getLesson, getLessons } from '../../content/lessons';
+import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
 
+const T = localized({
+  en: {
+    notFound: 'Lesson not found.',
+    quiz: 'Quiz',
+    correct: '✓ Correct. ',
+    wrong: '✗ Not quite. Try again. ',
+    complete: 'Lesson complete! 🎉',
+    next: (title: string) => `Next: ${title}`,
+  },
+  es: {
+    notFound: 'No se encontró la lección.',
+    quiz: 'Cuestionario',
+    correct: '✓ ¡Correcto! ',
+    wrong: '✗ No exactamente. Inténtalo de nuevo. ',
+    complete: '¡Lección completada! 🎉',
+    next: (title: string) => `Siguiente: ${title}`,
+  },
+});
+
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const lesson = getLesson(id);
+  // useSettings() re-renders this screen when the language changes; getLesson reads the current one.
   const { updateStats } = useSettings();
+  const lesson = getLesson(id);
   const { good, bad } = useOutcomeColors();
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
   if (!lesson) {
     return (
       <Screen>
-        <P>Lesson not found.</P>
+        <P>{T.notFound}</P>
       </Screen>
     );
   }
 
   const allCorrect = lesson.quiz.every((q, i) => answers[i] === q.answer);
-  const next = LESSONS[LESSONS.indexOf(lesson) + 1];
+  const lessons = getLessons();
+  const next = lessons[lessons.indexOf(lesson) + 1];
 
   const choose = (qi: number, oi: number) => {
     if (answers[qi] === lesson.quiz[qi].answer) return;
@@ -55,7 +77,7 @@ export default function LessonScreen() {
         </View>
       ))}
 
-      <H2>Quiz</H2>
+      <H2>{T.quiz}</H2>
       {lesson.quiz.map((q, qi) => {
         const picked = answers[qi];
         const answered = picked !== undefined;
@@ -76,7 +98,7 @@ export default function LessonScreen() {
             </View>
             {answered && (
               <Text style={{ color: correct ? good : bad, fontSize: 15 }}>
-                {correct ? '✓ Correct. ' : '✗ Not quite. Try again. '}
+                {correct ? T.correct : T.wrong}
                 {correct ? q.explanation : ''}
               </Text>
             )}
@@ -86,13 +108,13 @@ export default function LessonScreen() {
 
       {allCorrect && (
         <Panel style={{ borderColor: colors.gold, borderWidth: 1 }}>
-          <Text style={styles.done}>Lesson complete! 🎉</Text>
+          <Text style={styles.done}>{T.complete}</Text>
           {lesson.practice && (
             <Button title={lesson.practice.label} onPress={() => router.push(lesson.practice!.href)} />
           )}
           {next && (
             <Button
-              title={`Next: ${next.title}`}
+              title={T.next(next.title)}
               variant="secondary"
               onPress={() => router.replace({ pathname: '/learn/[id]', params: { id: next.id } })}
             />
