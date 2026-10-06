@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { useInterstitial } from '../ads/useInterstitial';
+import { haptic } from '../audio/haptics';
 import { playSound, preloadSounds } from '../audio/sounds';
 import { BonusAdButton } from '../components/BonusAdButton';
 import { ChipButton, ChipStack, LevelBar } from '../components/chips';
@@ -12,7 +13,7 @@ import { SeatView } from '../components/SeatView';
 import { Button, Panel, Screen, Segmented } from '../components/ui';
 import { useReduceMotion } from '../components/useReduceMotion';
 import { decksRemaining, flooredTrueCount, shouldTakeInsurance, suggestedBetUnits } from '../engine/counting';
-import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../engine/dealSchedule';
+import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule, hapticSchedule } from '../engine/dealSchedule';
 import {
   GameState,
   Outcome,
@@ -115,6 +116,9 @@ export default function Play() {
     const s = dealSchedule(game, next, reduceMotion ? 0 : DEAL_STEP_MS);
     if (settings.soundEffects) {
       for (const sound of s.sounds) timers.current.push(setTimeout(() => playSound(sound.name), sound.at));
+    }
+    if (settings.haptics) {
+      for (const h of hapticSchedule(next, s, reduceMotion ? 0 : DEAL_STEP_MS)) timers.current.push(setTimeout(() => haptic(h.kind), h.at));
     }
     setSchedule(s);
     setGame(next);
@@ -525,7 +529,15 @@ export default function Play() {
           {/* Chip tray: tap chips to build your bet. */}
           <View style={styles.tray}>
             {casino.chips.map((c) => (
-              <ChipButton key={c} value={c} disabled={bet + c > maxPerHand} onPress={() => setBet(bet + c)} />
+              <ChipButton
+                key={c}
+                value={c}
+                disabled={bet + c > maxPerHand}
+                onPress={() => {
+                  if (settings.haptics) haptic('chip');
+                  setBet(bet + c);
+                }}
+              />
             ))}
             <Button title="Clear" variant="ghost" disabled={bet === 0} onPress={() => setBet(0)} style={styles.clear} />
           </View>
@@ -550,6 +562,7 @@ export default function Play() {
               setCountSource((g) => ({ ...g, bankroll: g.bankroll + amount }));
               setFanfare({ tier: 'bigWin', label: `+$${formatChips(amount)} BONUS`, net: amount, shake: 0, particles: 28, key: Date.now() });
               if (settings.soundEffects) playSound('chips');
+              if (settings.haptics) haptic('bigWin');
             }}
           />
           <Text style={styles.lobby} onPress={() => router.push('/tables')} accessibilityRole="link">

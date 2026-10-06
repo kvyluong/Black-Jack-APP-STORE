@@ -47,6 +47,8 @@ export interface Settings {
   soundEffects: boolean;
   /** Screen shake, chip bursts and pop-ups. */
   bigEffects: boolean;
+  /** Vibration as your cards land and when you win. */
+  haptics: boolean;
   /** How many seats you play at the practice table (1 or 2). */
   yourHands: number;
   /** Computer players who come and go at the practice table. */
@@ -66,6 +68,7 @@ const DEFAULT_SETTINGS: Settings = {
   useDeviations: false,
   soundEffects: true,
   bigEffects: true,
+  haptics: true,
   yourHands: 2,
   otherPlayers: true,
   bankroll: STARTING_CHIPS,

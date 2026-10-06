@@ -62,6 +62,12 @@ export default function SettingsScreen() {
           onChange={(v) => updateSettings({ soundEffects: v })}
         />
         <ToggleRow
+          label="Haptics"
+          hint="A light tap as your cards land, a buzz when you win"
+          value={settings.haptics}
+          onChange={(v) => updateSettings({ haptics: v })}
+        />
+        <ToggleRow
           label="Big effects"
           hint="Screen shake, chip bursts and score pop-ups"
           value={settings.bigEffects}

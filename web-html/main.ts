@@ -35,7 +35,7 @@ import {
   tapSeconds,
   visualHints,
 } from '../src/engine/academy';
-import { DEAL_STEP_MS, DealSchedule, SoundName, cardDelay, dealSchedule } from '../src/engine/dealSchedule';
+import { DEAL_STEP_MS, DealSchedule, HapticKind, SoundName, cardDelay, dealSchedule, hapticSchedule } from '../src/engine/dealSchedule';
 import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/engine/drills';
 import {
   GameState,
@@ -127,6 +127,7 @@ interface Settings {
   useDeviations: boolean;
   soundEffects: boolean;
   bigEffects: boolean;
+  haptics: boolean;
   yourHands: number;
   otherPlayers: boolean;
   bankroll: number;
@@ -142,6 +143,7 @@ const DEFAULT_SETTINGS: Settings = {
   useDeviations: false,
   soundEffects: true,
   bigEffects: true,
+  haptics: true,
   yourHands: 2,
   otherPlayers: true,
   bankroll: STARTING_CHIPS,
@@ -761,6 +763,7 @@ function renderPlay() {
   });
   on('#next-hand', 'click', nextHand);
   on('[data-chip]', 'click', (el) => {
+    vibrate('chip');
     table.bet += Number(el.dataset.chip);
     renderPlay();
   });
@@ -791,6 +794,7 @@ function renderPlay() {
       renderPlay();
       countUpBankroll(before, table.game.bankroll);
       if (settings.soundEffects) playSound('chips');
+      vibrate('bigWin');
       playFanfare(
         { tier: 'bigWin', label: `+$${formatChips(amount)} BONUS`, net: amount, shake: 0, particles: 28 },
         app.querySelector('.felt'),
@@ -920,6 +924,26 @@ function gradeSound(ok: boolean, streak: number) {
   if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong', ok ? streakPitch(streak) : 1);
 }
 
+/** Vibration patterns (ms on/off). Browsers support this on Android only; elsewhere it's a no-op. */
+const VIBRATION: Record<HapticKind, number | number[]> = {
+  cardLand: 8,
+  flip: 12,
+  chip: 5,
+  win: 30,
+  bigWin: [30, 60, 40],
+  blackjack: [40, 60, 40, 60, 80],
+  bust: 120,
+};
+
+function vibrate(kind: HapticKind) {
+  if (!settings.haptics) return;
+  try {
+    navigator.vibrate?.(VIBRATION[kind]);
+  } catch {
+    // No vibration here.
+  }
+}
+
 /** Counts the bankroll display up to `target` with rising ticks. */
 function countUpBankroll(from: number, target: number) {
   const ticks = reducedMotionPref() ? 0 : countUpTicks(target - from);
@@ -961,6 +985,7 @@ function afterChange(next: GameState) {
   if (settings.soundEffects) {
     for (const sound of s.sounds) table.timers.push(setTimeout(() => playSound(sound.name), sound.at));
   }
+  for (const h of hapticSchedule(next, s, reducedMotionPref() ? 0 : DEAL_STEP_MS)) table.timers.push(setTimeout(() => vibrate(h.kind), h.at));
   const before = (table.shown ?? table.game).bankroll;
   table.game = next;
   table.schedule = s;
@@ -1725,6 +1750,7 @@ function renderSettings() {
         ${toggle('countQuizzes', 'Count pop quizzes', 'Sometimes ask for the running count between hands')}
         ${toggle('useDeviations', 'Count-based advice', 'Coach uses Hi-Lo index plays and insurance at +3')}
         ${toggle('soundEffects', 'Sound effects', 'Card, chip and win/lose sounds')}
+        ${toggle('haptics', 'Haptics', 'Vibrate as your cards land and when you win (Android browsers)')}
         ${toggle('bigEffects', 'Big effects', 'Screen shake, chip bursts and score pop-ups')}
       </div>
       <h2>The table</h2>
@@ -1752,7 +1778,7 @@ function renderSettings() {
       <h2>About</h2>
       <p class="muted">Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.</p>`;
 
-    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'bigEffects', 'otherPlayers'] as const).forEach((id) =>
+    (['showHints', 'correctMistakes', 'showCount', 'countQuizzes', 'useDeviations', 'soundEffects', 'haptics', 'bigEffects', 'otherPlayers'] as const).forEach((id) =>
       on(`#${id}`, 'change', (el) => {
         updateSettings({ [id]: (el as HTMLInputElement).checked });
         if (id === 'showCount') table.countVisible = settings.showCount;

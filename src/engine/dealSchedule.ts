@@ -1,4 +1,4 @@
-import { GameState } from './game';
+import { GameState, YOU } from './game';
 import { FanfareTier, roundFanfare } from './juice';
 
 /** Milliseconds between cards being dealt. */
@@ -128,4 +128,32 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
 /** Looks up when a given card should animate in; cards not in the schedule appear immediately. */
 export function cardDelay(schedule: DealSchedule | null, seat: Seat, index: number): number {
   return schedule?.cards.find((c) => c.seat === seat && c.index === index)?.at ?? 0;
+}
+
+export type HapticKind = 'cardLand' | 'flip' | 'chip' | 'win' | 'bigWin' | 'blackjack' | 'bust';
+
+const RESULT_HAPTIC: Partial<Record<FanfareTier, HapticKind>> = {
+  blackjack: 'blackjack',
+  bigWin: 'bigWin',
+  win: 'win',
+  bust: 'bust',
+};
+
+/**
+ * When to buzz the phone for a move: a light tap as each of your cards lands
+ * (other players' cards stay quiet so a full table doesn't buzz constantly),
+ * a soft tap when the hole card flips, and a pattern for wins and busts.
+ */
+export function hapticSchedule(next: GameState, s: DealSchedule, step = DEAL_STEP_MS): { kind: HapticKind; at: number }[] {
+  const land = step === 0 ? 0 : CARD_ANIM_MS;
+  const out: { kind: HapticKind; at: number }[] = [];
+  for (const c of s.cards) {
+    if (c.seat !== 'dealer' && next.hands[c.seat]?.owner === YOU) out.push({ kind: 'cardLand', at: c.at + land });
+  }
+  if (s.holeFlipAt !== null) out.push({ kind: 'flip', at: s.holeFlipAt + land / 2 });
+  const result = s.sounds.find((x) => x.at === s.doneAt && ['win', 'blackjack', 'bust'].includes(x.name));
+  const fanfare = result && next.phase === 'roundOver' ? roundFanfare(next) : null;
+  const kind = fanfare ? RESULT_HAPTIC[fanfare.tier] : undefined;
+  if (kind) out.push({ kind, at: s.doneAt });
+  return out.sort((a, b) => a.at - b.at);
 }

@@ -1,5 +1,5 @@
 import { Card, Rank, createShoe, seededRng } from '../cards';
-import { DEAL_STEP_MS, cardDelay, dealSchedule } from '../dealSchedule';
+import { DEAL_STEP_MS, cardDelay, dealSchedule, hapticSchedule } from '../dealSchedule';
 import { GameState, act, newGame, startRound } from '../game';
 import { DEFAULT_RULES } from '../rules';
 
@@ -57,5 +57,31 @@ describe('dealSchedule', () => {
     const s = dealSchedule(g0, startRound(g0, 10), 0);
     expect(s.doneAt).toBe(0);
     expect(s.cards.every((x) => x.at === 0)).toBe(true);
+  });
+});
+
+describe('hapticSchedule', () => {
+  it('taps as your cards land, not the dealer cards', () => {
+    const g0 = rigged(['10', '6', '7', '9']);
+    const g1 = startRound(g0, 10);
+    const h = hapticSchedule(g1, dealSchedule(g0, g1));
+    expect(h.map((x) => x.kind)).toEqual(['cardLand', 'cardLand']);
+    expect(h[1].at).toBeGreaterThan(h[0].at);
+  });
+
+  it('adds a flip tap and a win pattern when the round ends in your favor', () => {
+    const g1 = startRound(rigged(['10', '6', '7', '9', '10']), 10);
+    const g2 = act(g1, 'stand');
+    const kinds = hapticSchedule(g2, dealSchedule(g1, g2)).map((x) => x.kind);
+    expect(kinds).toEqual(['flip', 'win']);
+  });
+
+  it('celebrates a blackjack and buzzes a bust', () => {
+    const bj0 = rigged(['A', '9', 'K', '7']);
+    const bj = startRound(bj0, 10);
+    expect(hapticSchedule(bj, dealSchedule(bj0, bj)).at(-1)?.kind).toBe('blackjack');
+    const b1 = startRound(rigged(['10', '6', '6', '9', 'K']), 10);
+    const b2 = act(b1, 'hit');
+    expect(hapticSchedule(b2, dealSchedule(b1, b2)).map((x) => x.kind)).toEqual(['cardLand', 'flip', 'bust']);
   });
 });
