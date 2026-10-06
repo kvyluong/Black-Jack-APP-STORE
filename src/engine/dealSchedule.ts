@@ -19,7 +19,10 @@ export type SoundName =
   | 'bust'
   | 'correct'
   | 'wrong'
-  | 'tick';
+  | 'tick'
+  | 'tag_plus'
+  | 'tag_zero'
+  | 'tag_minus';
 
 const RESULT_SOUND: Record<FanfareTier, SoundName> = {
   blackjack: 'blackjack',

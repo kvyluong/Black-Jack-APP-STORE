@@ -10,7 +10,32 @@ import {
   shouldTakeInsurance,
   suggestedBetUnits,
 } from '../src/engine/counting';
-import { DEAL_STEP_MS, DealSchedule, cardDelay, dealSchedule } from '../src/engine/dealSchedule';
+import {
+  AcademyMode,
+  LearningPreference,
+  MAX_LEVEL,
+  MODES,
+  ModeProgress,
+  PREFERENCE_LABEL,
+  academyXp,
+  cardGroups,
+  cardRun,
+  countStory,
+  dailyWorkout,
+  flashMs,
+  groupChoices,
+  groupValue,
+  isDue,
+  modesFor,
+  newProgress,
+  recordRound,
+  roundLength,
+  spokenEvery,
+  tagOf,
+  tapSeconds,
+  visualHints,
+} from '../src/engine/academy';
+import { DEAL_STEP_MS, DealSchedule, SoundName, cardDelay, dealSchedule } from '../src/engine/dealSchedule';
 import { countDrillCards, strategyQuestion, trueCountQuestion } from '../src/engine/drills';
 import {
   GameState,
@@ -46,6 +71,7 @@ import {
   getTable,
   isUnlocked,
   levelInfo,
+  localDay,
   needsRefill,
   newlyUnlocked,
   roundXp,
@@ -84,6 +110,12 @@ interface Stats {
   refills: number;
   bonusClaims?: BonusClaims;
   bonusChipsEarned: number;
+  academy: {
+    pref?: LearningPreference;
+    progress: Partial<Record<AcademyMode, ModeProgress>>;
+    streak: number;
+    lastWorkoutDay?: string;
+  };
 }
 
 interface Settings {
@@ -127,6 +159,7 @@ const DEFAULT_STATS: Stats = {
   biggestWin: 0,
   refills: 0,
   bonusChipsEarned: 0,
+  academy: { progress: {}, streak: 0 },
 };
 const STORAGE_KEY = 'blackjack-coach/v1';
 
@@ -238,6 +271,10 @@ type View = { title: string; back?: string; render: () => void };
 
 function route(): View {
   const hash = location.hash.replace(/^#/, '') || 'home';
+  if (hash.startsWith('academy-')) {
+    const mode = MODES.find((m) => m.id === hash.slice(8));
+    if (mode) return { title: mode.title, back: 'academy', render: () => renderAcademyMode(mode.id) };
+  }
   if (hash.startsWith('lesson-')) {
     const lesson = getLesson(hash.slice(7));
     if (lesson) return { title: lesson.title, back: 'learn', render: () => renderLesson(lesson) };
@@ -251,6 +288,7 @@ function route(): View {
     'drill-strategy': { title: 'Strategy Drill', back: 'drills', render: renderStrategyDrill },
     'drill-count': { title: 'Running Count Drill', back: 'drills', render: renderCountDrill },
     'drill-true-count': { title: 'True Count Drill', back: 'drills', render: renderTrueCountDrill },
+    academy: { title: 'Counting Academy', back: 'home', render: renderAcademy },
     chart: { title: 'Strategy Chart', back: 'home', render: renderChart },
     settings: { title: 'Settings', back: 'home', render: renderSettings },
   };
@@ -281,6 +319,7 @@ function renderHome() {
   const tiles = [
     ['learn', 'Learn', 'Step-by-step lessons from the rules to card counting', '01'],
     ['tables', 'Casino Floor', 'Play with a coach. Win chips to unlock bigger tables', '02'],
+    ['academy', 'Counting Academy', 'Learn to count your way: see it, hear it, tap it, chunk it or read it', '03'],
     ['drills', 'Drills', 'Basic strategy, running count and true count drills', '03'],
     ['chart', 'Strategy Chart', 'The full basic strategy chart for your table rules', '04'],
     ['settings', 'Settings', 'Table rules, coaching options and progress', '05'],
@@ -1310,6 +1349,305 @@ function renderTrueCountDrill() {
     });
   };
   draw();
+}
+
+// ---------- Counting Academy ----------
+
+const PREFS: LearningPreference[] = ['see', 'hear', 'do', 'read', 'mix'];
+/** The daily workout in progress, if any: three modes played in order. */
+let workoutRun: { plan: AcademyMode[]; step: number } | null = null;
+
+const sgn = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
+const tagClass = (t: number) => (t > 0 ? 'plus' : t < 0 ? 'minus' : 'zero');
+const tagSound = (t: number): SoundName => (t > 0 ? 'tag_plus' : t < 0 ? 'tag_minus' : 'tag_zero');
+
+function sfx(name: SoundName) {
+  if (settings.soundEffects) playSound(name);
+}
+
+/** Says a short phrase with the browser's speech engine, if there is one. */
+function say(text: string) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05;
+    speechSynthesis.speak(u);
+  } catch {
+    // No speech in this browser: the sounds still carry the tags.
+  }
+}
+const spoken = (n: number) => (n === 0 ? 'zero' : `${n > 0 ? 'plus' : 'minus'} ${Math.abs(n)}`);
+
+function renderAcademy() {
+  workoutRun = null;
+  const academy = stats.academy;
+  const pref = academy.pref ?? 'mix';
+  const today = localDay(new Date());
+  const plan = dailyWorkout(academy.progress, today, pref);
+  const doneToday = academy.lastWorkoutDay === today;
+  app.innerHTML = `
+    <p>Five ways to learn the Hi-Lo count. Start with the style you enjoy, then mix them.</p>
+    <div class="panel">
+      <b>How do you like to learn?</b>
+      <div class="pref-chips">${PREFS.map((p) => `<button class="pref ${p === pref ? 'on' : ''}" data-pref="${p}" aria-pressed="${p === pref}">${PREFERENCE_LABEL[p]}</button>`).join('')}</div>
+      <p class="muted small">Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses several.</p>
+    </div>
+    <div class="panel milestone-ish">
+      <div class="row-between"><b class="gold big-label">Today's workout</b><span>${academy.streak > 0 ? `🔥 ${academy.streak}-day streak` : 'Start a streak'}</span></div>
+      <p class="muted small">Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.</p>
+      <ol class="plan">${plan.map((id) => `<li>${MODES.find((m) => m.id === id)!.title}</li>`).join('')}</ol>
+      <button class="btn primary" id="start-workout">${doneToday ? 'Done for today. Go again' : 'Start workout'}</button>
+    </div>
+    <h2>All exercises</h2>
+    <div class="list">${modesFor(pref)
+      .map((m) => {
+        const p = academy.progress[m.id];
+        const due = isDue(p, today) && (p?.played ?? 0) > 0;
+        return `<a class="tile mode-tile" href="#academy-${m.id}"><span class="tile-text">
+          <span class="row-between"><b>${m.title}</b><span class="gold">Lv ${p?.level ?? 1}/${MAX_LEVEL}</span></span>
+          <span class="gold small">${m.forWho}${due ? ' · due for review' : ''}</span>
+          <span class="ink">${m.how}</span>
+          <span>Why it works: ${m.why}</span></span></a>`;
+      })
+      .join('')}</div>`;
+  on('[data-pref]', 'click', (el) => {
+    updateStats((s) => ({ ...s, academy: { ...s.academy, pref: el.dataset.pref as LearningPreference } }));
+    renderAcademy();
+  });
+  on('#start-workout', 'click', () => {
+    workoutRun = { plan, step: 0 };
+    location.hash = `academy-${plan[0]}`;
+  });
+}
+
+interface RoundResult {
+  accuracy: number;
+  correct: number;
+}
+
+function renderAcademyMode(mode: AcademyMode) {
+  const today = localDay(new Date());
+  const progress = stats.academy.progress[mode] ?? newProgress(today);
+  const level = progress.level;
+  const run = workoutRun && workoutRun.plan[workoutRun.step] === mode ? workoutRun : null;
+  const header = `<p class="muted center">${run ? `Workout ${run.step + 1}/${run.plan.length} · ` : ''}Level ${level}/${MAX_LEVEL}</p>`;
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  cleanup = () => {
+    timers.forEach(clearTimeout);
+    try {
+      speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
+  };
+  const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
+
+  const finish = (r: RoundResult) => {
+    cleanup?.();
+    const { progress: next, leveledUp } = recordRound(progress, r.accuracy, today);
+    const xp = academyXp(r.correct, level);
+    const before = levelInfo(stats.xp).level;
+    const lastStep = run && run.step === run.plan.length - 1;
+    const yesterday = localDay(new Date(Date.now() - 86400000));
+    updateStats((s) => ({
+      ...s,
+      xp: s.xp + xp,
+      academy: {
+        ...s.academy,
+        progress: { ...s.academy.progress, [mode]: next },
+        ...(lastStep && s.academy.lastWorkoutDay !== today
+          ? { lastWorkoutDay: today, streak: s.academy.lastWorkoutDay === yesterday ? s.academy.streak + 1 : 1 }
+          : {}),
+      },
+    }));
+    const after = levelInfo(stats.xp).level;
+    const nextMode = run && run.step < run.plan.length - 1 ? run.plan[run.step + 1] : null;
+    app.innerHTML = `<div class="panel center">
+      <p class="big">${Math.round(r.accuracy * 100)}% accurate</p>
+      ${leveledUp ? `<p class="milestone-text">★ Level up! Now level ${next.level}</p>` : `<p class="muted">${r.accuracy >= 0.9 ? 'Top level. Keep it sharp.' : 'Score 90% or more to level up.'}</p>`}
+      <p class="muted">+${xp} XP${after > before ? ` · You're now player level ${after}!` : ''}</p>
+      <p class="muted">Next review: ${next.due === today ? 'today' : next.due}</p>
+      ${
+        nextMode
+          ? `<button class="btn primary" id="next-ex">Next: ${MODES.find((m) => m.id === nextMode)!.title}</button>`
+          : `${run ? '<p class="milestone-text">Workout complete! See you tomorrow.</p>' : ''}
+             <button class="btn secondary" id="again">Again</button><a class="btn ghost" href="#academy">Back to the Academy</a>`
+      }</div>`;
+    if (leveledUp) sfx('win');
+    on('#next-ex', 'click', () => {
+      workoutRun = { plan: run!.plan, step: run!.step + 1 };
+      location.hash = `academy-${nextMode}`;
+    });
+    on('#again', 'click', () => renderAcademyMode(mode));
+  };
+
+  /** "What's the running count?" step with the full answer revealed afterwards. */
+  const countAnswer = (cards: Card[]) => {
+    const actual = cards.reduce((s, c) => s + tagOf(c), 0);
+    let guess = 0;
+    let checked = false;
+    const draw = () => {
+      const acc = guess === actual ? 1 : Math.abs(guess - actual) === 1 ? 0.5 : 0;
+      app.innerHTML = `${header}<div class="panel">
+        <p class="prompt">What's the running count?</p>
+        <div class="stepper"><button class="btn ghost" id="minus" ${checked ? 'disabled' : ''}>−</button><span class="guess big">${sgn(guess)}</span><button class="btn ghost" id="plus" ${checked ? 'disabled' : ''}>+</button></div>
+        ${
+          !checked
+            ? '<button class="btn primary" id="check">Check</button>'
+            : `<p class="verdict ${acc === 1 ? 'good' : acc > 0 ? 'warnc' : 'bad'}">${acc === 1 ? '✓ Exactly right' : `${acc > 0 ? 'Close: ' : '✗ '}it was ${sgn(actual)}`}</p>
+               <div class="card-row">${cards.map((c) => cardHtml(c, { size: 'sm', tag: true })).join('')}</div>
+               <button class="btn primary" id="done">Finish</button>`
+        }</div>`;
+      on('#minus', 'click', () => ((guess--), draw()));
+      on('#plus', 'click', () => ((guess++), draw()));
+      on('#check', 'click', () => {
+        checked = true;
+        sfx(acc === 1 ? 'correct' : 'wrong');
+        draw();
+      });
+      on('#done', 'click', () => finish({ accuracy: acc, correct: Math.round(acc * cards.length * 0.5) }));
+    };
+    draw();
+  };
+
+  /** Flash cards one at a time for the See and Hear modes. */
+  const flashRun = (paint: (card: Card, i: number, running: number, total: number) => void, onCard?: (card: Card, i: number, running: number) => void) => {
+    const cards = cardRun(roundLength('colorCount', level));
+    let i = 0;
+    let running = 0;
+    const step = () => {
+      if (i >= cards.length) return countAnswer(cards);
+      running += tagOf(cards[i]);
+      paint(cards[i], i, running, cards.length);
+      onCard?.(cards[i], i, running);
+      i++;
+      later(step, flashMs(level));
+    };
+    step();
+  };
+
+  if (mode === 'colorCount') {
+    const hints = visualHints(level);
+    flashRun((card, i, running, total) => {
+      const t = tagOf(card);
+      app.innerHTML = `${header}<p class="muted center">Card ${i + 1}/${total} · Level ${level}: ${hints.glow ? 'color hints on' : 'no color hints'}</p>
+        <div class="color-stage">
+          ${hints.meter ? `<div class="meter" aria-label="Running count ${running}"><div class="meter-fill ${tagClass(running)}" style="height:${50 + Math.max(-10, Math.min(10, running)) * 5}%"></div><span>${sgn(running)}</span></div>` : ''}
+          <div class="glow ${hints.glow ? tagClass(t) : ''}">${cardHtml(card, { size: 'lg', tag: hints.badge })}</div>
+        </div>
+        <p class="muted center">Green = +1 · Gray = 0 · Red = −1</p>`;
+    });
+  } else if (mode === 'soundCount') {
+    const every = spokenEvery(level);
+    const eyesFree = level >= 4;
+    flashRun(
+      (card, i, _running, total) => {
+        app.innerHTML = `${header}<p class="muted center">Card ${i + 1}/${total} · ${every ? `Count spoken every ${every === 1 ? 'card' : `${every} cards`}` : 'No spoken count'}${eyesFree ? ' · Eyes-free' : ''}</p>
+          <div class="flash">${cardHtml(eyesFree ? null : card, { size: 'lg' })}</div>
+          <p class="muted center">High pip = +1 · Click = 0 · Low pip = −1. Turn your sound on.</p>`;
+      },
+      (card, i, running) => {
+        unlockAudio();
+        playSound(tagSound(tagOf(card)));
+        if (every && (i + 1) % every === 0) later(() => say(spoken(running)), 250);
+      },
+    );
+  } else if (mode === 'tagTap') {
+    const cards = cardRun(roundLength('tagTap', level));
+    const secs = tapSeconds(level);
+    let i = 0;
+    let right = 0;
+    let combo = 0;
+    let answered = false;
+    const show = (flash = '') => {
+      app.innerHTML = `${header}<div class="row-between muted"><span>${i + 1}/${cards.length}</span><span>${combo >= 3 ? `Combo ×${combo}` : `${secs.toFixed(1)}s per card`}</span></div>
+        <div class="track"><div class="fill tap-clock" style="animation-duration:${secs}s"></div></div>
+        <div class="flash stage ${flash}">${cardHtml(cards[i], { size: 'lg' })}</div>
+        <div class="btn-row tag-buttons">${[-1, 0, 1].map((v) => `<button class="btn secondary tagb ${tagClass(v)}" data-tag="${v}">${sgn(v)}</button>`).join('')}</div>
+        <p class="keys">Keys: ← or 1 = −1 · ↓ or 2 = 0 · → or 3 = +1</p>`;
+      on('[data-tag]', 'click', (el) => answer(Number(el.dataset.tag)));
+    };
+    let timer: ReturnType<typeof setTimeout>;
+    const answer = (v: number | null) => {
+      if (answered) return;
+      answered = true;
+      clearTimeout(timer);
+      const ok = v === tagOf(cards[i]);
+      right += ok ? 1 : 0;
+      combo = ok ? combo + 1 : 0;
+      sfx(ok ? tagSound(tagOf(cards[i])) : 'wrong');
+      show(ok ? 'ok' : 'no');
+      later(() => {
+        i++;
+        if (i >= cards.length) return finish({ accuracy: right / cards.length, correct: right });
+        start();
+      }, 220);
+    };
+    const start = () => {
+      answered = false;
+      show();
+      timer = setTimeout(() => answer(null), secs * 1000);
+      timers.push(timer);
+    };
+    const keys = (e: KeyboardEvent) => {
+      const map: Record<string, number> = { ArrowLeft: -1, '1': -1, ArrowDown: 0, '2': 0, ArrowRight: 1, '3': 1 };
+      if (e.key in map) {
+        e.preventDefault();
+        answer(map[e.key]);
+      }
+    };
+    document.addEventListener('keydown', keys);
+    const baseCleanup = cleanup;
+    cleanup = () => {
+      baseCleanup();
+      document.removeEventListener('keydown', keys);
+    };
+    start();
+  } else if (mode === 'pairCancel') {
+    const groups = cardGroups(level);
+    let i = 0;
+    let right = 0;
+    let shown: { ok: boolean; value: number } | null = null;
+    const draw = () => {
+      const g = groups[i];
+      app.innerHTML = `${header}<p class="muted center">Group ${i + 1}/${groups.length} · ${g.length === 2 ? 'Pairs' : `Groups of ${g.length}`}</p>
+        <div class="card-row group ${shown ? (shown.ok ? 'ok' : 'no') : ''}">${g.map((c) => cardHtml(c, { size: 'md', tag: !!shown })).join('')}</div>
+        ${shown && !shown.ok ? `<p class="verdict bad">That group is ${sgn(shown.value)}</p>` : ''}
+        <div class="btn-row">${groupChoices(g.length).map((v) => `<button class="btn secondary" data-v="${v}">${sgn(v)}</button>`).join('')}</div>
+        <p class="muted center">Tip: a high card and a low card cancel to 0. Count only what's left.</p>`;
+      on('[data-v]', 'click', (el) => {
+        if (shown) return;
+        const value = groupValue(g);
+        const ok = Number(el.dataset.v) === value;
+        right += ok ? 1 : 0;
+        sfx(ok ? 'correct' : 'wrong');
+        shown = { ok, value };
+        draw();
+        later(
+          () => {
+            shown = null;
+            i++;
+            if (i >= groups.length) finish({ accuracy: right / groups.length, correct: right });
+            else draw();
+          },
+          ok ? 350 : 1100,
+        );
+      });
+    };
+    draw();
+  } else {
+    const story = countStory(level);
+    const oneAtATime = level >= 3;
+    let line = oneAtATime ? 0 : story.lines.length - 1;
+    const draw = () => {
+      app.innerHTML = `${header}<p class="muted center">${oneAtATime ? 'One line at a time: keep the count as you read' : 'Read the round, then give the count'}</p>
+        <div class="panel story">${story.lines.map((l, k) => (oneAtATime && k !== line ? '' : `<p>${esc(l)}</p>`)).join('')}</div>
+        ${oneAtATime && line < story.lines.length - 1 ? '<button class="btn primary" id="next-line">Next line</button>' : '<button class="btn primary" id="have-count">I have the count</button>'}`;
+      on('#next-line', 'click', () => ((line++), draw()));
+      on('#have-count', 'click', () => countAnswer(story.cards));
+    };
+    draw();
+  }
 }
 
 // ---------- Chart ----------

@@ -8,6 +8,9 @@ import flip from '../assets/sounds/flip.wav';
 import lose from '../assets/sounds/lose.wav';
 import push from '../assets/sounds/push.wav';
 import shuffle from '../assets/sounds/shuffle.wav';
+import tagMinus from '../assets/sounds/tag_minus.wav';
+import tagPlus from '../assets/sounds/tag_plus.wav';
+import tagZero from '../assets/sounds/tag_zero.wav';
 import tick from '../assets/sounds/tick.wav';
 import win from '../assets/sounds/win.wav';
 import wrong from '../assets/sounds/wrong.wav';
@@ -26,6 +29,9 @@ const BYTES: Record<SoundName, Uint8Array> = {
   correct,
   wrong,
   tick,
+  tag_plus: tagPlus,
+  tag_zero: tagZero,
+  tag_minus: tagMinus,
 };
 const VOLUME: Partial<Record<SoundName, number>> = { card: 0.8, flip: 0.8, shuffle: 0.7, tick: 0.6 };
 

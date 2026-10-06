@@ -16,6 +16,14 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
   - shows running count, decks remaining and true count, with a suggested bet
   - can quiz you on the running count between hands
   - can switch to count-based advice (Hi-Lo index plays, insurance at +3)
+- **Counting Academy**: five ways to learn the Hi-Lo count, one per way people like to learn, each built on a technique with research behind it:
+  - *See it, Color Count* (visual): cards glow green/gray/red beside a count meter; the hints fade out over five levels.
+  - *Hear it, Sound Count* (listening): a tag sound per card plus the count spoken aloud at early levels, ending eyes-free.
+  - *Do it, Tag Tap* (hands-on): tap −1/0/+1 on each card against a shrinking clock (retrieval practice).
+  - *Chunk it, Pair Cancel*: call the total of pairs, then groups of three and four, the way fast counters work.
+  - *Read it, Count Story* (reading): a written round at the table; later levels reveal it one line at a time.
+
+  Players pick how they like to learn, which only sets the order: matching lessons to a "learning style" isn't supported by research, but mixing methods helps everyone. So a **daily workout** mixes three modes, favors the ones due for review (reviews spread out to 1, 2, 4, 7 and 14 days as you improve) and keeps a day streak. Scoring 90%+ levels a mode up; all rounds earn XP.
 - **Drills**: basic strategy flash cards, running count (adjustable speed, 1 or 2 cards at a time), true count conversion.
 - **Deal animations and sound effects**: cards slide out of the shoe one at a time in casino order, the hole card flips over, and chip, card, shuffle and win/lose sounds play in time. Totals, results and buttons wait until the cards land so nothing is spoiled. Sound can be turned off in Settings and follows the iPhone silent switch; animations turn off when the phone's Reduce Motion setting is on.
 - **Game feel** (inspired by Balatro): cards land with a bounce and sway gently while idle; wins pop up as big tilted text with a burst of chips, and the bankroll counts up with ticking; blackjacks, big wins and busts shake the table; a streak badge grows with every correct play and the chime climbs in pitch. In the browser, cards also tilt toward your mouse and the felt slowly swirls. Effects can be turned off in Settings ("Big effects") and respect Reduce Motion.

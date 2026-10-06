@@ -15,10 +15,13 @@ const SOURCES: Record<SoundName, number> = {
   correct: require('../../assets/sounds/correct.wav'),
   wrong: require('../../assets/sounds/wrong.wav'),
   tick: require('../../assets/sounds/tick.wav'),
+  tag_plus: require('../../assets/sounds/tag_plus.wav'),
+  tag_zero: require('../../assets/sounds/tag_zero.wav'),
+  tag_minus: require('../../assets/sounds/tag_minus.wav'),
 };
 
 /** Card sounds can overlap when dealt quickly, so they get a few players each. */
-const POOL_SIZE: Partial<Record<SoundName, number>> = { card: 3, tick: 3, correct: 2 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { card: 3, tick: 3, correct: 2, tag_plus: 2, tag_zero: 2, tag_minus: 2 };
 const VOLUME: Partial<Record<SoundName, number>> = { card: 0.8, flip: 0.8, shuffle: 0.7, tick: 0.6 };
 
 type Pool = { players: AudioPlayer[]; next: number };
@@ -60,7 +63,9 @@ export function playSound(name: SoundName, rate = 1) {
     pool.next = (pool.next + 1) % pool.players.length;
     player.setPlaybackRate(rate);
     player.seekTo(0).catch(() => {});
-    player.play();
+    // On the web, play() returns a promise that rejects before the first tap; ignore that.
+    const started = player.play() as unknown as Promise<void> | undefined;
+    started?.catch?.(() => {});
   } catch {
     // Ignore audio errors; sound is never required to play.
   }

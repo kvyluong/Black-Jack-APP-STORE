@@ -29,6 +29,8 @@ export default function RootLayout() {
           <Stack.Screen name="play" options={{ title: 'Table' }} />
           <Stack.Screen name="learn/index" options={{ title: 'Lessons' }} />
           <Stack.Screen name="learn/[id]" options={{ title: 'Lesson' }} />
+          <Stack.Screen name="academy/index" options={{ title: 'Counting Academy' }} />
+          <Stack.Screen name="academy/[mode]" options={{ title: 'Exercise' }} />
           <Stack.Screen name="drills/index" options={{ title: 'Drills' }} />
           <Stack.Screen name="drills/strategy" options={{ title: 'Strategy Drill' }} />
           <Stack.Screen name="drills/count" options={{ title: 'Running Count Drill' }} />

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 
@@ -20,6 +21,14 @@ export interface Stats {
   /** Rewarded-ad bonus claims today (resets daily). */
   bonusClaims?: BonusClaims;
   bonusChipsEarned: number;
+  /** Counting Academy: chosen learning preference and per-mode progress. */
+  academy: {
+    pref?: LearningPreference;
+    progress: Partial<Record<AcademyMode, ModeProgress>>;
+    /** Days in a row with a finished daily workout. */
+    streak: number;
+    lastWorkoutDay?: string;
+  };
 }
 
 export interface Settings {
@@ -75,6 +84,7 @@ const DEFAULT_STATS: Stats = {
   biggestWin: 0,
   refills: 0,
   bonusChipsEarned: 0,
+  academy: { progress: {}, streak: 0 },
 };
 
 const STORAGE_KEY = 'blackjack-coach/v1';

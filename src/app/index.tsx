@@ -11,6 +11,7 @@ import { colors, radius, spacing } from '../theme';
 const TILES: { title: string; subtitle: string; href: Href; icon: string }[] = [
   { title: 'Learn', subtitle: 'Step-by-step lessons from the rules to card counting', href: '/learn', icon: '📘' },
   { title: 'Casino Floor', subtitle: 'Play with a coach. Win chips to unlock bigger tables', href: '/tables', icon: '🃏' },
+  { title: 'Counting Academy', subtitle: 'Learn to count your way: see it, hear it, tap it, chunk it or read it', href: '/academy', icon: '🧠' },
   { title: 'Drills', subtitle: 'Basic strategy, running count and true count drills', href: '/drills', icon: '🎯' },
   { title: 'Strategy Chart', subtitle: 'The full basic strategy chart for your rules', href: '/chart', icon: '📊' },
   { title: 'Settings', subtitle: 'Table rules, coaching options and progress', href: '/settings', icon: '⚙️' },

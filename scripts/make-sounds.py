@@ -140,6 +140,21 @@ def tick():
     return mix(s, noise_burst(0.01, 0.002, lowpass=0.9), gain=0.3)
 
 
+def tag_plus():
+    """Hi-Lo +1: a short high pip."""
+    return tone(1318.5, 0.14, 0.05, harmonics=((1, 1.0), (2, 0.2)))
+
+
+def tag_zero():
+    """Hi-Lo 0: a soft neutral click."""
+    return noise_burst(0.04, 0.006, lowpass=0.5)
+
+
+def tag_minus():
+    """Hi-Lo -1: a short low pip."""
+    return tone(329.6, 0.18, 0.07, harmonics=((1, 1.0), (2, 0.35)))
+
+
 def write(name, samples):
     peak = max(1e-9, max(abs(x) for x in samples))
     scale = 0.85 / peak if peak > 0.85 else 1.0
@@ -160,6 +175,7 @@ if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     for name, fn in [("card", card), ("flip", flip), ("chips", chips), ("win", win),
                      ("blackjack", blackjack), ("lose", lose), ("push", push), ("shuffle", shuffle),
-                     ("bust", bust), ("correct", correct), ("wrong", wrong), ("tick", tick)]:
+                     ("bust", bust), ("correct", correct), ("wrong", wrong), ("tick", tick),
+                     ("tag_plus", tag_plus), ("tag_zero", tag_zero), ("tag_minus", tag_minus)]:
         write(name, fn())
         print(f"wrote assets/sounds/{name}.wav")
