@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
-import { ColorCount, PairCancel, ReadCount, RoundResult, SoundCount, TagTap } from '../../components/academy';
+import { ColorCount, PairCancel, ReadCount, RoundResult, SoundCount, SystemBadge, TagTap } from '../../components/academy';
 import { Button, P, Panel, Screen } from '../../components/ui';
 import { AcademyMode, MAX_LEVEL, MODES, academyXp, newProgress, recordRound } from '../../engine/academy';
 import { levelInfo, localDay } from '../../engine/progression';
@@ -49,7 +49,7 @@ export default function AcademyExercise() {
   const mode = MODES.find((m) => m.id === params.mode) ?? MODES[0];
   const workout = params.workout ? (params.workout.split(',') as AcademyMode[]) : null;
   const step = Number(params.step ?? 0);
-  const { stats, updateStats } = useSettings();
+  const { stats, updateStats, settings } = useSettings();
   const today = localDay(new Date());
   const progress = stats.academy.progress[mode.id] ?? newProgress(today);
   const [round, setRound] = useState(0);
@@ -90,7 +90,8 @@ export default function AcademyExercise() {
           <P muted style={{ textAlign: 'center' }}>
             {T.progress(step + 1, workout ? workout.length : null, progress.level, MAX_LEVEL)}
           </P>
-          <Mode key={round} level={progress.level} onFinish={finish} />
+          <SystemBadge />
+          <Mode key={`${round}-${settings.countingSystem}`} level={progress.level} onFinish={finish} />
         </>
       ) : (
         <Panel style={{ alignItems: 'stretch' }}>

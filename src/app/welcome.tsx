@@ -11,7 +11,7 @@ import { PlayingCard } from '../components/PlayingCard';
 import { Button, H1, P, Panel, Screen } from '../components/ui';
 import { useDealAnimation } from '../components/useDealAnimation';
 import { Card } from '../engine/cards';
-import { hiLoValue } from '../engine/counting';
+import { cardTag } from '../engine/counting';
 import { cardDelay } from '../engine/dealSchedule';
 import { GameState, act, startRound } from '../engine/game';
 import { STARTING_CHIPS, formatChips } from '../engine/progression';
@@ -33,7 +33,7 @@ const T = localized({
     twoWins: 'Two hands, two wins',
     heart: 'You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.',
     firstLook: 'Your first look at counting',
-    tags: 'Card counters give every card a tag: low cards (2–6) are +1, 7–9 are 0, and 10s and Aces are −1. Here are the cards from your two hands:',
+    tags: 'Card counters give every card a tag. In Hi-Lo, the most popular count, low cards (2–6) are +1, 7–9 are 0, and 10s and Aces are −1. Here are the cards from your two hands:',
     seenA11y: (rc: string) => `Cards seen. Running count ${rc}`,
     runningCount: 'Running count:',
     positive:
@@ -63,7 +63,7 @@ const T = localized({
     twoWins: 'Dos manos, dos victorias',
     heart: 'Ya conoces lo esencial del juego: plántate cuando el crupier probablemente se pase y pide cuando no.',
     firstLook: 'Tu primer vistazo al conteo',
-    tags: 'Quienes cuentan cartas le dan a cada carta una etiqueta: las bajas (2–6) son +1, del 7 al 9 son 0, y los 10 y los ases son −1. Estas son las cartas de tus dos manos:',
+    tags: 'Quienes cuentan cartas le dan a cada carta una etiqueta. En Hi-Lo, el conteo más popular, las bajas (2–6) son +1, del 7 al 9 son 0, y los 10 y los ases son −1. Estas son las cartas de tus dos manos:',
     seenA11y: (rc: string) => `Cartas vistas. Conteo continuo ${rc}`,
     runningCount: 'Conteo continuo:',
     positive:
@@ -152,7 +152,7 @@ export default function Welcome() {
   }
 
   if (stage.kind === 'finish') {
-    const rc = seen.reduce((sum, c) => sum + hiLoValue(c.rank), 0);
+    const rc = seen.reduce((sum, c) => sum + cardTag(c.rank, 'hiLo'), 0);
     return (
       <Screen ads={false}>
         <Stack.Screen options={{ title: T.nicePlaying, headerBackVisible: false }} />
@@ -163,7 +163,7 @@ export default function Welcome() {
           <P>{T.tags}</P>
           <View style={styles.seen} accessibilityLabel={T.seenA11y(`${rc > 0 ? '+' : ''}${rc}`)}>
             {seen.map((c, i) => (
-              <PlayingCard key={i} card={c} size="sm" showTag />
+              <PlayingCard key={i} card={c} size="sm" showTag tagSystem="hiLo" />
             ))}
           </View>
           <Text style={styles.rc}>

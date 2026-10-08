@@ -1,7 +1,8 @@
 // The Counting Academy's practice modes. Each reports back how accurate the
 // round was; the screen around it handles levels, XP and review scheduling.
+import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
 import { speak, spokenCount, stopSpeaking } from '../audio/speak';
@@ -19,6 +20,7 @@ import {
   visualHints,
 } from '../engine/academy';
 import { Card } from '../engine/cards';
+import { CountingSystem, SYSTEM_NAME, describeTags, maxTag, signedTag, tagValues } from '../engine/counting';
 import { localized } from '../i18n/lang';
 import type { SoundName } from '../engine/dealSchedule';
 import { useSettings } from '../state/settings';
@@ -54,11 +56,14 @@ const T = localized({
     runningA11y: (n: number) => `Running count ${n}`,
     colorMeta: (i: number, n: number, level: number, glow: boolean) =>
       `Card ${i}/${n} · Level ${level}: ${glow ? 'color hints on' : 'no color hints'}`,
-    legendCb: 'Blue ▲ = +1 · Gray ● = 0 · Orange ▼ = −1',
-    legend: 'Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1',
+    color: (t: number, cb: boolean) =>
+      t === 0 ? 'Gray' : `${Math.abs(t) >= 2 ? 'Bright ' : ''}${t > 0 ? (cb ? 'blue' : 'green') : cb ? 'orange' : 'red'}`.replace(/^./, (c) => c.toUpperCase()),
     soundMeta: (i: number, n: number, every: number | null, eyesFree: boolean) =>
       `Card ${i}/${n} · ${every ? `Count spoken every ${every === 1 ? 'card' : `${every} cards`}` : 'No spoken count'}${eyesFree ? ' · Eyes-free' : ''}`,
-    soundLegend: 'High pip = +1 · Click = 0 · Low pip = −1. Turn your sound on.',
+    soundLegend: (level2: boolean) => `High pip = plus · Click = 0 · Low pip = minus${level2 ? ' · Two pips = ±2' : ''}. Turn your sound on.`,
+    counting: (name: string) => `Counting: ${name}`,
+    change: 'Change',
+    changeA11y: 'Change counting system in Settings',
     groupMeta: (i: number, n: number, size: number) => `Group ${i}/${n} · ${size === 2 ? 'Pairs' : `Groups of ${size}`}`,
     groupWas: (n: string) => `That group is ${n}`,
     groupTip: 'Tip: a high card and a low card cancel to 0. Count only what’s left.',
@@ -81,11 +86,14 @@ const T = localized({
     runningA11y: (n: number) => `Conteo continuo ${n}`,
     colorMeta: (i: number, n: number, level: number, glow: boolean) =>
       `Carta ${i}/${n} · Nivel ${level}: ${glow ? 'con pistas de color' : 'sin pistas de color'}`,
-    legendCb: 'Azul ▲ = +1 · Gris ● = 0 · Naranja ▼ = −1',
-    legend: 'Verde ▲ = +1 · Gris ● = 0 · Rojo ▼ = −1',
+    color: (t: number, cb: boolean) =>
+      t === 0 ? 'Gris' : `${t > 0 ? (cb ? 'Azul' : 'Verde') : cb ? 'Naranja' : 'Rojo'}${Math.abs(t) >= 2 ? ' brillante' : ''}`,
     soundMeta: (i: number, n: number, every: number | null, eyesFree: boolean) =>
       `Carta ${i}/${n} · ${every ? `Conteo en voz alta cada ${every === 1 ? 'carta' : `${every} cartas`}` : 'Sin conteo en voz alta'}${eyesFree ? ' · Sin mirar' : ''}`,
-    soundLegend: 'Tono agudo = +1 · Clic = 0 · Tono grave = −1. Activa el sonido.',
+    soundLegend: (level2: boolean) => `Tono agudo = más · Clic = 0 · Tono grave = menos${level2 ? ' · Dos tonos = ±2' : ''}. Activa el sonido.`,
+    counting: (name: string) => `Conteo: ${name}`,
+    change: 'Cambiar',
+    changeA11y: 'Cambiar el sistema de conteo en Ajustes',
     groupMeta: (i: number, n: number, size: number) => `Grupo ${i}/${n} · ${size === 2 ? 'Parejas' : `Grupos de ${size}`}`,
     groupWas: (n: string) => `Ese grupo vale ${n}`,
     groupTip: 'Consejo: una carta alta y una baja se anulan y dan 0. Cuenta solo lo que queda.',
@@ -96,8 +104,47 @@ const T = localized({
   },
 });
 
-const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
+const signed = signedTag;
 const TAG_SOUND = (t: number): SoundName => (t > 0 ? 'tag_plus' : t < 0 ? 'tag_minus' : 'tag_zero');
+
+/** Plays a tag's sound: once for ±1 or 0, twice (the second a touch higher) for ±2. */
+function playTag(t: number) {
+  playSound(TAG_SOUND(t));
+  if (Math.abs(t) >= 2) setTimeout(() => playSound(TAG_SOUND(t), 1.15), 130);
+}
+
+/** The player's counting system (from settings). */
+const useSystem = (): CountingSystem => useSettings().settings.countingSystem;
+
+/** "Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1" for the system's tag values. */
+export function colorLegend(system: CountingSystem, cb: boolean): string {
+  return tagValues(system)
+    .map((t) => `${T.color(t, cb)} ${tagSymbol(t)} = ${signed(t)}`)
+    .join(' · ');
+}
+
+/** Shows which system is being practiced, its tags, and a link to change it in Settings. */
+export function SystemBadge() {
+  const { settings } = useSettings();
+  const system = settings.countingSystem;
+  return (
+    <View style={styles.badge}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.badgeTitle}>{T.counting(SYSTEM_NAME[system])}</Text>
+        <Text style={styles.badgeTags}>{describeTags(system)}</Text>
+      </View>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={T.changeA11y}
+        onPress={() => router.push('/settings')}
+        hitSlop={8}
+        style={({ pressed }) => [styles.badgeLink, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.badgeLinkText}>{T.change}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 /** Scoring for "what's the count?" answers: exact is full marks, off by one is half. */
 function countAccuracy(guess: number, actual: number) {
@@ -108,7 +155,7 @@ function countAccuracy(guess: number, actual: number) {
 function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult) => void }) {
   const { settings } = useSettings();
   const oc = useOutcomeColors();
-  const actual = cards.reduce((s, c) => s + tagOf(c), 0);
+  const actual = cards.reduce((s, c) => s + tagOf(c, settings.countingSystem), 0);
   const [guess, setGuess] = useState(0);
   const [checked, setChecked] = useState(false);
   const acc = countAccuracy(guess, actual);
@@ -151,7 +198,10 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
 export function TagTap({ level, onFinish }: ModeProps) {
   const { settings } = useSettings();
   const cb = settings.colorblind;
-  const cards = useMemo(() => cardRun(roundLength('tagTap', level)), [level]);
+  const system = settings.countingSystem;
+  const values = useMemo(() => [...tagValues(system)].reverse(), [system]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a new system means a new round
+  const cards = useMemo(() => cardRun(roundLength('tagTap', level)), [level, system]);
   const [i, setI] = useState(0);
   const [right, setRight] = useState(0);
   const [combo, setCombo] = useState(0);
@@ -162,8 +212,12 @@ export function TagTap({ level, onFinish }: ModeProps) {
   const answer = (value: number | null) => {
     if (flash) return; // already answered this card
     clock.stopAnimation();
-    const ok = value === tagOf(cards[i]);
-    if (settings.soundEffects) playSound(ok ? TAG_SOUND(tagOf(cards[i])) : 'wrong');
+    const tag = tagOf(cards[i], system);
+    const ok = value === tag;
+    if (settings.soundEffects) {
+      if (ok) playTag(tag);
+      else playSound('wrong');
+    }
     setFlash(ok ? 'ok' : 'no');
     setCombo(ok ? combo + 1 : 0);
     const nextRight = right + (ok ? 1 : 0);
@@ -198,8 +252,14 @@ export function TagTap({ level, onFinish }: ModeProps) {
         <PlayingCard card={cards[i]} size="lg" />
       </View>
       <View style={styles.tagButtons}>
-        {[-1, 0, 1].map((v) => (
-          <Button key={v} title={`${tagSymbol(v)} ${signed(v)}`} variant="secondary" onPress={() => answer(v)} style={{ ...styles.tagButton, borderColor: tagColor(v, cb) }} />
+        {values.map((v) => (
+          <Button
+            key={v}
+            title={`${tagSymbol(v)} ${signed(v)}`}
+            variant="secondary"
+            onPress={() => answer(v)}
+            style={{ ...styles.tagButton, ...(values.length > 3 && styles.tagButtonSmall), borderColor: tagColor(v, cb) }}
+          />
         ))}
       </View>
     </View>
@@ -207,11 +267,12 @@ export function TagTap({ level, onFinish }: ModeProps) {
 }
 
 /** Shared flash-card runner for the See and Hear modes. */
-function useFlashRun(level: number, onCard: (card: Card, index: number, running: number) => void) {
-  const cards = useMemo(() => cardRun(roundLength('colorCount', level)), [level]);
+function useFlashRun(level: number, system: CountingSystem, onCard: (card: Card, index: number, running: number) => void) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a new system means a new round
+  const cards = useMemo(() => cardRun(roundLength('colorCount', level)), [level, system]);
   const [i, setI] = useState(0);
   const [done, setDone] = useState(false);
-  const running = cards.slice(0, i + 1).reduce((s, c) => s + tagOf(c), 0);
+  const running = cards.slice(0, i + 1).reduce((s, c) => s + tagOf(c, system), 0);
   useEffect(() => {
     if (done) return;
     onCard(cards[i], i, running);
@@ -224,18 +285,23 @@ function useFlashRun(level: number, onCard: (card: Card, index: number, running:
 
 /** See it: color-coded cards and a count meter, with the hints fading as you level up. */
 export function ColorCount({ level, onFinish }: ModeProps) {
-  const cb = useSettings().settings.colorblind;
+  const { settings, lang } = useSettings();
+  const cb = settings.colorblind;
+  const system = settings.countingSystem;
   const hints = visualHints(level);
-  const { cards, i, done, running } = useFlashRun(level, () => {});
+  const legend = useMemo(() => colorLegend(system, cb), [system, cb, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { cards, i, done, running } = useFlashRun(level, system, () => {});
   if (done) return <CountAnswer cards={cards} onDone={onFinish} />;
-  const tag = tagOf(cards[i]);
+  const tag = tagOf(cards[i], system);
+  // The meter spans ±10 tags' worth of count (±20 for a level-two system).
+  const span = 10 * maxTag(system);
   return (
     <View style={{ gap: spacing(2) }}>
       <Text style={styles.meta}>{T.colorMeta(i + 1, cards.length, level, hints.glow)}</Text>
       <View style={styles.colorStage}>
         {hints.meter && (
           <View style={styles.meter} accessibilityLabel={T.runningA11y(running)}>
-            <View style={[styles.meterFill, { height: `${50 + Math.max(-10, Math.min(10, running)) * 5}%`, backgroundColor: tagColor(running, cb) }]} />
+            <View style={[styles.meterFill, { height: `${50 + (Math.max(-span, Math.min(span, running)) / span) * 50}%`, backgroundColor: tagColor(Math.sign(running), cb) }]} />
             <Text style={styles.meterText}>{signed(running)}</Text>
           </View>
         )}
@@ -244,7 +310,7 @@ export function ColorCount({ level, onFinish }: ModeProps) {
         </View>
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        {cb ? T.legendCb : T.legend}
+        {legend}
       </P>
     </View>
   );
@@ -252,10 +318,11 @@ export function ColorCount({ level, onFinish }: ModeProps) {
 
 /** Hear it: each card plays its tag sound; early levels also say the running count. */
 export function SoundCount({ level, onFinish }: ModeProps) {
+  const system = useSystem();
   const every = spokenEvery(level);
   const eyesFree = level >= 4;
-  const { cards, i, done } = useFlashRun(level, (card, index, running) => {
-    playSound(TAG_SOUND(tagOf(card)));
+  const { cards, i, done } = useFlashRun(level, system, (card, index, running) => {
+    playTag(tagOf(card, system));
     if (every && (index + 1) % every === 0) setTimeout(() => speak(spokenCount(running)), 250);
   });
   useEffect(() => () => stopSpeaking(), []);
@@ -267,7 +334,7 @@ export function SoundCount({ level, onFinish }: ModeProps) {
         <PlayingCard key={i} card={cards[i]} size="lg" faceDown={eyesFree} />
       </View>
       <P muted style={{ textAlign: 'center' }}>
-        {T.soundLegend}
+        {T.soundLegend(maxTag(system) >= 2)}
       </P>
     </View>
   );
@@ -276,16 +343,18 @@ export function SoundCount({ level, onFinish }: ModeProps) {
 /** Chunk it: call the total of each pair or group in one go. */
 export function PairCancel({ level, onFinish }: ModeProps) {
   const { settings } = useSettings();
-  const groups = useMemo(() => cardGroups(level), [level]);
+  const system = settings.countingSystem;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a new system means a new round
+  const groups = useMemo(() => cardGroups(level), [level, system]);
   const [i, setI] = useState(0);
   const [right, setRight] = useState(0);
   const [shown, setShown] = useState<{ ok: boolean; value: number } | null>(null);
   const group = groups[i];
-  const choices = groupChoices(group.length);
+  const choices = groupChoices(group.length, system);
 
   const answer = (v: number) => {
     if (shown) return;
-    const value = groupValue(group);
+    const value = groupValue(group, system);
     const ok = v === value;
     if (settings.soundEffects) playSound(ok ? 'correct' : 'wrong');
     setShown({ ok, value });
@@ -324,7 +393,10 @@ export function PairCancel({ level, onFinish }: ModeProps) {
 
 /** Read it: a written round at the table. Later levels reveal it one line at a time. */
 export function ReadCount({ level, onFinish }: ModeProps) {
-  const story = useMemo(() => countStory(level), [level]);
+  const { lang, settings } = useSettings();
+  const system = settings.countingSystem;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the story is written in the current language
+  const story = useMemo(() => countStory(level, Math.random, system), [level, system, lang]);
   const oneAtATime = level >= 3;
   const [line, setLine] = useState(oneAtATime ? 0 : story.lines.length - 1);
   const [answering, setAnswering] = useState(false);
@@ -367,6 +439,12 @@ const styles = StyleSheet.create({
   no: { borderColor: colors.bad },
   tagButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1), justifyContent: 'center' },
   tagButton: { flex: 1, minWidth: 90, paddingVertical: spacing(2.5) },
+  tagButtonSmall: { minWidth: 60, paddingHorizontal: spacing(1) },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, borderRadius: radius.md, padding: spacing(1.5) },
+  badgeTitle: { color: colors.gold, fontWeight: '800', fontSize: 15 },
+  badgeTags: { color: colors.text, fontSize: 13 },
+  badgeLink: { borderWidth: 1.5, borderColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  badgeLinkText: { color: colors.gold, fontWeight: '700' },
   choice: { minWidth: 56, flexGrow: 1 },
   colorStage: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing(3), minHeight: 190 },
   meter: { width: 34, height: 170, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end', overflow: 'hidden' },

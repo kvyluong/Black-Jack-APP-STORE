@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SystemBadge, colorLegend } from '../../components/academy';
 import { Button, H2, P, Panel, Screen } from '../../components/ui';
 import {
   LearningPreference,
@@ -11,6 +12,7 @@ import {
   MODES,
   modesFor,
 } from '../../engine/academy';
+import { SYSTEM_NAME, systemNote } from '../../engine/counting';
 import { localDay } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -20,7 +22,7 @@ const PREFS: LearningPreference[] = ['see', 'hear', 'do', 'read', 'mix'];
 
 const T = localized({
   en: {
-    intro: 'Five ways to learn the Hi-Lo count. Start with the style you enjoy, then mix them.',
+    intro: (name: string) => `Five ways to learn the ${name} count. Start with the style you enjoy, then mix them.`,
     howLearn: 'How do you like to learn?',
     prefNote:
       'Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses several.',
@@ -37,7 +39,7 @@ const T = localized({
     why: (w: string) => `Why it works: ${w}`,
   },
   es: {
-    intro: 'Cinco formas de aprender el conteo Hi-Lo. Empieza con el estilo que más te guste y luego combínalos.',
+    intro: (name: string) => `Cinco formas de aprender el conteo ${name}. Empieza con el estilo que más te guste y luego combínalos.`,
     howLearn: '¿Cómo te gusta aprender?',
     prefNote:
       'Tu elección solo define qué ejercicios salen primero. Las investigaciones muestran que todos aprendemos mejor combinando, por eso el entrenamiento diario usa varios.',
@@ -57,7 +59,8 @@ const T = localized({
 
 /** Counting Academy hub: pick how you like to learn, do today's workout, or any mode. */
 export default function Academy() {
-  const { stats, updateStats } = useSettings();
+  const { stats, updateStats, settings } = useSettings();
+  const system = settings.countingSystem;
   const academy = stats.academy;
   const pref = academy.pref ?? 'mix';
   const today = localDay(new Date());
@@ -68,7 +71,11 @@ export default function Academy() {
 
   return (
     <Screen>
-      <P>{T.intro}</P>
+      <P>{T.intro(SYSTEM_NAME[system])}</P>
+      <SystemBadge />
+      <Text style={styles.small}>
+        {colorLegend(system, settings.colorblind)}. {systemNote(system)}
+      </Text>
 
       <Panel>
         <Text style={styles.label}>{T.howLearn}</Text>

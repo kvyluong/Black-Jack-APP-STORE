@@ -1,10 +1,11 @@
-// Counting Academy: several ways to practice the Hi-Lo count, one per way people
+// Counting Academy: several ways to practice the count (in the player's chosen
+// system: Hi-Lo, KO, Hi-Opt I or Omega II), one per way people
 // like to learn, each built on a technique with good evidence behind it
 // (retrieval practice, spacing, dual coding, chunking, interleaving).
 import { Card, Rank, Rng, createShoe } from './cards';
-import { hiLoValue } from './counting';
+import { CountingSystem, SYSTEM_NAME, cardTag, getCountingSystem, maxTag, signedTag, tagValues } from './counting';
 import { localDay } from './progression';
-import { localized } from '../i18n/lang';
+import { localized, tr } from '../i18n/lang';
 
 export type LearningPreference = 'see' | 'hear' | 'do' | 'read' | 'mix';
 
@@ -15,43 +16,56 @@ export interface ModeInfo {
   title: string;
   /** Who it suits, in plain words. */
   forWho: string;
-  /** What you do. */
+  /** What you do (names the current system's tags). */
   how: string;
   /** The learning technique behind it. */
   why: string;
   preference: Exclude<LearningPreference, 'mix'>;
 }
 
-const MODE_TEXT = localized<Record<AcademyMode, Pick<ModeInfo, 'title' | 'forWho' | 'how' | 'why'>>>({
+/** What the mode descriptions need to know about the system. */
+interface SysText {
+  name: string;
+  /** "−1, 0 or +1" */
+  values: string;
+  /** Uses ±2 tags (Omega II). */
+  level2: boolean;
+}
+
+type ModeText = Pick<ModeInfo, 'title' | 'forWho' | 'why'> & { how: (s: SysText) => string };
+
+const MODE_TEXT = localized<Record<AcademyMode, ModeText>>({
   en: {
     colorCount: {
       title: 'See it: Color Count',
       forWho: 'For visual learners',
-      how: 'Cards glow green (+1), gray (0) or red (−1) while a meter tracks the count. The hints fade as you level up.',
+      how: (s) =>
+        `Cards glow green (plus), gray (0) or red (minus)${s.level2 ? ', with a double arrow ▲▲/▼▼ and a brighter glow for ±2' : ''} while a meter tracks the ${s.name} count. The hints fade as you level up.`,
       why: 'Pairs words with pictures (dual coding), then removes the support so you rely on memory.',
     },
     soundCount: {
       title: 'Hear it: Sound Count',
       forWho: 'For people who learn by listening',
-      how: 'Each card plays a sound: a high pip for +1, a click for 0, a low pip for −1. Early levels also say the count out loud.',
+      how: (s) =>
+        `Each card plays a sound: a high pip for plus, a click for 0, a low pip for minus${s.level2 ? ' (two pips for ±2)' : ''}. Early levels also say the ${s.name} count out loud.`,
       why: 'Links each tag to a sound, and trains you to count without staring at a screen.',
     },
     tagTap: {
       title: 'Do it: Tag Tap',
       forWho: 'For hands-on learners',
-      how: 'A card appears. Tap −1, 0 or +1 before time runs out. The clock gets faster each level.',
+      how: (s) => `A card appears. Tap its ${s.name} tag (${s.values}) before time runs out. The clock gets faster each level.`,
       why: 'Every card is a tiny quiz (retrieval practice), so the tags become automatic.',
     },
     pairCancel: {
       title: 'Chunk it: Pair Cancel',
       forWho: 'For everyone who wants speed',
-      how: 'Cards come in pairs, then threes and fours. Call each group’s total in one go: a King and a 5 cancel to 0.',
+      how: (s) => `Cards come in pairs, then threes and fours. Call each group’s ${s.name} total in one go: a King and a 5 cancel to 0.`,
       why: 'Grouping cards into chunks is how fast counters work: fewer things to keep in your head.',
     },
     readCount: {
       title: 'Read it: Count Story',
       forWho: 'For readers',
-      how: 'A short written scene describes a round at the table. Read it and work out the running count.',
+      how: (s) => `A short written scene describes a round at the table. Read it and work out the ${s.name} running count.`,
       why: 'Turns the count into words you process slowly and precisely, a good first step before speed.',
     },
   },
@@ -59,31 +73,33 @@ const MODE_TEXT = localized<Record<AcademyMode, Pick<ModeInfo, 'title' | 'forWho
     colorCount: {
       title: 'Míralo: Conteo por colores',
       forWho: 'Para quienes aprenden viendo',
-      how: 'Las cartas brillan en verde (+1), gris (0) o rojo (−1) mientras un medidor lleva el conteo. Las pistas desaparecen al subir de nivel.',
+      how: (s) =>
+        `Las cartas brillan en verde (más), gris (0) o rojo (menos)${s.level2 ? ', con doble flecha ▲▲/▼▼ y un brillo más intenso para ±2' : ''} mientras un medidor lleva el conteo ${s.name}. Las pistas desaparecen al subir de nivel.`,
       why: 'Une palabras con imágenes (codificación dual) y luego quita la ayuda para que uses tu memoria.',
     },
     soundCount: {
       title: 'Escúchalo: Conteo por sonido',
       forWho: 'Para quienes aprenden escuchando',
-      how: 'Cada carta suena: un tono agudo para +1, un clic para 0, un tono grave para −1. En los primeros niveles también se dice el conteo en voz alta.',
+      how: (s) =>
+        `Cada carta suena: un tono agudo para más, un clic para 0, un tono grave para menos${s.level2 ? ' (dos tonos para ±2)' : ''}. En los primeros niveles también se dice el conteo ${s.name} en voz alta.`,
       why: 'Asocia cada valor con un sonido y te entrena para contar sin mirar la pantalla.',
     },
     tagTap: {
       title: 'Hazlo: Toca el valor',
       forWho: 'Para quienes aprenden haciendo',
-      how: 'Aparece una carta. Toca −1, 0 o +1 antes de que se acabe el tiempo. El reloj va más rápido en cada nivel.',
+      how: (s) => `Aparece una carta. Toca su valor ${s.name} (${s.values}) antes de que se acabe el tiempo. El reloj va más rápido en cada nivel.`,
       why: 'Cada carta es un mini examen (práctica de recuperación), así los valores se vuelven automáticos.',
     },
     pairCancel: {
       title: 'Agrúpalo: Parejas que se anulan',
       forWho: 'Para todos los que quieren velocidad',
-      how: 'Las cartas salen en parejas, luego de tres y de cuatro. Di el total de cada grupo de una vez: un Rey y un 5 se anulan y dan 0.',
+      how: (s) => `Las cartas salen en parejas, luego de tres y de cuatro. Di el total ${s.name} de cada grupo de una vez: un Rey y un 5 se anulan y dan 0.`,
       why: 'Agrupar cartas es lo que hacen los contadores rápidos: menos cosas que recordar.',
     },
     readCount: {
       title: 'Léelo: Historia de conteo',
       forWho: 'Para lectores',
-      how: 'Una escena corta describe una ronda en la mesa. Léela y calcula el conteo continuo.',
+      how: (s) => `Una escena corta describe una ronda en la mesa. Léela y calcula el conteo continuo ${s.name}.`,
       why: 'Convierte el conteo en palabras que procesas con calma y precisión, un buen primer paso antes de la velocidad.',
     },
   },
@@ -97,7 +113,15 @@ const MODE_ORDER: [AcademyMode, ModeInfo['preference']][] = [
   ['readCount', 'read'],
 ];
 
-/** Every mode. The text fields follow the current language. */
+/** "−1, 0 or +1" / "−1, 0 o +1": a system's tag values, lowest first. */
+export function tagChoiceList(system: CountingSystem = getCountingSystem()): string {
+  const v = [...tagValues(system)].reverse().map(signedTag);
+  return `${v.slice(0, -1).join(', ')} ${tr('or', 'o')} ${v[v.length - 1]}`;
+}
+
+const sysText = (system: CountingSystem): SysText => ({ name: SYSTEM_NAME[system], values: tagChoiceList(system), level2: maxTag(system) >= 2 });
+
+/** Every mode. The text fields follow the current language and counting system. */
 export const MODES: ModeInfo[] = MODE_ORDER.map(([id, preference]) => ({
   id,
   get title() {
@@ -107,7 +131,7 @@ export const MODES: ModeInfo[] = MODE_ORDER.map(([id, preference]) => ({
     return MODE_TEXT[id].forWho;
   },
   get how() {
-    return MODE_TEXT[id].how;
+    return MODE_TEXT[id].how(sysText(getCountingSystem()));
   },
   get why() {
     return MODE_TEXT[id].why;
@@ -199,7 +223,8 @@ export function dailyWorkout(progress: Partial<Record<AcademyMode, ModeProgress>
 
 // ---------- Round content ----------
 
-export const tagOf = (c: Card) => hiLoValue(c.rank);
+/** A card's tag in the given system (default: the player's chosen one). */
+export const tagOf = (c: Card, system: CountingSystem = getCountingSystem()) => cardTag(c.rank, system);
 
 /** How many cards a round uses at a level. */
 export function roundLength(mode: AcademyMode, level: number): number {
@@ -240,11 +265,16 @@ export function cardGroups(level: number, rng: Rng = Math.random): Card[][] {
   return Array.from({ length: count }, (_, i) => cards.slice(i * size, i * size + size));
 }
 
-export const groupValue = (group: Card[]) => group.reduce((sum, c) => sum + tagOf(c), 0);
+export const groupValue = (group: Card[], system: CountingSystem = getCountingSystem()) =>
+  group.reduce((sum, c) => sum + tagOf(c, system), 0);
 
-/** The answer buttons for a group: every total a group of this size can have. */
-export function groupChoices(size: number): number[] {
-  return Array.from({ length: size * 2 + 1 }, (_, i) => i - size);
+/**
+ * The answer buttons for a group: every total a group of this size can have
+ * (Hi-Lo pairs: −2…+2; Omega II pairs, with ±2 tags: −4…+4).
+ */
+export function groupChoices(size: number, system: CountingSystem = getCountingSystem()): number[] {
+  const m = size * maxTag(system);
+  return Array.from({ length: m * 2 + 1 }, (_, i) => i - m);
 }
 
 // ---------- Count Story ----------
@@ -308,7 +338,7 @@ export interface Story {
  * A short written round at the table. Longer stories (more players, more hits)
  * at higher levels.
  */
-export function countStory(level: number, rng: Rng = Math.random): Story {
+export function countStory(level: number, rng: Rng = Math.random, system: CountingSystem = getCountingSystem()): Story {
   const players = Math.min(4, 1 + Math.ceil(level / 2));
   const deck = cardRun(40, rng);
   let i = 0;
@@ -332,7 +362,7 @@ export function countStory(level: number, rng: Rng = Math.random): Story {
   const dealerHits = level >= 2 ? Array.from({ length: Math.floor(rng() * 2) + 1 }, next) : [];
   lines.push(STORY.turns(word(hole), dealerHits.map(word)));
   const cards = deck.slice(0, i);
-  return { lines, cards, answer: cards.reduce((s, c) => s + tagOf(c), 0) };
+  return { lines, cards, answer: cards.reduce((s, c) => s + tagOf(c, system), 0) };
 }
 
 /** XP for an academy round: rewards accuracy, scaled lightly by level. */

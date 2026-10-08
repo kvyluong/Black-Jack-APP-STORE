@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, isRed } from '../engine/cards';
-import { hiLoValue } from '../engine/counting';
+import { CountingSystem, cardTag } from '../engine/counting';
 import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, tagColor, tagText } from '../theme';
@@ -10,26 +10,31 @@ interface Props {
   card?: Card;
   faceDown?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg';
-  /** Shows the card's Hi-Lo tag beneath it (used in lessons and drills). */
+  /** Shows the card's count tag beneath it (used in lessons and drills). */
   showTag?: boolean;
+  /** Which system's tag to show; defaults to the player's chosen counting system. */
+  tagSystem?: CountingSystem;
 }
+
+const NUM_EN: Record<number, string> = { 1: 'one', 2: 'two' };
+const NUM_ES: Record<number, string> = { 1: 'uno', 2: 'dos' };
 
 const T = localized({
   en: {
     card: (rank: string, suit: string) => `${rank} of ${suit}`,
     suits: { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' } as Record<Card['suit'], string>,
-    tag: (tag: number) => `count ${tag > 0 ? 'plus one' : tag < 0 ? 'minus one' : 'zero'}`,
+    tag: (tag: number) => `count ${tag === 0 ? 'zero' : `${tag > 0 ? 'plus' : 'minus'} ${NUM_EN[Math.abs(tag)] ?? Math.abs(tag)}`}`,
   },
   es: {
     card: (rank: string, suit: string) => `${rank} de ${suit}`,
     suits: { '♠': 'picas', '♥': 'corazones', '♦': 'diamantes', '♣': 'tréboles' },
-    tag: (tag: number) => `conteo ${tag > 0 ? 'más uno' : tag < 0 ? 'menos uno' : 'cero'}`,
+    tag: (tag: number) => `conteo ${tag === 0 ? 'cero' : `${tag > 0 ? 'más' : 'menos'} ${NUM_ES[Math.abs(tag)] ?? Math.abs(tag)}`}`,
   },
 });
 
 const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
 
-export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
+export function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
   const { settings } = useSettings();
   const s = SIZES[size];
   if (faceDown || !card) {
@@ -40,10 +45,15 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
     );
   }
   const color = isRed(card) ? colors.red : colors.black;
-  const tag = hiLoValue(card.rank);
+  const tag = cardTag(card.rank, tagSystem ?? settings.countingSystem);
+  const tagLabel = showTag ? (
+    <Text style={[styles.tag, size === 'xs' && styles.tagXs, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={T.tag(tag)}>
+      {tagText(tag)}
+    </Text>
+  ) : null;
   if (size === 'xs') {
     // Tiny cards for other players' seats: just rank over suit.
-    return (
+    const tiny = (
       <View
         style={[styles.card, styles.xs, { width: s.w, height: s.h }]}
         accessible
@@ -52,6 +62,14 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
         <Text style={{ color, fontSize: s.f, fontWeight: '800', lineHeight: s.f + 2 }}>{card.rank}</Text>
         <Text style={{ color, fontSize: s.f, lineHeight: s.f + 2 }}>{card.suit}</Text>
       </View>
+    );
+    return tagLabel ? (
+      <View style={{ alignItems: 'center' }}>
+        {tiny}
+        {tagLabel}
+      </View>
+    ) : (
+      tiny
     );
   }
   return (
@@ -65,11 +83,7 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag }: Props) {
         <Text style={[styles.center, { color, fontSize: s.f * 1.2 }]}>{card.suit}</Text>
         <Text style={[styles.rank, { color, fontSize: s.f }]}>{card.rank}</Text>
       </View>
-      {showTag && (
-        <Text style={[styles.tag, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={T.tag(tag)}>
-          {tagText(tag)}
-        </Text>
-      )}
+      {tagLabel}
     </View>
   );
 }
@@ -98,4 +112,5 @@ const styles = StyleSheet.create({
   center: { lineHeight: undefined },
   rank: { position: 'absolute', bottom: 2, right: 5, fontWeight: '700', transform: [{ rotate: '180deg' }] },
   tag: { marginTop: 4, fontWeight: '700', fontSize: 14 },
+  tagXs: { fontSize: 10, marginTop: 2 },
 });

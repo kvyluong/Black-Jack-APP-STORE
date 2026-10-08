@@ -70,7 +70,7 @@ export default function LessonScreen() {
           {sec.cards && (
             <View style={styles.cards}>
               {sec.cards.map((rank, j) => (
-                <PlayingCard key={j} card={{ rank, suit: (['♠', '♥', '♣', '♦'] as const)[j % 4] }} size="sm" showTag={sec.showTags} />
+                <PlayingCard key={j} card={{ rank, suit: (['♠', '♥', '♣', '♦'] as const)[j % 4] }} size="sm" showTag={sec.showTags} tagSystem="hiLo" />
               ))}
             </View>
           )}

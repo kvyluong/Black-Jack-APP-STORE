@@ -22,14 +22,21 @@ export const radius = { sm: 6, md: 12, lg: 20 };
 /** Color-blind-safe pair used instead of green/red when the setting is on. */
 export const colorblindColors = { good: '#4C9AFF', bad: '#FFB020' };
 
-/** Shape for a Hi-Lo tag, so the tag never depends on color alone. */
-export const tagSymbol = (t: number) => (t > 0 ? '▲' : t < 0 ? '▼' : '●');
+/**
+ * Brighter tints for level-two tags (±2, Omega II): higher contrast on the felt,
+ * always paired with a doubled symbol so the size never depends on color alone.
+ */
+const strongTag = { good: '#9BF5BA', bad: '#FFB0B0' };
+const strongTagColorblind = { good: '#9CC8FF', bad: '#FFD27A' };
+
+/** Shape for a count tag, so it never depends on color alone: ▲▲ +2, ▲ +1, ● 0, ▼ −1, ▼▼ −2. */
+export const tagSymbol = (t: number) => (t >= 2 ? '▲▲' : t > 0 ? '▲' : t <= -2 ? '▼▼' : t < 0 ? '▼' : '●');
 
 export function tagColor(t: number, colorblind: boolean): string {
   if (t === 0) return colors.muted;
-  const pair = colorblind ? colorblindColors : colors;
+  const pair = Math.abs(t) >= 2 ? (colorblind ? strongTagColorblind : strongTag) : colorblind ? colorblindColors : colors;
   return t > 0 ? pair.good : pair.bad;
 }
 
-/** "▲ +1", "● 0", "▼ −1". */
-export const tagText = (t: number) => `${tagSymbol(t)} ${t > 0 ? '+1' : t < 0 ? '−1' : '0'}`;
+/** "▲▲ +2", "▲ +1", "● 0", "▼ −1", "▼▼ −2". */
+export const tagText = (t: number) => `${tagSymbol(t)} ${t > 0 ? `+${t}` : t < 0 ? `−${-t}` : '0'}`;
