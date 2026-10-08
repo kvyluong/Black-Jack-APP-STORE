@@ -208,9 +208,13 @@ function isAllowed(action: Action, ctx: DecisionContext): boolean {
   return true;
 }
 
-/** Index for the table's rules: 10 vs A doubles sooner when the dealer hits soft 17. */
+/**
+ * Index for the table's rules. When the dealer hits soft 17, 10 vs A doubles at +3
+ * (S17: +4) and 11 vs A doubles down to −1 (S17: +1), per the published H17 indices.
+ */
 function indexFor(dev: Deviation, rules: Rules): number {
   if (rules.dealerHitsSoft17 && dev.id === '10vA') return 3;
+  if (rules.dealerHitsSoft17 && dev.id === '11vA') return -1;
   return dev.index;
 }
 

@@ -156,6 +156,13 @@ describe('count plays', () => {
     expect(recommend(ctx(['10', '4'], '10', 2)).action).toBe('hit');
   });
 
+  it('11 vs A doubles down to −1 when the dealer hits soft 17', () => {
+    expect(recommend(ctx(['6', '5'], 'A', 0, true)).action).toBe('double');
+    expect(recommend(ctx(['6', '5'], 'A', -1, true)).action).toBe('double');
+    expect(recommend(ctx(['6', '5'], 'A', -2, true)).action).toBe('hit');
+    expect(recommend(ctx(['6', '5'], 'A', 0, false)).action).toBe('hit');
+  });
+
   it('10 vs A doubles at +3 when the dealer hits soft 17', () => {
     expect(recommend(ctx(['6', '4'], 'A', 3, true)).action).toBe('double');
     expect(recommend(ctx(['6', '4'], 'A', 3, false)).action).toBe('hit');
