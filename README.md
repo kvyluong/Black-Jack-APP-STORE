@@ -6,6 +6,15 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
 ## Features
 
+- **Road to the Casino**: a casino-ready score built from the benchmarks serious counters use (99%+ basic strategy over your last 200 decisions, a full deck counted exactly in under 30 seconds, true count conversion, every count play learned, deck estimation within half a deck, a passed casino-conditions test, all lessons), each with progress, why it matters and a practice button, plus the next step to work on.
+- **Daily goals and progress charts**: three goals a day with chip and XP rewards and a streak; charts of accuracy, hands, best deck time and test grades over time.
+- **Casino Conditions test**: one full shoe with no hints or count on screen, chatty players, a faster dealer and a discard tray; decks-left questions during the shoe, then the running and true count at the end, and a report card grading play, count, bets and deck estimates.
+- **Count Plays trainer**: the Illustrious 18, Fab 4 and insurance as flash cards with spaced review ("play it" and "name the index"), answers straight from the coach's own logic (including H17 index changes).
+- **Bankroll simulator**: bet spread, rules and bankroll in; edge, average bet, win per hour, swings, N0, risk of ruin and the bankroll for 5% / 1% risk out. True-count frequencies come from simulated shoes; the advantage and variance figures were checked against the app's own engine.
+- **Counting systems**: Hi-Lo, KO, Hi-Opt I and Omega II across the table count, Academy, drills and card tags (lessons and count plays stay Hi-Lo). Computer card counters at the table always count Hi-Lo.
+- **Hand signals**: tap the felt to hit, swipe sideways to stand, like a real casino (Settings).
+- **Deck estimation drill**: read a discard tray and judge the decks left.
+- **Tablets**: screens become a centered column on iPads and wide browser windows.
 - **Guided first hands**: on first launch, a coach walks new players through two scripted practice hands: standing on 17 against a weak dealer 6, then hitting 8 against a 9. Only the right button is enabled, and every step matches basic strategy (a unit test checks this). It ends with a first look at counting: the cards from both hands with their Hi-Lo tags and the running count. It can be skipped at any time and replayed from Settings.
 - **Your leaks**: every decision at the table and in the strategy drill is sorted into a type (hard 11 or less, stiff 12–16, hard 17+, soft hands, pairs, insurance). After 5 decisions of a type you see your accuracy for it, weakest first, plus the exact spots you miss most (e.g. "Soft 18 vs 9: best play Hit"). "Drill my weakest spot" opens a strategy drill that deals only that kind of hand.
 - **Accessibility**: count tags always pair a shape with the number (▲ +1, ● 0, ▼ −1), so they never rely on color alone. A color-blind mode in Settings swaps green/red for blue/orange throughout. Seats at the table read out as one sentence to screen readers (player, style, bet, cards, result).

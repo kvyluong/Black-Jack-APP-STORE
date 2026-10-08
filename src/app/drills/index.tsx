@@ -2,6 +2,7 @@ import { Href, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { P, Screen } from '../../components/ui';
+import { SYSTEM_NAME, getCountingSystem } from '../../engine/counting';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
@@ -12,7 +13,7 @@ const T = localized({
     strategyTitle: 'Basic Strategy',
     strategyBody: 'Random hands vs a dealer upcard. Choose the best play and see why.',
     countTitle: 'Running Count',
-    countBody: 'Cards flash by. Keep the Hi-Lo count and enter it at the end.',
+    countBody: (system: string) => `Cards flash by. Keep the ${system} count and enter it at the end.`,
     trueTitle: 'True Count',
     trueBody: 'Convert a running count to a true count using the decks remaining.',
     devTitle: 'Count Plays',
@@ -25,7 +26,7 @@ const T = localized({
     strategyTitle: 'Estrategia básica',
     strategyBody: 'Manos al azar contra la carta visible del crupier. Elige la mejor jugada y descubre por qué.',
     countTitle: 'Conteo continuo',
-    countBody: 'Las cartas pasan rápido. Lleva el conteo Hi-Lo e ingrésalo al final.',
+    countBody: (system: string) => `Las cartas pasan rápido. Lleva el conteo ${system} e ingrésalo al final.`,
     trueTitle: 'Conteo real',
     trueBody: 'Convierte el conteo continuo en conteo real según las barajas que quedan.',
     devTitle: 'Jugadas por conteo',
@@ -37,7 +38,7 @@ const T = localized({
 
 const drills = (): { key: string; title: string; body: string; href: Href }[] => [
   { key: 'strategy', title: T.strategyTitle, body: T.strategyBody, href: '/drills/strategy' },
-  { key: 'count', title: T.countTitle, body: T.countBody, href: '/drills/count' },
+  { key: 'count', title: T.countTitle, body: T.countBody(SYSTEM_NAME[getCountingSystem()]), href: '/drills/count' },
   { key: 'true-count', title: T.trueTitle, body: T.trueBody, href: '/drills/true-count' },
   { key: 'decks', title: T.decksTitle, body: T.decksBody, href: '/drills/decks' },
   { key: 'deviations', title: T.devTitle, body: T.devBody, href: '/drills/deviations' },
