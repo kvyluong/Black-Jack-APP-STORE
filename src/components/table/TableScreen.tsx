@@ -20,6 +20,7 @@ import {
   YOU,
   act,
   currentTrueCount,
+  hiLoTrueCount,
   decisionContext,
   isYours,
   legalActions,
@@ -69,7 +70,7 @@ import { DiscardTray } from './DiscardTray';
 import { HandSignalArea, Signal } from './HandSignalArea';
 import { TableFelt } from './TableFelt';
 import { ActionBar, InsurancePanel } from './TurnControls';
-import { useTableDealAnimation } from './useTableDealAnimation';
+import { useDealAnimation } from '../useDealAnimation';
 
 const QUIZ_CHANCE = 0.25;
 /** How long a computer player "thinks" before acting (quicker under casino conditions). */
@@ -202,7 +203,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // Correct decisions this round, for XP.
   const [roundCorrect, setRoundCorrect] = useState(0);
   const roundBreak = useInterstitial();
-  const anim = useTableDealAnimation(DEAL_STEP[mode]);
+  const anim = useDealAnimation(DEAL_STEP[mode]);
   const { settled } = anim;
 
   // You can hide or peek at the count; turning "Show the count" on or off in Settings resets that.
@@ -366,13 +367,13 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     const base = { ...game, bankroll };
     setTable(seated);
     let skip = yourSeatCount - affordableSeats;
-    const bets = roundBets(seated, bet, currentTrueCount(game), unit, casino.maxBet).filter((b) => b.owner !== YOU || skip-- <= 0);
+    const bets = roundBets(seated, bet, hiLoTrueCount(game), unit, casino.maxBet).filter((b) => b.owner !== YOU || skip-- <= 0);
     // The test scores your bet against the count's (KO: its estimated true count).
     if (testing) exam?.onBet(bet / unit, suggestedBetUnits(flooredTrueCount(game.runningCount, game.shoe.length)));
     const next = startRound(base, bets);
     if (next.phase === 'insurance' && !testing) {
       // Card counters at the table take insurance when the count is high.
-      const take = shouldTakeInsurance(currentTrueCount(next));
+      const take = shouldTakeInsurance(hiLoTrueCount(next));
       const counters = seated.seats.filter((o) => isNpc(o) && o.style === 'counter');
       setBubbles(Object.fromEntries(counters.map((o) => [isNpc(o) ? o.id : '', take ? T.takesIns : T.noIns])));
     }

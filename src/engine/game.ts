@@ -33,8 +33,10 @@ export interface GameState {
   rules: Rules;
   shoe: Card[];
   shoeSize: number;
-  /** Hi-Lo running count of every card the player has seen since the last shuffle. */
+  /** Running count (in the chosen counting system) of every card seen since the last shuffle. */
   runningCount: number;
+  /** Hi-Lo count of the same cards, kept for the computer card counters at the table. */
+  hiLoCount: number;
   /** Set when the most recent round started from a freshly shuffled shoe. */
   justShuffled: boolean;
   /** Your bankroll. Computer players' money is tracked by the table simulation. */
@@ -65,6 +67,7 @@ export function newGame(rules: Rules, bankroll: number, rng: Rng = Math.random):
     shoe,
     shoeSize: shoe.length,
     runningCount: initialRunningCount(rules.decks),
+    hiLoCount: 0,
     justShuffled: true,
     bankroll,
     phase: 'betting',
@@ -96,11 +99,16 @@ export function shuffleIfNeeded(prev: GameState, hands = 1, rng: Rng = Math.rand
   if (prev.phase !== 'betting' && prev.phase !== 'roundOver') return prev;
   if (!needsShuffle(prev, hands)) return { ...prev, justShuffled: false };
   const shoe = createShoe(prev.rules.decks, rng);
-  return { ...prev, shoe, shoeSize: shoe.length, runningCount: initialRunningCount(prev.rules.decks), justShuffled: true };
+  return { ...prev, shoe, shoeSize: shoe.length, runningCount: initialRunningCount(prev.rules.decks), hiLoCount: 0, justShuffled: true };
 }
 
 export function currentTrueCount(s: GameState): number {
   return trueCount(s.runningCount, s.shoe.length);
+}
+
+/** Hi-Lo true count, which the computer card counters use whatever system you count with. */
+export function hiLoTrueCount(s: GameState): number {
+  return trueCount(s.hiLoCount ?? 0, s.shoe.length, 'hiLo');
 }
 
 /** Draws a card. `visible` cards update the running count; the hole card is counted when revealed. */
@@ -120,10 +128,14 @@ function draw(s: GameState, visible: boolean, rng: Rng): Card {
     s.shoeSize = fresh.length + inPlay.length;
     s.runningCount =
       initialRunningCount(s.rules.decks) + inPlay.filter((c) => c !== hole).reduce((sum, c) => sum + cardTag(c.rank), 0);
+    s.hiLoCount = inPlay.filter((c) => c !== hole).reduce((sum, c) => sum + cardTag(c.rank, 'hiLo'), 0);
     s.justShuffled = true;
   }
   const card = s.shoe.pop()!;
-  if (visible) s.runningCount += cardTag(card.rank);
+  if (visible) {
+    s.runningCount += cardTag(card.rank);
+    s.hiLoCount += cardTag(card.rank, 'hiLo');
+  }
   return card;
 }
 
@@ -175,6 +187,7 @@ export function startRound(prev: GameState, bets: number | SeatBet[], rng: Rng =
     s.shoe = createShoe(s.rules.decks, rng);
     s.shoeSize = s.shoe.length;
     s.runningCount = initialRunningCount(s.rules.decks);
+    s.hiLoCount = 0;
     s.justShuffled = true;
   }
   s.roundStartBankroll = s.bankroll;
@@ -216,6 +229,7 @@ function revealHole(s: GameState) {
   if (!s.holeRevealed) {
     s.holeRevealed = true;
     s.runningCount += cardTag(s.dealer[1].rank);
+    s.hiLoCount += cardTag(s.dealer[1].rank, 'hiLo');
   }
 }
 

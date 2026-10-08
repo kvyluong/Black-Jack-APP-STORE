@@ -3,7 +3,7 @@
 import { localized } from '../i18n/lang';
 import { Rng } from './cards';
 import { suggestedBetUnits } from './counting';
-import { GameState, SeatBet, YOU, currentTrueCount, decisionContext, legalActions } from './game';
+import { GameState, SeatBet, YOU, decisionContext, hiLoTrueCount, legalActions } from './game';
 import { handValue } from './hand';
 import { Action, basicAction, recommend } from './strategy';
 
@@ -216,7 +216,7 @@ export function npcAction(s: GameState, npc: Npc, rng: Rng = Math.random): { act
 
   switch (npc.style) {
     case 'counter':
-      action = recommend({ ...ctx, trueCount: currentTrueCount(s) }).action;
+      action = recommend({ ...ctx, trueCount: hiLoTrueCount(s) }).action;
       break;
     case 'hunch':
       // Usually right, but a third of the time goes with their gut.

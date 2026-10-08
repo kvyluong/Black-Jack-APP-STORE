@@ -13,7 +13,8 @@ import { useReduceMotion } from './useReduceMotion';
 
 export type ShownFanfare = Fanfare & { key: number };
 
-export function useDealAnimation() {
+/** `stepMs`: time between cards (the casino-conditions test deals faster). */
+export function useDealAnimation(stepMs = DEAL_STEP_MS) {
   const { settings } = useSettings();
   const reduceMotion = useReduceMotion();
   const shake = useShake();
@@ -32,7 +33,7 @@ export function useDealAnimation() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setFanfare(null);
-    const step = reduceMotion ? 0 : DEAL_STEP_MS;
+    const step = reduceMotion ? 0 : stepMs;
     const s = dealSchedule(prev, next, step);
     if (settings.soundEffects) {
       for (const sound of s.sounds) timers.current.push(setTimeout(() => playSound(sound.name), sound.at));
