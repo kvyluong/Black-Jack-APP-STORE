@@ -127,7 +127,7 @@ export default function Play() {
   const { ready, settings } = useSettings();
   if (!ready) return <Screen>{null}</Screen>;
   // A fresh shoe whenever you change tables or table rules.
-  return <TableScreen key={`${settings.tableId}:${JSON.stringify(settings.rules)}`} />;
+  return <TableScreen key={`${settings.tableId}:${settings.countingSystem}:${JSON.stringify(settings.rules)}`} />;
 }
 
 function TableScreen() {

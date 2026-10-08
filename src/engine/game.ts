@@ -1,5 +1,5 @@
 import { Card, Rng, createShoe, isTenValue } from './cards';
-import { hiLoValue, trueCount } from './counting';
+import { cardTag, initialRunningCount, trueCount } from './counting';
 import { handValue, isBlackjack, isBust, isPair } from './hand';
 import { Rules } from './rules';
 import { Action, DecisionContext } from './strategy';
@@ -64,7 +64,7 @@ export function newGame(rules: Rules, bankroll: number, rng: Rng = Math.random):
     rules,
     shoe,
     shoeSize: shoe.length,
-    runningCount: 0,
+    runningCount: initialRunningCount(rules.decks),
     justShuffled: true,
     bankroll,
     phase: 'betting',
@@ -96,7 +96,7 @@ export function shuffleIfNeeded(prev: GameState, hands = 1, rng: Rng = Math.rand
   if (prev.phase !== 'betting' && prev.phase !== 'roundOver') return prev;
   if (!needsShuffle(prev, hands)) return { ...prev, justShuffled: false };
   const shoe = createShoe(prev.rules.decks, rng);
-  return { ...prev, shoe, shoeSize: shoe.length, runningCount: 0, justShuffled: true };
+  return { ...prev, shoe, shoeSize: shoe.length, runningCount: initialRunningCount(prev.rules.decks), justShuffled: true };
 }
 
 export function currentTrueCount(s: GameState): number {
@@ -118,11 +118,12 @@ function draw(s: GameState, visible: boolean, rng: Rng): Card {
     const hole = s.dealer.length > 1 && !s.holeRevealed ? s.dealer[1] : null;
     s.shoe = fresh;
     s.shoeSize = fresh.length + inPlay.length;
-    s.runningCount = inPlay.filter((c) => c !== hole).reduce((sum, c) => sum + hiLoValue(c.rank), 0);
+    s.runningCount =
+      initialRunningCount(s.rules.decks) + inPlay.filter((c) => c !== hole).reduce((sum, c) => sum + cardTag(c.rank), 0);
     s.justShuffled = true;
   }
   const card = s.shoe.pop()!;
-  if (visible) s.runningCount += hiLoValue(card.rank);
+  if (visible) s.runningCount += cardTag(card.rank);
   return card;
 }
 
@@ -173,7 +174,7 @@ export function startRound(prev: GameState, bets: number | SeatBet[], rng: Rng =
   if (needsShuffle(s, seatBets.length)) {
     s.shoe = createShoe(s.rules.decks, rng);
     s.shoeSize = s.shoe.length;
-    s.runningCount = 0;
+    s.runningCount = initialRunningCount(s.rules.decks);
     s.justShuffled = true;
   }
   s.roundStartBankroll = s.bankroll;
@@ -214,7 +215,7 @@ export function resolveInsurance(prev: GameState, take: boolean, rng: Rng = Math
 function revealHole(s: GameState) {
   if (!s.holeRevealed) {
     s.holeRevealed = true;
-    s.runningCount += hiLoValue(s.dealer[1].rank);
+    s.runningCount += cardTag(s.dealer[1].rank);
   }
 }
 

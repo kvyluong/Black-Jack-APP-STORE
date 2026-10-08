@@ -4,7 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { getLocales } from 'expo-localization';
 
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
-import { CountingSystem } from '../engine/counting';
+import { CountingSystem, setCountingSystem } from '../engine/counting';
 import { LeakStats, emptyLeaks } from '../engine/leaks';
 import { GoalsState, HistoryPoint, emptyGoals } from '../engine/progress';
 import {
@@ -203,6 +203,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Text everywhere (including the engine) reads the current language; set it before children render.
   const lang: Lang = resolveLang(settings.language, deviceLanguage());
   setLang(lang);
+  setCountingSystem(settings.countingSystem);
 
   const value = useMemo(
     () => ({ ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
