@@ -91,13 +91,16 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
       t += step;
     }
   } else {
-    if (next.hands.length > prev.hands.length || next.hands.some((h, i) => h.bet > (prev.hands[i]?.bet ?? h.bet))) {
+    // Match hands by id: a split inserts a hand, shifting the positions of the ones after it.
+    const prevHand = (id: number) => prev.hands.find((h) => h.id === id);
+    if (next.hands.length > prev.hands.length || next.hands.some((h) => h.bet > (prevHand(h.id)?.bet ?? h.bet))) {
       sounds.push({ name: 'chips', at: 0 }); // split or double puts out another bet
     }
+    // A card is new if it wasn't on the table before (a split moves a card, it doesn't deal one).
+    const seen = new Set(prev.hands.flatMap((h) => h.cards));
     next.hands.forEach((hand, seat) => {
-      const before = prev.hands[seat]?.cards ?? [];
       hand.cards.forEach((card, index) => {
-        if (before[index] !== card) {
+        if (!seen.has(card)) {
           cards.push({ seat, index, at: t });
           sounds.push({ name: 'card', at: t });
           t += step;

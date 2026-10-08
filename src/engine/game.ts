@@ -11,6 +11,8 @@ export type Outcome = 'win' | 'lose' | 'push' | 'blackjack' | 'surrender';
 export const YOU = 'you';
 
 export interface PlayerHand {
+  /** Stable id for this hand within the round (survives splits shifting positions). */
+  id: number;
   /** Table position, 0 = first base (dealt first). Split hands keep their seat. */
   seat: number;
   /** Who plays this hand: `YOU` or a computer player's id. */
@@ -47,6 +49,13 @@ export interface GameState {
   /** Your bankroll change over the last completed round. */
   lastNet: number;
   roundStartBankroll: number;
+  /** Next PlayerHand id. */
+  nextHandId: number;
+  /**
+   * Chips each computer player can still put out this round (doubles and splits),
+   * keyed by owner id. Owners missing here are assumed to have enough.
+   */
+  npcChips?: Record<string, number>;
 }
 
 export function newGame(rules: Rules, bankroll: number, rng: Rng = Math.random): GameState {
@@ -66,11 +75,28 @@ export function newGame(rules: Rules, bankroll: number, rng: Rng = Math.random):
     insuranceBet: 0,
     lastNet: 0,
     roundStartBankroll: bankroll,
+    nextHandId: 1,
   };
 }
 
-export function needsShuffle(s: GameState): boolean {
-  return s.shoeSize - s.shoe.length >= s.shoeSize * s.rules.penetration;
+/** Cards to keep in the shoe per hand at the table (plus the dealer), so a round rarely runs out. */
+const CARDS_PER_HAND = 4;
+
+/** Past the cut card, or too few cards left for a round with this many hands. */
+export function needsShuffle(s: GameState, hands = 1): boolean {
+  return s.shoeSize - s.shoe.length >= s.shoeSize * s.rules.penetration || s.shoe.length < (hands + 1) * CARDS_PER_HAND;
+}
+
+/**
+ * Shuffles between rounds when the cut card has come out, like a real dealer does
+ * before anyone bets, so bet advice uses the new shoe's count. `hands` is how many
+ * hands the next round will have.
+ */
+export function shuffleIfNeeded(prev: GameState, hands = 1, rng: Rng = Math.random): GameState {
+  if (prev.phase !== 'betting' && prev.phase !== 'roundOver') return prev;
+  if (!needsShuffle(prev, hands)) return { ...prev, justShuffled: false };
+  const shoe = createShoe(prev.rules.decks, rng);
+  return { ...prev, shoe, shoeSize: shoe.length, runningCount: 0, justShuffled: true };
 }
 
 export function currentTrueCount(s: GameState): number {
@@ -80,9 +106,19 @@ export function currentTrueCount(s: GameState): number {
 /** Draws a card. `visible` cards update the running count; the hole card is counted when revealed. */
 function draw(s: GameState, visible: boolean, rng: Rng): Card {
   if (s.shoe.length === 0) {
-    s.shoe = createShoe(s.rules.decks, rng);
-    s.shoeSize = s.shoe.length;
-    s.runningCount = 0;
+    // Out of cards mid-round: reshuffle everything except the cards on the table, as a dealer
+    // would with the discards. The count restarts from the visible cards still in play (the
+    // hole card is added when it's revealed, as usual).
+    const inPlay = [...s.dealer, ...s.hands.flatMap((h) => h.cards)];
+    const fresh = createShoe(s.rules.decks, rng);
+    for (const c of inPlay) {
+      const i = fresh.findIndex((x) => x.rank === c.rank && x.suit === c.suit);
+      if (i >= 0) fresh.splice(i, 1);
+    }
+    const hole = s.dealer.length > 1 && !s.holeRevealed ? s.dealer[1] : null;
+    s.shoe = fresh;
+    s.shoeSize = fresh.length + inPlay.length;
+    s.runningCount = inPlay.filter((c) => c !== hole).reduce((sum, c) => sum + hiLoValue(c.rank), 0);
     s.justShuffled = true;
   }
   const card = s.shoe.pop()!;
@@ -96,11 +132,12 @@ function clone(s: GameState): GameState {
     shoe: s.shoe.slice(),
     dealer: s.dealer.slice(),
     hands: s.hands.map((h) => ({ ...h, cards: h.cards.slice() })),
+    npcChips: s.npcChips ? { ...s.npcChips } : undefined,
   };
 }
 
-function newHand(seat: number, owner: string, cards: Card[], bet: number, fromSplit = false): PlayerHand {
-  return { seat, owner, cards, bet, doubled: false, done: false, fromSplit, splitAces: false, surrendered: false };
+function newHand(s: GameState, seat: number, owner: string, cards: Card[], bet: number, fromSplit = false): PlayerHand {
+  return { id: s.nextHandId++, seat, owner, cards, bet, doubled: false, done: false, fromSplit, splitAces: false, surrendered: false };
 }
 
 export const isYours = (h: PlayerHand | undefined) => h?.owner === YOU;
@@ -110,6 +147,8 @@ export interface SeatBet {
   seat: number;
   owner: string;
   bet: number;
+  /** A computer player's chips left after this bet, for doubles and splits. */
+  chipsLeft?: number;
 }
 
 /**
@@ -128,8 +167,10 @@ export function startRound(prev: GameState, bets: number | SeatBet[], rng: Rng =
     throw new Error('Invalid bet');
   }
   let s = clone(prev);
-  s.justShuffled = false;
-  if (needsShuffle(s)) {
+  // Normally already shuffled between rounds (shuffleIfNeeded); this is the fallback.
+  // A full, untouched shoe means this is the first round after a shuffle.
+  s.justShuffled = s.shoe.length === s.shoeSize;
+  if (needsShuffle(s, seatBets.length)) {
     s.shoe = createShoe(s.rules.decks, rng);
     s.shoeSize = s.shoe.length;
     s.runningCount = 0;
@@ -142,7 +183,8 @@ export function startRound(prev: GameState, bets: number | SeatBet[], rng: Rng =
   s.holeRevealed = false;
   s.active = 0;
 
-  s.hands = seatBets.map((b) => newHand(b.seat, b.owner, [], b.bet));
+  s.npcChips = Object.fromEntries(seatBets.filter((b) => b.owner !== YOU && b.chipsLeft !== undefined).map((b) => [b.owner, b.chipsLeft!]));
+  s.hands = seatBets.map((b) => newHand(s, b.seat, b.owner, [], b.bet));
   for (const h of s.hands) h.cards.push(draw(s, true, rng));
   const up = draw(s, true, rng);
   for (const h of s.hands) h.cards.push(draw(s, true, rng));
@@ -208,8 +250,8 @@ export function legalActions(s: GameState): LegalActions {
   const h = s.hands[s.active];
   if (!h || h.done) return none;
   const two = h.cards.length === 2;
-  // Computer players are assumed to have the chips; only your bankroll is checked.
-  const canAfford = !isYours(h) || s.bankroll >= h.bet;
+  const npcLeft = s.npcChips?.[h.owner];
+  const canAfford = isYours(h) ? s.bankroll >= h.bet : npcLeft === undefined || npcLeft >= h.bet;
   const handsAtSeat = s.hands.filter((x) => x.seat === h.seat).length;
   return {
     hit: true,
@@ -250,7 +292,7 @@ export function act(prev: GameState, action: Action, rng: Rng = Math.random): Ga
       h.done = true;
       break;
     case 'double':
-      if (isYours(h)) s.bankroll -= h.bet;
+      spend(s, h);
       h.bet *= 2;
       h.doubled = true;
       h.cards.push(draw(s, true, rng));
@@ -261,13 +303,15 @@ export function act(prev: GameState, action: Action, rng: Rng = Math.random): Ga
       h.done = true;
       break;
     case 'split': {
-      if (isYours(h)) s.bankroll -= h.bet;
+      spend(s, h);
       const aces = h.cards[0].rank === 'A';
-      const second = newHand(h.seat, h.owner, [h.cards[1]], h.bet, true);
-      h.cards = [h.cards[0], draw(s, true, rng)];
+      const second = newHand(s, h.seat, h.owner, [h.cards[1]], h.bet, true);
+      // Both halves sit on the table before new cards are drawn (matters if the shoe runs out).
+      h.cards = [h.cards[0]];
       h.fromSplit = true;
-      second.cards.push(draw(s, true, rng));
       s.hands.splice(s.active + 1, 0, second);
+      h.cards.push(draw(s, true, rng));
+      second.cards.push(draw(s, true, rng));
       if (aces) {
         for (const x of [h, second]) {
           x.splitAces = true;
@@ -281,6 +325,12 @@ export function act(prev: GameState, action: Action, rng: Rng = Math.random): Ga
     }
   }
   return advance(s, rng);
+}
+
+/** Puts out another bet the size of `h`'s (double or split), from you or a computer player. */
+function spend(s: GameState, h: PlayerHand) {
+  if (isYours(h)) s.bankroll -= h.bet;
+  else if (s.npcChips?.[h.owner] !== undefined) s.npcChips[h.owner] -= h.bet;
 }
 
 function advance(s: GameState, rng: Rng): GameState {

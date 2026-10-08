@@ -127,14 +127,28 @@ const RAW_DEVIATIONS: Deviation[] = [
 ];
 
 /** Labels are stored in English ("16 vs 10") and read in the current language. */
-export const DEVIATIONS: Deviation[] = RAW_DEVIATIONS.map((d) => {
+function localizeLabel(d: Deviation): Deviation {
   const english = d.label;
-  // defineProperty (not an object-literal getter) so transpiled spreads can't freeze the value.
   return Object.defineProperty({ ...d }, 'label', {
-    get: () => tr(english, english.replace(' vs ', ' contra ')),
+    get: () => tr(english, english.replace(' vs ', ' contra ').replace('(surrender)', '(rendirse)')),
     enumerable: true,
   });
-});
+}
+
+export const DEVIATIONS: Deviation[] = RAW_DEVIATIONS.map(localizeLabel);
+
+/**
+ * The "Fab 4" late-surrender index plays (multi-deck S17): surrender at or above the
+ * index, otherwise play the hand normally.
+ */
+const RAW_SURRENDERS: Deviation[] = [
+  { id: 's14v10', label: '14 vs 10 (surrender)', index: 3, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 14 && !isPair(c) },
+  { id: 's15v10', label: '15 vs 10 (surrender)', index: 0, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 15 },
+  { id: 's15v9', label: '15 vs 9 (surrender)', index: 2, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 9 && hardTotal(c) === 15 },
+  { id: 's15vA', label: '15 vs A (surrender)', index: 1, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 11 && hardTotal(c) === 15 },
+];
+
+export const SURRENDER_DEVIATIONS: Deviation[] = RAW_SURRENDERS.map(localizeLabel);
 
 export interface DecisionContext {
   cards: Card[];
@@ -194,26 +208,47 @@ function isAllowed(action: Action, ctx: DecisionContext): boolean {
   return true;
 }
 
+/** Index for the table's rules: 10 vs A doubles sooner when the dealer hits soft 17. */
+function indexFor(dev: Deviation, rules: Rules): number {
+  if (rules.dealerHitsSoft17 && dev.id === '10vA') return 3;
+  return dev.index;
+}
+
+function countPlay(dev: Deviation, index: number, tc: number, action: Action, basic: Action): Recommendation {
+  const t = formatTrueCount(tc);
+  const i = `${index >= 0 ? '+' : ''}${index}`;
+  return {
+    action,
+    deviation: dev,
+    reason: tr(
+      `Count play: ${dev.label} changes at a true count of ${i}. The true count is ${t}, so ${action} instead of the usual ${basic}.`,
+      `Jugada por conteo: ${dev.label} cambia con un conteo real de ${i}. El conteo real es ${t}, así que toca ${ACTION_LABEL[action].toLowerCase()} en lugar de ${ACTION_LABEL[basic].toLowerCase()}, que es lo habitual.`,
+    ),
+  };
+}
+
 export function recommend(ctx: DecisionContext): Recommendation {
   const basic = basicAction(ctx);
   const up = upValue(ctx.dealerUp);
+  const tc = ctx.trueCount;
+  if (tc === undefined) return { action: basic, reason: explain(basic, ctx) };
 
-  if (ctx.trueCount !== undefined && basic !== 'surrender') {
+  // Surrender first: the count can add a surrender or take one away.
+  const sur = ctx.canSurrender ? SURRENDER_DEVIATIONS.find((d) => d.match(ctx.cards, up)) : undefined;
+  if (sur) {
+    if (tc >= sur.index && basic !== 'surrender') return countPlay(sur, sur.index, tc, 'surrender', basic);
+    if (tc < sur.index && basic === 'surrender') {
+      const instead = recommend({ ...ctx, canSurrender: false });
+      return instead.deviation ? instead : countPlay(sur, sur.index, tc, instead.action, basic);
+    }
+  }
+
+  if (basic !== 'surrender') {
     const dev = DEVIATIONS.find((d) => d.match(ctx.cards, up));
     if (dev) {
-      const action = ctx.trueCount >= dev.index ? dev.atOrAbove : dev.below;
-      if (action !== basic && isAllowed(action, ctx)) {
-        const tc = formatTrueCount(ctx.trueCount);
-        const index = `${dev.index >= 0 ? '+' : ''}${dev.index}`;
-        return {
-          action,
-          deviation: dev,
-          reason: tr(
-            `Count play: ${dev.label} changes at a true count of ${index}. The true count is ${tc}, so ${action} instead of the usual ${basic}.`,
-            `Jugada por conteo: ${dev.label} cambia con un conteo real de ${index}. El conteo real es ${tc}, así que toca ${ACTION_LABEL[action].toLowerCase()} en lugar de ${ACTION_LABEL[basic].toLowerCase()}, que es lo habitual.`,
-          ),
-        };
-      }
+      const index = indexFor(dev, ctx.rules);
+      const action = tc >= index ? dev.atOrAbove : dev.below;
+      if (action !== basic && isAllowed(action, ctx)) return countPlay(dev, index, tc, action, basic);
     }
   }
   return { action: basic, reason: explain(basic, ctx) };

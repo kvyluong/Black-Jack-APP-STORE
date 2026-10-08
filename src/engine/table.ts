@@ -178,18 +178,23 @@ export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean
 }
 
 /** How much a player bets this round. Card counters raise their bets when the count is high. */
-export function npcBet(npc: Npc, trueCount: number, minBet: number): number {
+export function npcBet(npc: Npc, trueCount: number, minBet: number, maxBet = Infinity): number {
   let bet = npc.baseBet;
   if (npc.style === 'counter') bet = npc.baseBet * suggestedBetUnits(Math.floor(trueCount));
-  return Math.max(minBet, Math.min(bet, Math.floor(npc.bankroll / minBet) * minBet));
+  // Within the table limits and what they have.
+  return Math.max(minBet, Math.min(bet, maxBet, Math.floor(npc.bankroll / minBet) * minBet));
 }
 
 /** Every bet on the table for the next round, in seat order. */
-export function roundBets(table: Table, yourBet: number, trueCount: number, minBet: number): SeatBet[] {
+export function roundBets(table: Table, yourBet: number, trueCount: number, minBet: number, maxBet = Infinity): SeatBet[] {
   const bets: SeatBet[] = [];
   table.seats.forEach((o, seat) => {
     if (o === YOU) bets.push({ seat, owner: YOU, bet: yourBet });
-    else if (isNpc(o) && o.bankroll >= minBet) bets.push({ seat, owner: o.id, bet: npcBet(o, trueCount, minBet) });
+    else if (isNpc(o) && o.bankroll >= minBet) {
+      const bet = npcBet(o, trueCount, minBet, maxBet);
+      // What's left limits their doubles and splits, so they can't go below zero.
+      bets.push({ seat, owner: o.id, bet, chipsLeft: o.bankroll - bet });
+    }
   });
   return bets;
 }

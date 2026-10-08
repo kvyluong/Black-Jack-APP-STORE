@@ -122,7 +122,7 @@ export function BettingPanel(p: Props) {
         <Button title={T.lower(formatChips(unit))} onPress={() => p.setBet(unit)} />
       )}
       <BonusAdButton onGranted={p.onBonus} />
-      <Text style={styles.lobby} onPress={() => router.push('/tables')} accessibilityRole="link">
+      <Text style={styles.lobby} onPress={() => router.push('/tables?from=play')} accessibilityRole="link">
         {T.changeTable}
       </Text>
     </Panel>

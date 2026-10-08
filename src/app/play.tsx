@@ -26,6 +26,7 @@ import {
   legalActions,
   newGame,
   resolveInsurance,
+  shuffleIfNeeded,
   startRound,
 } from '../engine/game';
 import { streakPitch } from '../engine/juice';
@@ -184,6 +185,9 @@ function TableScreen() {
   /** `correct`: right calls so far this round, passed in when this move just changed it. */
   const commit = (prev: GameState, next: GameState, correct = roundCorrect) => {
     setGame(next);
+    // Bets come out of your saved chips as soon as they're placed, so leaving mid-round forfeits
+    // them like walking away from a real table (instead of undoing the hand).
+    if (next.bankroll !== prev.bankroll && next.phase !== 'roundOver') updateSettings({ bankroll: next.bankroll });
     anim.play(prev, next, () => setCountSource(next));
     recordRoundEnd(next, correct);
   };
@@ -276,7 +280,9 @@ function TableScreen() {
   const yourSeatCount = seated.seats.filter((o) => o === YOU).length;
   const affordableSeats = bet >= unit ? Math.min(yourSeatCount, Math.floor(bankroll / bet)) : 0;
   // The most you can put on each hand: the table max, or what your chips cover.
-  const maxPerHand = Math.min(casino.maxBet, Math.floor(bankroll / Math.max(1, yourSeatCount)));
+  // With chips for fewer hands than seats, size bets for the hands you can actually play.
+  const coverableSeats = Math.max(1, Math.min(yourSeatCount, Math.floor(bankroll / unit)));
+  const maxPerHand = Math.min(casino.maxBet, Math.floor(bankroll / coverableSeats));
   // When your chips no longer cover this table's minimum, suggest one that fits.
   const moveTo = bankroll < unit && !needsRefill(bankroll) ? bestAffordableTable(bankroll, stats.peakChips) : undefined;
 
@@ -289,7 +295,7 @@ function TableScreen() {
     const base = { ...game, bankroll };
     setTable(seated);
     let skip = yourSeatCount - affordableSeats;
-    const bets = roundBets(seated, bet, currentTrueCount(game), unit).filter((b) => b.owner !== YOU || skip-- <= 0);
+    const bets = roundBets(seated, bet, currentTrueCount(game), unit, casino.maxBet).filter((b) => b.owner !== YOU || skip-- <= 0);
     const next = startRound(base, bets);
     if (next.phase === 'insurance') {
       // Card counters at the table take insurance when the count is high.
@@ -310,7 +316,11 @@ function TableScreen() {
     const { table: t, events: e } = betweenRounds(table, unit, settings.otherPlayers);
     setTable(t);
     if (e.length) setEvents((prev) => [...e, ...prev].slice(0, 3));
-    setGame((g) => ({ ...g, phase: 'betting', hands: [], dealer: [] }));
+    // Shuffle now (not at the deal) when the cut card is out, so bet advice uses the new shoe.
+    const handsNext = t.seats.filter((o) => o !== null).length;
+    const fresh = shuffleIfNeeded({ ...game, phase: 'betting', hands: [], dealer: [] }, handsNext);
+    setGame(fresh);
+    setCountSource(fresh);
   };
 
   /** Free refill back to the starting stack once you can't cover the smallest table. */
@@ -354,7 +364,7 @@ function TableScreen() {
         </Text>
       </View>
       <LevelBar xp={stats.xp} compact />
-      {game.justShuffled && !betting && <Text style={styles.shuffle}>{T.shuffled}</Text>}
+      {game.justShuffled && <Text style={styles.shuffle}>{T.shuffled}</Text>}
 
       <StreakBadge streak={streak} />
 

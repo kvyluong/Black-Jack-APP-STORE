@@ -104,7 +104,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
         {STYLE_LABEL[occupant.style]}
       </Text>
       {hands.map(({ h, i }) => (
-        <View key={i} style={styles.hand}>
+        <View key={h.id} style={styles.hand}>
           <Text style={styles.bet}>${h.bet}</Text>
           <View style={{ height: 42 + (h.cards.length - 1) * 14, width: 30 + (h.cards.length - 1) * 6 }}>
             {h.cards.map((c, ci) => (

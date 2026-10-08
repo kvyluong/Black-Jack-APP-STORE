@@ -103,7 +103,7 @@ export function TableFelt({ game, table, casino, schedule, settled, instant, bub
       <View style={styles.yours}>
         {yourHands.map(({ h, i }) => (
           <HandView
-            key={i}
+            key={h.id}
             cards={h.cards}
             size={small ? 'sm' : 'md'}
             active={game.phase === 'playing' && i === game.active}
