@@ -2,6 +2,7 @@ import { Href, Redirect, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LevelBar } from '../components/chips';
+import { DailyGoalsCard } from '../components/goals';
 import { H1, P, Panel, Screen } from '../components/ui';
 import { formatChips } from '../engine/progression';
 import { LESSONS } from '../content/lessons';
@@ -13,11 +14,14 @@ import { colors, radius, spacing } from '../theme';
 const T = localized({
   en: {
     tiles: {
+      ready: ['Road to the Casino', 'Your casino-ready score, and what to practice next'],
       learn: ['Learn', 'Step-by-step lessons from the rules to card counting'],
       tables: ['Casino Floor', 'Play with a coach. Win chips to unlock bigger tables'],
       academy: ['Counting Academy', 'Learn to count your way: see it, hear it, tap it, chunk it or read it'],
-      drills: ['Drills', 'Basic strategy, running count and true count drills'],
+      drills: ['Drills', 'Strategy, count plays, running count, true count and deck estimation'],
       leaks: ['Your Leaks', 'The decisions you miss most, and a drill aimed at them'],
+      progress: ['Your Progress', 'Accuracy and speed over time'],
+      simulator: ['Bankroll Simulator', 'Your bet spread, edge, hourly win and risk of going broke'],
       chart: ['Strategy Chart', 'The full basic strategy chart for your rules'],
       settings: ['Settings', 'Table rules, coaching options and progress'],
     } as Record<TileId, [string, string]>,
@@ -30,11 +34,14 @@ const T = localized({
   },
   es: {
     tiles: {
+      ready: ['Camino al casino', 'Tu puntaje para el casino y qué practicar después'],
       learn: ['Aprender', 'Lecciones paso a paso, desde las reglas hasta contar cartas'],
       tables: ['Sala del casino', 'Juega con un coach. Gana fichas para desbloquear mesas más grandes'],
       academy: ['Academia de conteo', 'Aprende a contar a tu manera: míralo, escúchalo, tócalo, agrúpalo o léelo'],
-      drills: ['Ejercicios', 'Ejercicios de estrategia básica, conteo continuo y conteo real'],
+      drills: ['Ejercicios', 'Estrategia, jugadas por conteo, conteo continuo, conteo real y estimar barajas'],
       leaks: ['Tus fugas', 'Las decisiones que más fallas y un ejercicio enfocado en ellas'],
+      progress: ['Tu progreso', 'Precisión y velocidad a lo largo del tiempo'],
+      simulator: ['Simulador de banca', 'Tu rango de apuestas, ventaja, ganancia por hora y riesgo de quiebra'],
       chart: ['Tabla de estrategia', 'La tabla completa de estrategia básica para tus reglas'],
       settings: ['Ajustes', 'Reglas de la mesa, opciones del coach y progreso'],
     },
@@ -47,14 +54,17 @@ const T = localized({
   },
 });
 
-type TileId = 'learn' | 'tables' | 'academy' | 'drills' | 'leaks' | 'chart' | 'settings';
+type TileId = 'ready' | 'learn' | 'tables' | 'academy' | 'drills' | 'leaks' | 'progress' | 'simulator' | 'chart' | 'settings';
 
 const TILES: { id: TileId; href: Href; icon: string }[] = [
+  { id: 'ready', href: '/ready', icon: '🏆' },
   { id: 'learn', href: '/learn', icon: '📘' },
   { id: 'tables', href: '/tables', icon: '🃏' },
   { id: 'academy', href: '/academy', icon: '🧠' },
   { id: 'drills', href: '/drills', icon: '🎯' },
   { id: 'leaks', href: '/leaks', icon: '🔍' },
+  { id: 'progress', href: '/progress', icon: '📈' },
+  { id: 'simulator', href: '/simulator', icon: '🧮' },
   { id: 'chart', href: '/chart', icon: '📊' },
   { id: 'settings', href: '/settings', icon: '⚙️' },
 ];
@@ -84,6 +94,8 @@ export default function Home() {
         </View>
         <LevelBar xp={stats.xp} />
       </Panel>
+
+      <DailyGoalsCard />
 
       {TILES.map((t) => {
         const [title, subtitle] = T.tiles[t.id];

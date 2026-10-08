@@ -4,7 +4,20 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { getLocales } from 'expo-localization';
 
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
+import { CountingSystem } from '../engine/counting';
 import { LeakStats, emptyLeaks } from '../engine/leaks';
+import { GoalsState, HistoryPoint, emptyGoals } from '../engine/progress';
+import {
+  CountRecords,
+  DeckEstimateRecords,
+  DeviationProgress,
+  ExamResult,
+  Tally,
+  emptyCountRecords,
+  emptyDeckEstimates,
+  emptyDeviationProgress,
+  emptyTally,
+} from '../engine/records';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 import { Lang, LanguageSetting, resolveLang, setLang } from '../i18n/lang';
@@ -37,6 +50,20 @@ export interface Stats {
     streak: number;
     lastWorkoutDay?: string;
   };
+  /** Running count drill records (full decks counted exactly, best time). */
+  countRecords: CountRecords;
+  /** True count conversion drill answers. */
+  trueCountDrill: Tally;
+  /** Count-play trainer flash cards (spaced review). */
+  deviations: DeviationProgress;
+  /** Casino-conditions tests, newest last (kept to the last 20). */
+  exams: ExamResult[];
+  /** Deck estimation drill answers. */
+  deckEstimates: DeckEstimateRecords;
+  /** Daily goals and their streak. */
+  goals: GoalsState;
+  /** One point per day you used the app, for progress charts (kept to ~1 year). */
+  history: HistoryPoint[];
 }
 
 export interface Settings {
@@ -71,6 +98,10 @@ export interface Settings {
   adsRemoved: boolean;
   /** App language; "system" follows the phone. */
   language: LanguageSetting;
+  /** Card counting system used by the count display, drills and Academy. */
+  countingSystem: CountingSystem;
+  /** Play at the table with casino hand signals: tap the felt to hit, swipe sideways to stand. */
+  handSignals: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -89,6 +120,8 @@ const DEFAULT_SETTINGS: Settings = {
   bankroll: STARTING_CHIPS,
   adsRemoved: false,
   language: 'system',
+  countingSystem: 'hiLo',
+  handSignals: false,
   tableId: 'floor',
 };
 
@@ -107,6 +140,13 @@ const DEFAULT_STATS: Stats = {
   academy: { progress: {}, streak: 0 },
   leaks: emptyLeaks(),
   onboarded: false,
+  countRecords: emptyCountRecords(),
+  trueCountDrill: emptyTally(),
+  deviations: emptyDeviationProgress(),
+  exams: [],
+  deckEstimates: emptyDeckEstimates(),
+  goals: emptyGoals(),
+  history: [],
 };
 
 const STORAGE_KEY = 'blackjack-coach/v1';

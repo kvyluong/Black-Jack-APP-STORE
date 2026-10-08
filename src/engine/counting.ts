@@ -1,5 +1,13 @@
 import { Card, Rank, pointValue } from './cards';
 
+/**
+ * Counting systems the player can choose. Hi-Lo is the default and the one the
+ * count plays (index numbers) are built for.
+ */
+export type CountingSystem = 'hiLo' | 'ko' | 'hiOptI' | 'omegaII';
+export const COUNTING_SYSTEMS: CountingSystem[] = ['hiLo', 'ko', 'hiOptI', 'omegaII'];
+export const SYSTEM_NAME: Record<CountingSystem, string> = { hiLo: 'Hi-Lo', ko: 'KO', hiOptI: 'Hi-Opt I', omegaII: 'Omega II' };
+
 /** Hi-Lo tag: 2–6 are +1, 7–9 are 0, 10s and Aces are −1. */
 export function hiLoValue(rank: Rank): number {
   const v = pointValue(rank);

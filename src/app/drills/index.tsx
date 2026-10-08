@@ -15,6 +15,10 @@ const T = localized({
     countBody: 'Cards flash by. Keep the Hi-Lo count and enter it at the end.',
     trueTitle: 'True Count',
     trueBody: 'Convert a running count to a true count using the decks remaining.',
+    devTitle: 'Count Plays',
+    devBody: 'The plays that change with the count: the Illustrious 18 and Fab 4, as flash cards that come back until you know them.',
+    decksTitle: 'Deck Estimation',
+    decksBody: 'Look at the discard tray and judge how many decks are left, the way you must at a real table.',
   },
   es: {
     intro: 'Práctica corta y repetible. Unos minutos al día te dan velocidad de verdad.',
@@ -24,6 +28,10 @@ const T = localized({
     countBody: 'Las cartas pasan rápido. Lleva el conteo Hi-Lo e ingrésalo al final.',
     trueTitle: 'Conteo real',
     trueBody: 'Convierte el conteo continuo en conteo real según las barajas que quedan.',
+    devTitle: 'Jugadas por conteo',
+    devBody: 'Las jugadas que cambian con el conteo: las Ilustres 18 y las Fab 4, en tarjetas que vuelven hasta que te las sepas.',
+    decksTitle: 'Estimar barajas',
+    decksBody: 'Mira la bandeja de descartes y calcula cuántas barajas quedan, como en una mesa real.',
   },
 });
 
@@ -31,6 +39,8 @@ const drills = (): { key: string; title: string; body: string; href: Href }[] =>
   { key: 'strategy', title: T.strategyTitle, body: T.strategyBody, href: '/drills/strategy' },
   { key: 'count', title: T.countTitle, body: T.countBody, href: '/drills/count' },
   { key: 'true-count', title: T.trueTitle, body: T.trueBody, href: '/drills/true-count' },
+  { key: 'decks', title: T.decksTitle, body: T.decksBody, href: '/drills/decks' },
+  { key: 'deviations', title: T.devTitle, body: T.devBody, href: '/drills/deviations' },
 ];
 
 export default function Drills() {

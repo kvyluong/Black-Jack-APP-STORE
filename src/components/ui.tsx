@@ -133,7 +133,8 @@ export function Segmented<T extends string | number>({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.felt },
-  content: { padding: spacing(2), gap: spacing(1.5) },
+  // On tablets and wide browser windows, keep a readable column centered.
+  content: { padding: spacing(2), gap: spacing(1.5), width: '100%', maxWidth: 760, alignSelf: 'center' },
   button: {
     paddingVertical: spacing(1.5),
     paddingHorizontal: spacing(2),

@@ -6,12 +6,17 @@ import { Alert, Linking, Text } from 'react-native';
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
 import { useRemoveAds } from '../purchases/RemoveAds';
+import { COUNTING_SYSTEMS, CountingSystem, SYSTEM_NAME } from '../engine/counting';
 import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors } from '../theme';
 
 const T = localized({
   en: {
+    signals: 'Hand signals',
+    signalsHint: 'Play like at a real table: tap the felt to hit, swipe sideways to stand. The buttons stay for doubles, splits and surrender.',
+    system: 'Counting system',
+    systemHint: 'Hi-Lo is the best place to start. KO needs no true count. Hi-Opt I and Omega II are for experienced counters. Count plays use Hi-Lo numbers.',
     resetTitle: 'Reset progress?',
     resetBody: 'This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.',
     cancel: 'Cancel',
@@ -69,6 +74,10 @@ const T = localized({
       'Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
   },
   es: {
+    signals: 'Señas con la mano',
+    signalsHint: 'Juega como en una mesa real: toca el paño para pedir y desliza de lado para plantarte. Los botones siguen ahí para doblar, dividir y rendirte.',
+    system: 'Sistema de conteo',
+    systemHint: 'Hi-Lo es el mejor para empezar. KO no necesita conteo real. Hi-Opt I y Omega II son para contadores con experiencia. Las jugadas por conteo usan los números de Hi-Lo.',
     resetTitle: '¿Reiniciar el progreso?',
     resetBody:
       'Esto borra tus estadísticas, niveles, mesas desbloqueadas, progreso de lecciones y fichas. Empiezas de nuevo con 1,000 fichas.',
@@ -250,6 +259,19 @@ export default function SettingsScreen() {
           value={settings.otherPlayers}
           onChange={(v) => updateSettings({ otherPlayers: v })}
         />
+        <ToggleRow
+          label={T.signals}
+          hint={T.signalsHint}
+          value={settings.handSignals}
+          onChange={(v) => updateSettings({ handSignals: v })}
+        />
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.system}</Text>
+        <Segmented<CountingSystem>
+          options={COUNTING_SYSTEMS.map((c) => ({ label: SYSTEM_NAME[c], value: c }))}
+          value={settings.countingSystem}
+          onChange={(v) => updateSettings({ countingSystem: v })}
+        />
+        <P muted style={{ fontSize: 13 }}>{T.systemHint}</P>
       </Panel>
 
       <H2>{T.rules}</H2>

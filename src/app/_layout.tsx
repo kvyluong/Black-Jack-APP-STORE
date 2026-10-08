@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { initAds } from '../ads/init';
 import { RemoveAdsProvider } from '../purchases/RemoveAds';
+import { useDailySnapshot } from '../components/goals';
 import { localized } from '../i18n/lang';
 import { SettingsProvider, useSettings } from '../state/settings';
 import { colors } from '../theme';
@@ -26,6 +27,12 @@ const T = localized({
     leaks: 'Your Leaks',
     welcome: 'Welcome',
     settings: 'Settings',
+    ready: 'Road to the Casino',
+    progress: 'Your Progress',
+    simulator: 'Bankroll Simulator',
+    exam: 'Casino Conditions',
+    deviationsDrill: 'Count Plays',
+    decksDrill: 'Deck Estimation',
   },
   es: {
     index: 'Blackjack Coach',
@@ -43,6 +50,12 @@ const T = localized({
     leaks: 'Tus fugas',
     welcome: 'Bienvenida',
     settings: 'Ajustes',
+    ready: 'Camino al casino',
+    progress: 'Tu progreso',
+    simulator: 'Simulador de banca',
+    exam: 'Condiciones de casino',
+    deviationsDrill: 'Jugadas por conteo',
+    decksDrill: 'Estimar barajas',
   },
 });
 
@@ -66,6 +79,7 @@ export default function RootLayout() {
 /** The navigator. Reads settings so the screen titles follow the language. */
 function AppStack() {
   const { lang } = useSettings();
+  useDailySnapshot();
   // Rebuilt only when the language changes, not on every chip or stats update.
   return useMemo(
     () => (
@@ -92,6 +106,12 @@ function AppStack() {
         <Stack.Screen name="leaks" options={{ title: T.leaks }} />
         <Stack.Screen name="welcome" options={{ title: T.welcome }} />
         <Stack.Screen name="settings" options={{ title: T.settings }} />
+        <Stack.Screen name="ready" options={{ title: T.ready }} />
+        <Stack.Screen name="progress" options={{ title: T.progress }} />
+        <Stack.Screen name="simulator" options={{ title: T.simulator }} />
+        <Stack.Screen name="exam" options={{ title: T.exam }} />
+        <Stack.Screen name="drills/deviations" options={{ title: T.deviationsDrill }} />
+        <Stack.Screen name="drills/decks" options={{ title: T.decksDrill }} />
       </Stack>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
