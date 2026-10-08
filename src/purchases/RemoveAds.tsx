@@ -11,7 +11,7 @@ type Status = 'idle' | 'buying' | 'restoring';
 const T = localized({
   en: {
     thanks: 'Thanks! Ads are gone for good.',
-    failed: 'failed',
+    failed: 'The purchase didn’t go through. You haven’t been charged.',
     offline: 'Can’t reach the store right now. Check your connection and try again.',
     restored: 'Purchase restored. Ads are off.',
     notFound: 'No purchase found for this account.',

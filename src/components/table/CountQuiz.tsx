@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
-import { Button } from '../ui';
+import { Button, STEP_LABEL } from '../ui';
 import { useOutcomeColors } from '../useColors';
 
 const T = localized({
@@ -37,9 +37,9 @@ export function CountQuiz({ quiz, setQuiz, actual }: { quiz: Quiz; setQuiz: (q: 
     <View style={{ gap: spacing(1) }}>
       <Text style={styles.prompt}>{T.prompt}</Text>
       <View style={styles.row}>
-        <Button title="−" variant="ghost" disabled={revealed} onPress={() => setQuiz({ guess: guess - 1, revealed })} />
+        <Button title="−" accessibilityLabel={STEP_LABEL.down} variant="ghost" disabled={revealed} onPress={() => setQuiz({ guess: guess - 1, revealed })} />
         <Text style={styles.guess}>{signed(guess)}</Text>
-        <Button title="+" variant="ghost" disabled={revealed} onPress={() => setQuiz({ guess: guess + 1, revealed })} />
+        <Button title="+" accessibilityLabel={STEP_LABEL.up} variant="ghost" disabled={revealed} onPress={() => setQuiz({ guess: guess + 1, revealed })} />
         {!revealed && (
           <Button
             title={T.check}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PlayingCard } from '../../components/PlayingCard';
-import { Button, P, Panel, Screen, Segmented } from '../../components/ui';
+import { Button, P, Panel, Screen, Segmented, STEP_LABEL } from '../../components/ui';
 import { Card } from '../../engine/cards';
 import { runningCount } from '../../engine/counting';
 import { countDrillCards } from '../../engine/drills';
@@ -159,11 +159,11 @@ export default function CountDrill() {
           <Panel>
             <Text style={styles.prompt}>{T.question}</Text>
             <View style={styles.stepper}>
-              <Button title="−" variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess - 1)} style={styles.step} />
+              <Button title="−" accessibilityLabel={STEP_LABEL.down} variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess - 1)} style={styles.step} />
               <Text style={styles.guess} accessibilityLabel={T.guess(signed(guess))}>
                 {signed(guess)}
               </Text>
-              <Button title="+" variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess + 1)} style={styles.step} />
+              <Button title="+" accessibilityLabel={STEP_LABEL.up} variant="ghost" disabled={phase === 'result'} onPress={() => setGuess(guess + 1)} style={styles.step} />
             </View>
             {phase === 'answer' && <Button title={T.check} onPress={check} />}
           </Panel>

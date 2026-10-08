@@ -168,7 +168,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () => ({ ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
     [ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress],
   );
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  // Until saved settings load, render nothing (the splash screen is still up), so the
+  // first frame is already in the right language with the right chips.
+  return <Ctx.Provider value={value}>{ready ? children : null}</Ctx.Provider>;
 }
 
 function deviceLanguage(): string | null {

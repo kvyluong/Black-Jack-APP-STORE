@@ -3,7 +3,14 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View, ViewStyle } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdBanner } from '../ads/AdBanner';
+import { localized } from '../i18n/lang';
 import { colors, radius, spacing } from '../theme';
+
+/** Screen-reader names for the −/+ buttons used to enter a count. */
+export const STEP_LABEL = localized({
+  en: { down: 'Lower your answer', up: 'Raise your answer' },
+  es: { down: 'Bajar tu respuesta', up: 'Subir tu respuesta' },
+});
 
 export function Screen({ children, scroll = true, ads = true }: { children: ReactNode; scroll?: boolean; ads?: boolean }) {
   return (

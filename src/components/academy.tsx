@@ -25,7 +25,7 @@ import { useSettings } from '../state/settings';
 import { colors, radius, spacing, tagColor, tagSymbol } from '../theme';
 import { useOutcomeColors } from './useColors';
 import { PlayingCard } from './PlayingCard';
-import { Button, P, Panel } from './ui';
+import { Button, P, Panel, STEP_LABEL } from './ui';
 
 export interface RoundResult {
   /** 0–1. 90%+ levels up. */
@@ -116,11 +116,11 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
     <Panel>
       <Text style={styles.prompt}>{T.prompt}</Text>
       <View style={styles.stepper}>
-        <Button title="−" variant="ghost" disabled={checked} onPress={() => setGuess(guess - 1)} style={styles.step} />
+        <Button title="−" accessibilityLabel={STEP_LABEL.down} variant="ghost" disabled={checked} onPress={() => setGuess(guess - 1)} style={styles.step} />
         <Text style={styles.guess} accessibilityLabel={T.guessA11y(signed(guess))}>
           {signed(guess)}
         </Text>
-        <Button title="+" variant="ghost" disabled={checked} onPress={() => setGuess(guess + 1)} style={styles.step} />
+        <Button title="+" accessibilityLabel={STEP_LABEL.up} variant="ghost" disabled={checked} onPress={() => setGuess(guess + 1)} style={styles.step} />
       </View>
       {!checked ? (
         <Button
