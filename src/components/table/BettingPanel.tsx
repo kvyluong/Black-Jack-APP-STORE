@@ -61,10 +61,12 @@ interface Props {
   onDeal: () => void;
   onRefill: () => void;
   onBonus: (amount: number) => void;
+  /** Bonus chips and the table lobby link (off in the casino-conditions test). */
+  extras?: boolean;
 }
 
 /** Between hands: 1 or 2 hands, the chip tray, and the Deal button. */
-export function BettingPanel(p: Props) {
+export function BettingPanel({ extras = true, ...p }: Props) {
   const { settings, updateSettings } = useSettings();
   const unit = p.casino.minBet;
   return (
@@ -121,10 +123,12 @@ export function BettingPanel(p: Props) {
       ) : (
         <Button title={T.lower(formatChips(unit))} onPress={() => p.setBet(unit)} />
       )}
-      <BonusAdButton onGranted={p.onBonus} />
-      <Text style={styles.lobby} onPress={() => router.push('/tables?from=play')} accessibilityRole="link">
-        {T.changeTable}
-      </Text>
+      {extras && <BonusAdButton onGranted={p.onBonus} />}
+      {extras && (
+        <Text style={styles.lobby} onPress={() => router.push('/tables?from=play')} accessibilityRole="link">
+          {T.changeTable}
+        </Text>
+      )}
     </Panel>
   );
 }

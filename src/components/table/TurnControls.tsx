@@ -14,6 +14,7 @@ const T = localized({
     coach: (hint: string) => `Coach: ${hint}`,
     take: 'Take insurance',
     decline: 'No insurance',
+    signals: 'Tap the felt to hit · Swipe sideways to stand',
   },
   es: {
     coachSeat: (seat: number, action: string) => `Asiento ${seat} · Coach: ${action}`,
@@ -22,18 +23,26 @@ const T = localized({
     coach: (hint: string) => `Coach: ${hint}`,
     take: 'Tomar seguro',
     decline: 'Sin seguro',
+    signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
   },
 });
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
 
-/** Your turn: Hit / Stand / Double / Split / Surrender, with the coach's pick highlighted. */
+/** Hit and Stand have casino hand signals; the other plays still use the buttons. */
+const SIGNALED: Action[] = ['hit', 'stand'];
+
+/**
+ * Your turn: Hit / Stand / Double / Split / Surrender, with the coach's pick highlighted.
+ * With `handSignals`, a hint explains the felt gestures and Hit/Stand are dimmed (still tappable).
+ */
 export function ActionBar({
   seat,
   legal,
   advice,
   showHints,
   surrenderAllowed,
+  handSignals = false,
   onAction,
 }: {
   seat: number;
@@ -41,6 +50,7 @@ export function ActionBar({
   advice: Recommendation | null;
   showHints: boolean;
   surrenderAllowed: boolean;
+  handSignals?: boolean;
   onAction: (a: Action) => void;
 }) {
   return (
@@ -51,6 +61,7 @@ export function ActionBar({
           {advice.deviation ? T.countPlay : ''}
         </Text>
       )}
+      {handSignals && <Text style={styles.signals}>✋ {T.signals}</Text>}
       <View style={styles.actions}>
         {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => (
           <Button
@@ -60,7 +71,7 @@ export function ActionBar({
             disabled={!legal[a]}
             highlighted={showHints && advice?.action === a}
             onPress={() => onAction(a)}
-            style={styles.actionButton}
+            style={handSignals && SIGNALED.includes(a) ? { ...styles.actionButton, ...styles.dimmed } : styles.actionButton}
           />
         ))}
       </View>
@@ -87,4 +98,6 @@ const styles = StyleSheet.create({
   prompt: { color: colors.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1), justifyContent: 'center' },
   actionButton: { minWidth: 96, flexGrow: 1 },
+  dimmed: { opacity: 0.55 },
+  signals: { color: colors.text, textAlign: 'center', fontSize: 14, fontWeight: '600' },
 });
