@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { Alert, Text } from 'react-native';
+import { Alert, Linking, Text } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
@@ -62,6 +63,7 @@ const T = localized({
     data: 'Data',
     privacy: 'Ad privacy choices',
     resetButton: 'Reset progress and chips',
+    privacyPolicy: 'Privacy policy',
     about: 'About',
     aboutText:
       'Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
@@ -119,14 +121,19 @@ const T = localized({
     data: 'Datos',
     privacy: 'Opciones de privacidad de anuncios',
     resetButton: 'Reiniciar progreso y fichas',
+    privacyPolicy: 'Política de privacidad',
     about: 'Acerca de',
     aboutText:
       'Blackjack Coach es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
   },
 });
 
+/** The website (app.json `extra.website`) hosts the privacy policy in both languages. */
+const website = (Constants.expoConfig?.extra?.website as string | undefined)?.replace(/\/$/, '');
+const privacyUrl = (base: string, lang: string) => `${base}/${lang === 'es' ? 'es/privacidad.html' : 'privacy.html'}`;
+
 export default function SettingsScreen() {
-  const { settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
+  const { lang, settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
   const { rules } = settings;
   const [showPrivacy, setShowPrivacy] = useState(false);
   const removeAds = useRemoveAds();
@@ -322,6 +329,11 @@ export default function SettingsScreen() {
       <P muted>
         {T.aboutText}
       </P>
+      {website && (
+        <Text style={{ color: colors.gold, textDecorationLine: 'underline' }} accessibilityRole="link" onPress={() => Linking.openURL(privacyUrl(website, lang))}>
+          {T.privacyPolicy}
+        </Text>
+      )}
     </Screen>
   );
 }

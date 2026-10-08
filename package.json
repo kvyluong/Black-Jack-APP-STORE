@@ -40,7 +40,8 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "build:web": "node scripts/build-web.mjs"
+    "build:web": "node scripts/build-web.mjs",
+    "build:site": "npm run build:web && node scripts/build-site.mjs"
   },
   "private": true,
   "jest": {

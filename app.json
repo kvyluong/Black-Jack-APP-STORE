@@ -70,7 +70,8 @@
       },
       "iap": {
         "removeAds": "remove_ads"
-      }
+      },
+      "website": "https://kvyluong.github.io/Black-Jack-APP-STORE"
     },
     "locales": {
       "en": "./locales/en.json",

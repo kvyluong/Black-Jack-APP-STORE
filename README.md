@@ -51,6 +51,16 @@ npm run build:web
 
 This runs `expo export --platform web` and folds the result into one file (`scripts/build-web.mjs`): sounds and images are inlined, and the current screen is kept in the address bar's `#` part (e.g. `blackjack-coach.html#/tables`) because browsers don't let a file opened from disk change its path. The same file works as the website demo.
 
+## Website
+
+`website/` is the marketing site: a landing page and a privacy policy, in English (`index.html`, `privacy.html`) and Spanish (`es/`), plus `app-ads.txt`. It has no external fonts, scripts or cookies. `npm run build:site` assembles it into `site-dist/` together with the playable browser version as `play.html`. It warns about any `REPLACE_WITH_…` placeholders still to fill in (`--strict` makes that an error).
+
+The **Website** GitHub Actions workflow publishes it to GitHub Pages on every push to the default branch. One-time setup: in the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**. The site is then at `https://kvyluong.github.io/Black-Jack-APP-STORE/`, which is also `extra.website` in `app.json` (the app's Settings links to the privacy policy there). If you use a custom domain, update `extra.website`.
+
+## Automatic checks
+
+The **Checks** workflow runs on every push and pull request: lint, typecheck, unit tests, and a web build.
+
 ## Project layout
 
 ```
@@ -67,6 +77,8 @@ src/
   i18n/           Language setting and localized() text helper (English / Spanish)
   state/          Saved settings, bankroll and progress (AsyncStorage)
 locales/          Localized app name for the stores
+website/          Landing page, privacy policy (EN/ES) and app-ads.txt
+.github/workflows Checks (lint, types, tests, web build) and the website deploy
 scripts/          build-web.mjs builds html/blackjack-coach.html from the app;
                   make-sounds.py synthesizes assets/sounds/*.wav (no licensed audio)
 html/             The built single-file HTML app
@@ -100,7 +112,8 @@ Development builds always use Google's test ad units.
    - In AdMob, set up a GDPR consent message (Privacy & messaging) and, for iOS, an IDFA explainer message so the ATT prompt shows.
    - Publish an `app-ads.txt` on your developer website.
 4. **Art.** Replace the placeholder icons and splash image in `assets/`.
-5. **Privacy policy.** Both stores require a privacy policy URL, and AdMob collects device identifiers. Fill in Google Play's Data safety form and Apple's App Privacy labels to match (advertising data, device ID, diagnostics).
+5. **Website and privacy policy.** Turn on GitHub Pages (see Website above). In `website/privacy.html` and `website/es/privacidad.html`, fill in your name, contact email and the date, and have the policy reviewed (it's a draft, not legal advice). Use the privacy policy URL in both store listings. Fill in Google Play's Data safety form and Apple's App Privacy labels to match (advertising data, device ID, diagnostics, purchases).
+   - **app-ads.txt:** put your AdMob publisher ID in `website/app-ads.txt`. AdMob only reads it at the root of a domain (`https://yourdomain.com/app-ads.txt`), not under `/Black-Jack-APP-STORE/`, so you need a custom domain on Pages (or a `kvyluong.github.io` user site) and that domain as the developer website in both stores.
 6. **Build and submit** with EAS:
    ```bash
    npx eas-cli@latest build --platform all --profile production
