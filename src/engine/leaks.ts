@@ -48,9 +48,17 @@ export interface LeakStats {
   byCategory: Partial<Record<LeakCategory, Tally>>;
   /** Specific situations, keyed by their English label (e.g. "Soft 18 vs 9") so every language shares them. */
   spots: Record<string, Spot>;
+  /**
+   * Right (true) or wrong (false) for your last RECENT_WINDOW decisions, newest last.
+   * Optional: saves from before it was added don't have it (read it as `recent ?? []`).
+   */
+  recent?: boolean[];
 }
 
-export const emptyLeaks = (): LeakStats => ({ byCategory: {}, spots: {} });
+/** How many recent decisions the rolling window keeps (the casino-ready basic strategy check). */
+export const RECENT_WINDOW = 200;
+
+export const emptyLeaks = (): LeakStats => ({ byCategory: {}, spots: {}, recent: [] });
 
 const upName = (r: Rank) => (r === 'A' ? 'A' : String(upValue(r)));
 
@@ -104,6 +112,7 @@ export function recordDecision(
   return {
     byCategory: { ...stats.byCategory, [category]: { right: cat.right + (ok ? 1 : 0), total: cat.total + 1 } },
     spots: { ...stats.spots, [label]: { ...spot, best: d.best, right: spot.right + (ok ? 1 : 0), total: spot.total + 1 } },
+    recent: [...(stats.recent ?? []), ok].slice(-RECENT_WINDOW),
   };
 }
 
