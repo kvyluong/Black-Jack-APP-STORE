@@ -82,7 +82,7 @@ export default function Home() {
     <Screen>
       <View style={{ alignItems: 'center', marginVertical: spacing(1) }}>
         <Text style={styles.logo}>♠ ♥ 21 ♣ ♦</Text>
-        <H1>Blackjack Coach</H1>
+        <H1>ShoeSharp</H1>
         <P muted>{T.tagline}</P>
       </View>
 

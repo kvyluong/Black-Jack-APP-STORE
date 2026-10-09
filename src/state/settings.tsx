@@ -149,6 +149,7 @@ const DEFAULT_STATS: Stats = {
   history: [],
 };
 
+// Kept from the app's first name (Blackjack Coach) so saved progress carries over.
 const STORAGE_KEY = 'blackjack-coach/v1';
 
 interface Store {

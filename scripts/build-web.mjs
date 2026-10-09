@@ -1,5 +1,5 @@
 // Builds the phone app for the web (Expo web export), then folds it into one
-// self-contained HTML file: html/blackjack-coach.html. Double-click it to play
+// self-contained HTML file: html/shoesharp.html. Double-click it to play
 // in any desktop browser, no server needed. Sounds and images are inlined.
 //
 //   npm run build:web
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const out = join(root, 'html', 'blackjack-coach.html');
+const out = join(root, 'html', 'shoesharp.html');
 
 if (!process.env.SKIP_EXPORT) execSync('npx expo export --platform web --output-dir dist --clear', { cwd: root, stdio: 'inherit', env: { ...process.env, CI: '1' } });
 
@@ -34,7 +34,7 @@ js = js.replace(/"(\/assets\/[^"]+?\.(?:wav|png|jpg|ttf))"/g, (whole, path) => {
 // The router reads the page path and changes it with history.pushState. A file opened
 // from disk can't change its path (browsers block it for file:// pages), so the bundle
 // runs with its own `window`, `location` and `history` that keep the route in the
-// #hash instead: /tables becomes blackjack-coach.html#/tables. Works the same when hosted.
+// #hash instead: /tables becomes shoesharp.html#/tables. Works the same when hosted.
 const shim = `(() => {
   const real = window;
   const route = () => {

@@ -1,4 +1,6 @@
-# Blackjack Coach
+# ShoeSharp
+
+**Blackjack & Card Counting Trainer.** (Formerly "Blackjack Coach": renamed because several apps already use "Blackjack Coach"-style names.)
 
 A mobile blackjack trainer for iOS and Android that teaches new players to play perfect basic strategy and count cards (Hi-Lo). Ad-supported with Google AdMob. Play money only.
 
@@ -48,7 +50,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
 ## Test it in a browser (Windows, Mac, anything)
 
-`html/blackjack-coach.html` is the whole app in one file, built from the same code as the phone app. Download it and double-click it: no install, no server. Progress saves in your browser. Ads and the Remove ads purchase are phone-only, so they don't appear.
+`html/shoesharp.html` is the whole app in one file, built from the same code as the phone app. Download it and double-click it: no install, no server. Progress saves in your browser. Ads and the Remove ads purchase are phone-only, so they don't appear.
 
 Desktop extras: keyboard shortcuts at the table (H hit, S stand, D double, P split, R surrender, Enter to deal / next hand).
 
@@ -58,7 +60,7 @@ Rebuild it after changing the app:
 npm run build:web
 ```
 
-This runs `expo export --platform web` and folds the result into one file (`scripts/build-web.mjs`): sounds and images are inlined, and the current screen is kept in the address bar's `#` part (e.g. `blackjack-coach.html#/tables`) because browsers don't let a file opened from disk change its path. The same file works as the website demo.
+This runs `expo export --platform web` and folds the result into one file (`scripts/build-web.mjs`): sounds and images are inlined, and the current screen is kept in the address bar's `#` part (e.g. `shoesharp.html#/tables`) because browsers don't let a file opened from disk change its path. The same file works as the website demo.
 
 ## Website
 
@@ -88,7 +90,7 @@ src/
 locales/          Localized app name for the stores
 website/          Landing page, privacy policy (EN/ES) and app-ads.txt
 .github/workflows Checks (lint, types, tests, web build) and the website deploy
-scripts/          build-web.mjs builds html/blackjack-coach.html from the app;
+scripts/          build-web.mjs builds html/shoesharp.html from the app;
                   make-sounds.py synthesizes assets/sounds/*.wav (no licensed audio)
 html/             The built single-file HTML app
 ```
@@ -113,7 +115,7 @@ Development builds always use Google's test ad units.
 
 ## Before you publish
 
-1. **Pick your app ID.** Replace `com.REPLACE_ME.blackjackcoach` in `app.json` (`ios.bundleIdentifier` and `android.package`).
+1. **Pick your app ID.** Replace `com.REPLACE_ME.shoesharp` in `app.json` (`ios.bundleIdentifier` and `android.package`).
 2. **Remove ads product.** In App Store Connect and the Google Play Console, create a non-consumable in-app product with the ID `remove_ads` (or change `extra.iap.removeAds` in `app.json`), and set its price ($2.99–$4.99 is typical). Test with a sandbox account (iOS) or a license tester (Android) on a development build.
 3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
    - Put the **app IDs** in `app.json` under the `react-native-google-mobile-ads` plugin (`androidAppId`, `iosAppId`). They are currently Google's sample IDs.

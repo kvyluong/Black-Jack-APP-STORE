@@ -25,7 +25,7 @@ const T = localized({
   en: {
     skip: 'Skip the tour',
     welcome: 'Welcome',
-    welcomeTitle: 'Welcome to Blackjack Coach',
+    welcomeTitle: 'Welcome to ShoeSharp',
     introBody: 'Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.',
     introNote: (chips: string) => `Takes about a minute. Practice chips only: your real stack of $${chips} is waiting for you after.`,
     letsPlay: 'Let’s play',
@@ -55,7 +55,7 @@ const T = localized({
   es: {
     skip: 'Saltar el tour',
     welcome: 'Bienvenida',
-    welcomeTitle: 'Bienvenido a Blackjack Coach',
+    welcomeTitle: 'Bienvenido a ShoeSharp',
     introBody: 'Juguemos juntos dos manos rápidas de práctica. Te diré exactamente qué hacer y por qué.',
     introNote: (chips: string) => `Toma como un minuto. Solo fichas de práctica: tu pila real de $${chips} te espera después.`,
     letsPlay: '¡A jugar!',

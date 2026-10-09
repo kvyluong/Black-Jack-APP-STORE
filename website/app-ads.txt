@@ -1,4 +1,4 @@
-# Authorized sellers of ads in Blackjack Coach (https://iabtechlab.com/ads-txt/).
+# Authorized sellers of ads in ShoeSharp (https://iabtechlab.com/ads-txt/).
 # Replace the publisher ID with yours: AdMob → Settings → Account information.
 # AdMob only reads this file at the root of your domain, e.g. https://example.com/app-ads.txt
 google.com, pub-REPLACE_WITH_ADMOB_PUBLISHER_ID, DIRECT, f08c47fec0942fa0

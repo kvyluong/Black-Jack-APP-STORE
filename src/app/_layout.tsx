@@ -12,7 +12,7 @@ import { colors } from '../theme';
 
 const T = localized({
   en: {
-    index: 'Blackjack Coach',
+    index: 'ShoeSharp',
     tables: 'Casino Floor',
     play: 'Table',
     learn: 'Lessons',
@@ -35,7 +35,7 @@ const T = localized({
     decksDrill: 'Deck Estimation',
   },
   es: {
-    index: 'Blackjack Coach',
+    index: 'ShoeSharp',
     tables: 'Sala del casino',
     play: 'Mesa',
     learn: 'Lecciones',

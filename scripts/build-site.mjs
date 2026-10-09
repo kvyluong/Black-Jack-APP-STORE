@@ -1,5 +1,5 @@
 // Assembles the website into site-dist/: the static pages in website/ plus the
-// playable browser version (html/blackjack-coach.html, from `npm run build:web`) as play.html.
+// playable browser version (html/shoesharp.html, from `npm run build:web`) as play.html.
 //
 //   npm run build:site            (builds the web app first)
 //   node scripts/build-site.mjs --strict   (fails if REPLACE_ placeholders remain)
@@ -10,9 +10,9 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'website');
 const out = join(root, 'site-dist');
-const game = join(root, 'html', 'blackjack-coach.html');
+const game = join(root, 'html', 'shoesharp.html');
 
-if (!existsSync(game)) throw new Error('html/blackjack-coach.html is missing: run `npm run build:web` first.');
+if (!existsSync(game)) throw new Error('html/shoesharp.html is missing: run `npm run build:web` first.');
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });

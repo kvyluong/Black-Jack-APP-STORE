@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Blackjack Coach",
-    "slug": "blackjack-coach",
-    "scheme": "blackjackcoach",
+    "name": "ShoeSharp",
+    "slug": "shoesharp",
+    "scheme": "shoesharp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,14 +14,14 @@
       "backgroundColor": "#0B5D3B"
     },
     "ios": {
-      "bundleIdentifier": "com.REPLACE_ME.blackjackcoach",
+      "bundleIdentifier": "com.REPLACE_ME.shoesharp",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.REPLACE_ME.blackjackcoach",
+      "package": "com.REPLACE_ME.shoesharp",
       "adaptiveIcon": {
         "backgroundColor": "#0B5D3B",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -31,7 +31,9 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "shortName": "ShoeSharp",
+      "name": "ShoeSharp"
     },
     "plugins": [
       "expo-router",

@@ -56,7 +56,7 @@ const T = localized({
     ls: 'Late surrender',
     rulesNote: 'The strategy chart and coach are tuned for multi-deck games. Changing rules starts a new shoe.',
     removeAds: 'Remove ads',
-    adsRemoved: '✓ Ads removed. Thanks for supporting Blackjack Coach!',
+    adsRemoved: '✓ Ads removed. Thanks for supporting ShoeSharp!',
     bringBack: 'Bring ads back (development only)',
     removeAdsInfo:
       'A one-time purchase that removes the banner and the ads between hands, on every device signed in to your store account. The optional bonus-chip videos stay, since you choose when to watch those.',
@@ -71,7 +71,7 @@ const T = localized({
     privacyPolicy: 'Privacy policy',
     about: 'About',
     aboutText:
-      'Blackjack Coach is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
+      'ShoeSharp is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
   },
   es: {
     signals: 'Señas con la mano',
@@ -118,7 +118,7 @@ const T = localized({
     ls: 'Rendición tardía',
     rulesNote: 'La tabla de estrategia y el coach están pensados para juegos de varias barajas. Cambiar las reglas inicia un zapato nuevo.',
     removeAds: 'Quitar anuncios',
-    adsRemoved: '✓ Anuncios quitados. ¡Gracias por apoyar a Blackjack Coach!',
+    adsRemoved: '✓ Anuncios quitados. ¡Gracias por apoyar a ShoeSharp!',
     bringBack: 'Volver a mostrar anuncios (solo desarrollo)',
     removeAdsInfo:
       'Una compra única que quita el banner y los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda. Los videos opcionales de fichas extra se quedan, ya que tú eliges cuándo verlos.',
@@ -133,7 +133,7 @@ const T = localized({
     privacyPolicy: 'Política de privacidad',
     about: 'Acerca de',
     aboutText:
-      'Blackjack Coach es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
+      'ShoeSharp es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
   },
 });
 
