@@ -241,3 +241,15 @@ export function koQuestion(deckChoices: number[] = [1, 2, 6, 8], rng: () => numb
   const running = lo + Math.floor(rng() * (hi - lo + 1));
   return { running, decks, answer: koBetZone(running, decks) };
 }
+
+/**
+ * Bet in units for the current count, in the way each system is taught:
+ * KO by its key count and pivot (koBetUnits); Omega II's level-2 true count runs
+ * about twice Hi-Lo's, so it's halved before the 1–8 ramp; Hi-Lo and Hi-Opt I use
+ * the ramp on the floored true count.
+ */
+export function betUnitsForCount(running: number, cardsRemaining: number, decks: number, system: CountingSystem = current): number {
+  if (system === 'ko') return koBetUnits(running, decks);
+  const tc = trueCount(running, cardsRemaining, system);
+  return suggestedBetUnits(Math.floor(system === 'omegaII' ? tc / 2 : tc));
+}

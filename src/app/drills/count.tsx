@@ -6,7 +6,7 @@ import { PlayingCard } from '../../components/PlayingCard';
 import { Button, P, Panel, Screen, Segmented, STEP_LABEL } from '../../components/ui';
 import { Card } from '../../engine/cards';
 import { SYSTEM_NAME, describeTags, runningCount, signedTag } from '../../engine/counting';
-import { countDrillCards } from '../../engine/drills';
+import { countDrillCards, fullDeckDrillCards } from '../../engine/drills';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
@@ -43,7 +43,7 @@ const T = localized({
     best: (s: string) => `Best full deck: ${s} s`,
     noBest: 'Best full deck: not yet (full deck, one card at a time, tap to advance)',
     perfectDecks: (n: number) => `Perfect full decks: ${n}`,
-    target: 'Casino-ready target: a full deck, exact, in under 30 s.',
+    target: 'Casino-ready target: a full deck, exact, in under 30 s. A few cards are held back each time, so the final count is never a giveaway.',
     start: 'Start',
     stop: 'Stop',
     nextCard: 'Next card',
@@ -83,7 +83,7 @@ const T = localized({
     best: (s: string) => `Mejor baraja completa: ${s} s`,
     noBest: 'Mejor baraja completa: aún no (baraja completa, una carta a la vez, toca para avanzar)',
     perfectDecks: (n: number) => `Barajas completas perfectas: ${n}`,
-    target: 'Meta para el casino: una baraja completa, exacta, en menos de 30 s.',
+    target: 'Meta para el casino: una baraja completa, exacta, en menos de 30 s. Cada vez se apartan algunas cartas, así que el conteo final nunca es obvio.',
     start: 'Empezar',
     stop: 'Detener',
     nextCard: 'Siguiente carta',
@@ -144,7 +144,7 @@ export default function CountDrill() {
   }
 
   const start = () => {
-    const drawn = countDrillCards(length);
+    const drawn = length === FULL_DECK ? fullDeckDrillCards() : countDrillCards(length);
     setCards(drawn);
     setIndex(0);
     setGuess(0);
@@ -180,12 +180,14 @@ export default function CountDrill() {
   const actual = runningCount(cards, system);
   const ok = guess === actual;
   const lastShown = index + perFlash >= cards.length;
-  const isFullDeckRun = cards.length === FULL_DECK && perFlash === 1;
+  // Full-deck runs hold back a few cards (so the answer isn't always 0), so allow 47–51.
+  const isFullDeckRun = length === FULL_DECK && cards.length > FULL_DECK - 6 && perFlash === 1;
 
   const check = () => {
     setPhase('result');
     if (!ok) return;
-    const timed = isFullDeckRun && pace === 'self' && elapsed !== null ? elapsed : null;
+    // Scaled up to 52 cards, so runs with a few cards held back compare fairly.
+    const timed = isFullDeckRun && pace === 'self' && elapsed !== null ? Math.round((elapsed * FULL_DECK) / cards.length) : null;
     setNewBest(timed !== null && (records.bestDeckMs === null || timed < records.bestDeckMs));
     updateStats((s) => ({
       ...s,

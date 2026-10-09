@@ -41,6 +41,16 @@ export function strategyQuestion(rng: Rng = Math.random): StrategyQuestion {
   return { cards: ranks.map((r) => card(r, rng)), dealerUp };
 }
 
+/**
+ * A full deck for the timed count, with 1–5 random cards held back. A complete deck
+ * always counts to the same number (0, or +4 in KO), so without this the answer
+ * could be given without counting.
+ */
+export function fullDeckDrillCards(rng: Rng = Math.random): Card[] {
+  const held = 1 + Math.floor(rng() * 5);
+  return createShoe(1, rng).slice(held);
+}
+
 /** A run of cards from a shuffled deck for the running-count drill. */
 export function countDrillCards(n: number, rng: Rng = Math.random): Card[] {
   return createShoe(Math.ceil(n / 52), rng).slice(0, n);

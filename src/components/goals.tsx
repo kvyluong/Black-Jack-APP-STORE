@@ -1,6 +1,6 @@
 // Daily goals card for the home screen, and the once-a-day stats snapshot behind it.
 import { Href, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
@@ -51,14 +51,22 @@ const T = localized({
   },
 });
 
-/** Today's local day, rechecked whenever the app comes back to the foreground (e.g. after midnight). */
-function useToday(): string {
+/**
+ * Today's local day. Rechecked every minute (so midnight is caught while the app
+ * stays open) and whenever the app comes back to the foreground.
+ */
+export function useToday(): string {
   const [today, setToday] = useState(() => localDay(new Date()));
   useEffect(() => {
+    const check = () => setToday(localDay(new Date()));
+    const id = setInterval(check, 60_000);
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setToday(localDay(new Date()));
+      if (state === 'active') check();
     });
-    return () => sub.remove();
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
   }, []);
   return today;
 }
@@ -69,7 +77,8 @@ export function useDailySnapshot() {
   const today = useToday();
   const snapshotDay = stats.goals?.day;
   useEffect(() => {
-    if (!ready || snapshotDay === today) return;
+    // Only roll forward: a clock or time zone moved back a day isn't a new day.
+    if (!ready || (snapshotDay && snapshotDay >= today)) return;
     // A write to the settings store (external to this component), not local state.
     updateStats((s) => {
       const next = rolloverDay(s, today);
@@ -89,9 +98,13 @@ export function DailyGoalsCard() {
   const claimed = live ? stats.goals.claimed : [];
   const streak = currentStreak(stats.goals, today);
   const allClaimed = ids.every((id) => claimed.includes(id));
+  const claiming = useRef(new Set<string>());
 
   const claim = (g: GoalDef) => {
-    if (!live || claimed.includes(g.id)) return;
+    const key = `${today}:${g.id}`;
+    // Guards a fast double tap before the next render (the chips would be paid twice).
+    if (!live || claimed.includes(g.id) || claiming.current.has(key)) return;
+    claiming.current.add(key);
     const r = goalReward(g, stats.peakChips);
     addChips(r.chips);
     updateStats((s) => ({ ...s, xp: s.xp + r.xp, goals: claimGoal(s.goals, g.id, today, ids) }));

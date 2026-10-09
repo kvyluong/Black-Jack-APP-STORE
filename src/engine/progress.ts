@@ -288,7 +288,8 @@ export const HISTORY_CAP = 400;
  */
 export function rolloverDay(s: ProgressStats, today: string): { goals: GoalsState; history: HistoryPoint[] } | null {
   const goals = s.goals ?? emptyGoals();
-  if (goals.day === today) return null;
+  // Only roll forward: a clock or time zone moved back a day isn't a new day.
+  if (goals.day && goals.day >= today) return null;
   let history = s.history ?? [];
   if (goals.day && goals.start) {
     const point: HistoryPoint = { day: goals.day, start: goals.start, values: counters(s, goals.day) };

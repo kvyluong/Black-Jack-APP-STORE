@@ -1,6 +1,9 @@
 // Regression tests for bugs found in review.
 import { Card, Rank, seededRng } from '../cards';
-import { runningCount } from '../counting';
+import { betUnitsForCount, koBetUnits, runningCount } from '../counting';
+import { fullDeckDrillCards } from '../drills';
+import { review } from '../deviations';
+import { emptyGoals, rolloverDay } from '../progress';
 import { dealSchedule } from '../dealSchedule';
 import { GameState, YOU, act, legalActions, newGame, resolveInsurance, shuffleIfNeeded, startRound } from '../game';
 import { DEFAULT_RULES } from '../rules';
@@ -166,5 +169,49 @@ describe('count plays', () => {
   it('10 vs A doubles at +3 when the dealer hits soft 17', () => {
     expect(recommend(ctx(['6', '4'], 'A', 3, true)).action).toBe('double');
     expect(recommend(ctx(['6', '4'], 'A', 3, false)).action).toBe('hit');
+  });
+});
+
+describe('round 2 fixes', () => {
+  it('timed full-deck runs hold back cards, so the final count varies', () => {
+    const rng = seededRng(5);
+    const counts = new Set<number>();
+    for (let i = 0; i < 200; i++) {
+      const cards = fullDeckDrillCards(rng);
+      expect(cards.length).toBeGreaterThanOrEqual(47);
+      expect(cards.length).toBeLessThanOrEqual(51);
+      counts.add(runningCount(cards, 'hiLo'));
+    }
+    expect(counts.size).toBeGreaterThan(3);
+  });
+
+  it('bet sizing follows each system: KO by key count, Omega II halved', () => {
+    // KO, 6 decks: the ramp the KO drill teaches.
+    expect(betUnitsForCount(0, 78, 6, 'ko')).toBe(koBetUnits(0, 6));
+    expect(betUnitsForCount(-2, 312, 6, 'ko')).toBe(koBetUnits(-2, 6));
+    // Omega II running +8 with 2 decks left: TC +4, like Hi-Lo +2.
+    expect(betUnitsForCount(8, 104, 6, 'omegaII')).toBe(2);
+    expect(betUnitsForCount(4, 104, 6, 'hiLo')).toBe(2);
+  });
+});
+
+describe('round 2 fixes: practice records', () => {
+  it("count-play cards only move up when they're due, so a card can't be learned in a day", () => {
+    let mem = review(undefined, true, '2026-10-09'); // new card: box 1, due tomorrow
+    expect(mem.box).toBe(1);
+    for (let i = 0; i < 5; i++) mem = review(mem, true, '2026-10-09'); // extra sessions today
+    expect(mem.box).toBe(1);
+    expect(review(mem, true, mem.due).box).toBe(2); // on its review day it moves up
+    expect(review(mem, false, '2026-10-09').box).toBe(0); // a miss still counts any day
+  });
+
+  it('a clock moved back a day is not a new day for goals', () => {
+    const stats = {
+      handsPlayed: 0, decisions: 0, correctDecisions: 0, lessonsCompleted: [], peakChips: 1000, leaks: { byCategory: {}, spots: {} }, academy: {},
+      goals: { ...emptyGoals(), day: '2026-10-09', start: {}, claimed: ['a'], streak: 5, lastCompleteDay: '2026-10-09' },
+      history: [],
+    };
+    expect(rolloverDay(stats as never, '2026-10-08')).toBeNull();
+    expect(rolloverDay(stats as never, '2026-10-10')).not.toBeNull();
   });
 });

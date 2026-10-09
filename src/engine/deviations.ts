@@ -273,11 +273,13 @@ export function addDays(day: string, n: number): string {
 }
 
 /**
- * Grades one answer. Right moves the card up a box (only once per session, so a
- * card shown twice can't jump two boxes in a day); a miss sends it to box 0.
+ * Grades one answer. Right moves the card up a box, but only when it was due (or new):
+ * extra practice before its review day doesn't promote it, so cards can't be
+ * "learned" in a day by starting session after session. A miss sends it to box 0.
  */
 export function review(mem: CardMemory | undefined, ok: boolean, today: string, promote = true): CardMemory {
   const prev = mem ?? { box: 0, due: today, right: 0, total: 0 };
+  if (mem && mem.due > today) promote = false;
   const box = ok ? (promote ? Math.min(MAX_BOX, prev.box + 1) : prev.box) : 0;
   const due = ok && !promote ? prev.due : addDays(today, BOX_INTERVALS[box]);
   return { box, due, right: prev.right + (ok ? 1 : 0), total: prev.total + 1 };

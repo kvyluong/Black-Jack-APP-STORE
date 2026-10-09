@@ -11,7 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useInterstitial } from '../../ads/useInterstitial';
 import { haptic } from '../../audio/haptics';
 import { playSound } from '../../audio/sounds';
-import { decksRemaining, flooredTrueCount, isBalanced, shouldTakeInsurance, suggestedBetUnits } from '../../engine/counting';
+import { betUnitsForCount, decksRemaining, initialRunningCount, isBalanced, shouldTakeInsurance } from '../../engine/counting';
 import { DEAL_STEP_MS } from '../../engine/dealSchedule';
 import { discardedCards } from '../../engine/decks';
 import { EXAM_STACK_UNITS, chatterLine } from '../../engine/exam';
@@ -150,7 +150,7 @@ export type TableMode = 'practice' | 'exam';
 
 /** What the Casino Conditions test hears from the table. */
 export interface ExamHooks {
-  /** A round was dealt: your bet per hand in units and what the count called for (suggestedBetUnits of the floored true count). */
+  /** A round was dealt: your bet per hand in units and what the count called for (betUnitsForCount). */
   onBet: (units: number, ideal: number) => void;
   /** One of your decisions (plays and insurance), graded silently. */
   onDecision: (ok: boolean) => void;
@@ -323,11 +323,14 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     let graded = 0;
     if (advice && ctx) {
       graded = grade(action === advice.action, T.best(ACTION_LABEL[advice.action], advice.reason));
-      // Track which kinds of decisions you miss (see the Your Leaks screen).
-      updateStats((s) => ({
-        ...s,
-        leaks: recordDecision(s.leaks, { cards: ctx.cards, dealerUp: ctx.dealerUp, canSplit: ctx.canSplit, chosen: action, best: advice.action }),
-      }));
+      // Track which kinds of decisions you miss (see the Your Leaks screen). Hands where a
+      // count play changes the answer aren't basic strategy, so they stay out of it.
+      if (!advice.deviation) {
+        updateStats((s) => ({
+          ...s,
+          leaks: recordDecision(s.leaks, { cards: ctx.cards, dealerUp: ctx.dealerUp, canSplit: ctx.canSplit, chosen: action, best: advice.action }),
+        }));
+      }
     }
     commit(game, act(game, action), roundCorrect + graded);
   };
@@ -369,7 +372,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     let skip = yourSeatCount - affordableSeats;
     const bets = roundBets(seated, bet, hiLoTrueCount(game), unit, casino.maxBet).filter((b) => b.owner !== YOU || skip-- <= 0);
     // The test scores your bet against the count's (KO: its estimated true count).
-    if (testing) exam?.onBet(bet / unit, suggestedBetUnits(flooredTrueCount(game.runningCount, game.shoe.length)));
+    if (testing) exam?.onBet(bet / unit, betUnitsForCount(game.runningCount, game.shoe.length, rules.decks));
     const next = startRound(base, bets);
     if (next.phase === 'insurance' && !testing) {
       // Card counters at the table take insurance when the count is high.
@@ -455,7 +458,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       {!testing && <LevelBar xp={stats.xp} compact />}
       {!testing && game.justShuffled && (
         <Text style={styles.shuffle}>
-          {isBalanced(countingSystem) ? T.shuffled : T.shuffledKo(signed(game.runningCount))}
+          {isBalanced(countingSystem) ? T.shuffled : T.shuffledKo(signed(initialRunningCount(rules.decks)))}
         </Text>
       )}
 
@@ -554,7 +557,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
           yourSeatCount={yourSeatCount}
           affordableSeats={affordableSeats}
           maxPerHand={maxPerHand}
-          suggestedUnits={countVisible ? suggestedBetUnits(flooredTrueCount(game.runningCount, game.shoe.length)) : null}
+          suggestedUnits={countVisible ? betUnitsForCount(game.runningCount, game.shoe.length, rules.decks) : null}
           outOfChips={!testing && needsRefill(bankroll)}
           moveTo={moveTo}
           extras={!testing}

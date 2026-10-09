@@ -3,9 +3,9 @@ import { router } from 'expo-router';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useToday } from '../components/goals';
 import { Chart, Datum, niceMax } from '../components/progress/Chart';
 import { Button, H2, P, Panel, Screen } from '../components/ui';
-import { localDay } from '../engine/progression';
 import {
   DECK_TARGET_MS,
   accuracyByDay,
@@ -102,9 +102,9 @@ const T = localized({
 
 export default function ProgressScreen() {
   const { stats } = useSettings();
-  const today = localDay(new Date());
+  const today = useToday();
   const points = historyWithToday(stats, today);
-  const exams = (stats.exams ?? []).slice(-10);
+  const exams = stats.exams ?? [];
   const deckTimes = bestDeckTimeline(points);
   const isNew = stats.decisions === 0 && stats.handsPlayed === 0 && deckTimes.length === 0 && exams.length === 0;
 
@@ -243,7 +243,9 @@ function DeckChart({ times }: { times: { day: string; ms: number }[] }) {
 }
 
 function ExamChart({ exams }: { exams: { day: string; grade: number; passed: boolean }[] }) {
-  const data: Datum[] = exams.map((e, i) => ({
+  // Chart the last 10; the summary covers every saved test.
+  const shown = exams.slice(-10);
+  const data: Datum[] = shown.map((e, i) => ({
     key: `${e.day}-${i}`,
     value: e.grade,
     label: shortDay(e.day),
