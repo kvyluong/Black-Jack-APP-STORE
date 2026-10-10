@@ -6,7 +6,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { seededRng } from '../engine/cards';
 import { Fanfare, FanfareTier, countUpTicks } from '../engine/juice';
 import { tr } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colorblindColors, colors } from '../theme';
 
 const TIER_COLOR: Record<FanfareTier, string> = {
@@ -31,7 +31,9 @@ export function useShake() {
     );
     Animated.sequence(steps).start();
   };
-  return { style: { transform: [{ translateX: x }] }, shake };
+  // A stable style object, so memoized views that take it don't re-render.
+  const [style] = useState(() => ({ transform: [{ translateX: x }] }));
+  return { style, shake };
 }
 
 interface Particle {
@@ -44,7 +46,7 @@ interface Particle {
 
 /** Big pop-up text plus a burst of chips, played once per new `fanfare.key`. */
 export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key: number }) | null; effects: boolean }) {
-  const colorblind = useSettings().settings.colorblind;
+  const colorblind = usePrefs().settings.colorblind;
   const pop = useState(() => new Animated.Value(0))[0];
   const burst = useState(() => new Animated.Value(0))[0];
 

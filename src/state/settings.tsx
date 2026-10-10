@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { getLocales } from 'expo-localization';
 
@@ -172,7 +173,16 @@ interface Store {
   resetProgress: () => void;
 }
 
-const Ctx = createContext<Store | null>(null);
+/** Everything but stats: what most screens and the table's cards need. */
+export type Prefs = Omit<Store, 'stats'>;
+
+// Two contexts, so a stats update (every decision at the table) doesn't
+// re-render components that only read settings, and the reverse.
+const PrefsCtx = createContext<Prefs | null>(null);
+const StatsCtx = createContext<Stats | null>(null);
+
+/** Saving waits this long after the last change, so a burst of updates is written once. */
+const SAVE_DELAY_MS = 600;
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -191,9 +201,37 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       .finally(() => setReady(true));
   }, []);
 
+  // Saving serializes everything, so it's batched: one write a moment after the last
+  // change, and straight away when the app goes to the background.
+  const pending = useRef<{ settings: Settings; stats: Stats } | null>(null);
+  const flush = useCallback(() => {
+    if (!pending.current) return;
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pending.current)).catch(() => {});
+    pending.current = null;
+  }, []);
   useEffect(() => {
-    if (ready) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, stats })).catch(() => {});
-  }, [ready, settings, stats]);
+    if (!ready) return;
+    pending.current = { settings, stats };
+    const id = setTimeout(flush, SAVE_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [ready, settings, stats, flush]);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => state !== 'active' && flush());
+    const onHide = () => flush();
+    // On the web, also save when the tab is hidden or closed.
+    if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', onHide);
+      window.addEventListener('pagehide', onHide);
+    }
+    return () => {
+      sub.remove();
+      if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+        document.removeEventListener('visibilitychange', onHide);
+        window.removeEventListener('pagehide', onHide);
+      }
+      flush();
+    };
+  }, [flush]);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), []);
   const updateRules = useCallback(
@@ -212,13 +250,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   setLang(lang);
   setCountingSystem(settings.countingSystem);
 
-  const value = useMemo(
-    () => ({ ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress }),
-    [ready, lang, settings, stats, updateSettings, updateRules, addChips, updateStats, resetProgress],
+  const prefs = useMemo(
+    () => ({ ready, lang, settings, updateSettings, updateRules, addChips, updateStats, resetProgress }),
+    [ready, lang, settings, updateSettings, updateRules, addChips, updateStats, resetProgress],
   );
   // Until saved settings load, render nothing (the splash screen is still up), so the
   // first frame is already in the right language with the right chips.
-  return <Ctx.Provider value={value}>{ready ? children : null}</Ctx.Provider>;
+  return (
+    <PrefsCtx.Provider value={prefs}>
+      <StatsCtx.Provider value={stats}>{ready ? children : null}</StatsCtx.Provider>
+    </PrefsCtx.Provider>
+  );
 }
 
 function deviceLanguage(): string | null {
@@ -229,8 +271,16 @@ function deviceLanguage(): string | null {
   }
 }
 
+/** Settings, stats and the actions to change them. Re-renders on any change. */
 export function useSettings(): Store {
-  const store = useContext(Ctx);
-  if (!store) throw new Error('useSettings must be used inside SettingsProvider');
-  return store;
+  const prefs = usePrefs();
+  const stats = useContext(StatsCtx)!;
+  return useMemo(() => ({ ...prefs, stats }), [prefs, stats]);
+}
+
+/** Settings and actions without stats: doesn't re-render when only stats change. */
+export function usePrefs(): Prefs {
+  const prefs = useContext(PrefsCtx);
+  if (!prefs) throw new Error('useSettings must be used inside SettingsProvider');
+  return prefs;
 }

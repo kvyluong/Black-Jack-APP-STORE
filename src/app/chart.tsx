@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { P, Screen, Segmented } from '../components/ui';
 import { Cell, hardCell, pairCell, softCell } from '../engine/strategy';
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colors, spacing } from '../theme';
 
 const UPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -69,7 +69,7 @@ const T = localized({
 type Tab = 'hard' | 'soft' | 'pairs';
 
 export default function Chart() {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const rules = settings.rules;
   const [tab, setTab] = useState<Tab>('hard');
 

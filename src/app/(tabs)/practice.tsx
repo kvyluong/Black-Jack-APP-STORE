@@ -8,7 +8,7 @@ import { ListedFeature, featureInfo } from '../../components/featureInfo';
 import { Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
 
 const T = localized({
@@ -40,7 +40,7 @@ const SECTIONS: { title: () => string; items: ListedFeature[] }[] = [
 ];
 
 export default function Practice() {
-  useSettings(); // re-render on language change
+  usePrefs(); // re-render on language change
   const unlocks = useUnlocks();
   const [showLocked, setShowLocked] = useState(false);
   const locked = SECTIONS.flatMap((s) => s.items).filter((f) => !unlocks.has(f));

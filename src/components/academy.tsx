@@ -23,7 +23,7 @@ import { Card } from '../engine/cards';
 import { CountingSystem, SYSTEM_NAME, describeTags, maxTag, signedTag, tagValues } from '../engine/counting';
 import { localized } from '../i18n/lang';
 import type { SoundName } from '../engine/dealSchedule';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colors, radius, spacing, tagColor, tagSymbol } from '../theme';
 import { useOutcomeColors } from './useColors';
 import { PlayingCard } from './PlayingCard';
@@ -114,7 +114,7 @@ function playTag(t: number) {
 }
 
 /** The player's counting system (from settings). */
-const useSystem = (): CountingSystem => useSettings().settings.countingSystem;
+const useSystem = (): CountingSystem => usePrefs().settings.countingSystem;
 
 /** "Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1" for the system's tag values. */
 export function colorLegend(system: CountingSystem, cb: boolean): string {
@@ -125,7 +125,7 @@ export function colorLegend(system: CountingSystem, cb: boolean): string {
 
 /** Shows which system is being practiced, its tags, and a link to change it in Settings. */
 export function SystemBadge() {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const system = settings.countingSystem;
   return (
     <View style={styles.badge}>
@@ -153,7 +153,7 @@ function countAccuracy(guess: number, actual: number) {
 
 /** Stepper to enter a running count, then reveal the answer with every card's tag. */
 function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult) => void }) {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const oc = useOutcomeColors();
   const actual = cards.reduce((s, c) => s + tagOf(c, settings.countingSystem), 0);
   const [guess, setGuess] = useState(0);
@@ -196,7 +196,7 @@ function CountAnswer({ cards, onDone }: { cards: Card[]; onDone: (r: RoundResult
 
 /** Do it: tap each card's tag before the clock runs out. */
 export function TagTap({ level, onFinish }: ModeProps) {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const cb = settings.colorblind;
   const system = settings.countingSystem;
   const values = useMemo(() => [...tagValues(system)].reverse(), [system]);
@@ -285,7 +285,7 @@ function useFlashRun(level: number, system: CountingSystem, onCard: (card: Card,
 
 /** See it: color-coded cards and a count meter, with the hints fading as you level up. */
 export function ColorCount({ level, onFinish }: ModeProps) {
-  const { settings, lang } = useSettings();
+  const { settings, lang } = usePrefs();
   const cb = settings.colorblind;
   const system = settings.countingSystem;
   const hints = visualHints(level);
@@ -342,7 +342,7 @@ export function SoundCount({ level, onFinish }: ModeProps) {
 
 /** Chunk it: call the total of each pair or group in one go. */
 export function PairCancel({ level, onFinish }: ModeProps) {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const system = settings.countingSystem;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- a new system means a new round
   const groups = useMemo(() => cardGroups(level), [level, system]);
@@ -393,7 +393,7 @@ export function PairCancel({ level, onFinish }: ModeProps) {
 
 /** Read it: a written round at the table. Later levels reveal it one line at a time. */
 export function ReadCount({ level, onFinish }: ModeProps) {
-  const { lang, settings } = useSettings();
+  const { lang, settings } = usePrefs();
   const system = settings.countingSystem;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the story is written in the current language
   const story = useMemo(() => countStory(level, Math.random, system), [level, system, lang]);

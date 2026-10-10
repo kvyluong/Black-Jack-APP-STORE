@@ -6,7 +6,7 @@ import { PlayingCard } from '../../components/PlayingCard';
 import { Button, H2, P, Panel, Screen } from '../../components/ui';
 import { getLesson, getLessons } from '../../content/lessons';
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
 
@@ -31,8 +31,8 @@ const T = localized({
 
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  // useSettings() re-renders this screen when the language changes; getLesson reads the current one.
-  const { updateStats } = useSettings();
+  // usePrefs() re-renders this screen when the language changes; getLesson reads the current one.
+  const { updateStats } = usePrefs();
   const lesson = getLesson(id);
   const { good, bad } = useOutcomeColors();
   const [answers, setAnswers] = useState<Record<number, number>>({});

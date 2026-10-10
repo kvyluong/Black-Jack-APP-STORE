@@ -5,7 +5,7 @@ import { Platform, Text } from 'react-native';
 
 import { useUnlocks } from '../../components/useUnlocks';
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors } from '../../theme';
 
 const T = localized({
@@ -20,7 +20,7 @@ const icon = (glyph: string) =>
   };
 
 export default function TabsLayout() {
-  const { lang } = useSettings();
+  const { lang } = usePrefs();
   const unlocks = useUnlocks();
   const badge = unlocks.newOnes.length || undefined;
   return useMemo(
@@ -40,6 +40,8 @@ export default function TabsLayout() {
           tabBarInactiveTintColor: colors.muted,
           tabBarLabelStyle: { fontWeight: '700', fontSize: 11 },
           sceneStyle: { backgroundColor: colors.felt },
+          // Hidden tabs don't re-render on every chip or stat change.
+          freezeOnBlur: true,
         }}
       >
         <Tabs.Screen name="index" options={{ title: T.home, headerTitle: 'ShoeSharp', tabBarIcon: icon('🏠') }} />

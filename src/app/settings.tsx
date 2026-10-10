@@ -8,7 +8,7 @@ import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../component
 import { useRemoveAds } from '../purchases/RemoveAds';
 import { COUNTING_SYSTEMS, CountingSystem, SYSTEM_NAME } from '../engine/counting';
 import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colors } from '../theme';
 
 const T = localized({
@@ -146,7 +146,7 @@ const website = (Constants.expoConfig?.extra?.website as string | undefined)?.re
 const privacyUrl = (base: string, lang: string) => `${base}/${lang === 'es' ? 'es/privacidad.html' : 'privacy.html'}`;
 
 export default function SettingsScreen() {
-  const { lang, settings, updateSettings, updateStats, updateRules, resetProgress } = useSettings();
+  const { lang, settings, updateSettings, updateStats, updateRules, resetProgress } = usePrefs();
   const { rules } = settings;
   const [showPrivacy, setShowPrivacy] = useState(false);
   const removeAds = useRemoveAds();

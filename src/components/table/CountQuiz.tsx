@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { Button, STEP_LABEL } from '../ui';
 import { useOutcomeColors } from '../useColors';
@@ -28,7 +28,7 @@ export interface Quiz {
 
 /** Between hands: "what's the running count?" with a −/+ picker. */
 export function CountQuiz({ quiz, setQuiz, actual }: { quiz: Quiz; setQuiz: (q: Quiz) => void; actual: number }) {
-  const { updateStats } = useSettings();
+  const { updateStats } = usePrefs();
   const { good, bad } = useOutcomeColors();
   const { guess, revealed } = quiz;
   const ok = guess === actual;

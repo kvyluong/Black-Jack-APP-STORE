@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { DealSchedule, cardDelay } from '../../engine/dealSchedule';
@@ -50,8 +51,11 @@ interface Props {
   shakeStyle: object;
 }
 
-/** The felt: dealer, the seven seats on an arc, and your hands shown large. */
-export function TableFelt({ game, table, casino, schedule, settled, instant, bubbles, fanfare, effects, shakeStyle }: Props) {
+/**
+ * The felt: dealer, the seven seats on an arc, and your hands shown large.
+ * Memoized, so the chip count-up and coaching messages don't redraw the whole table.
+ */
+export const TableFelt = memo(function TableFelt({ game, table, casino, schedule, settled, instant, bubbles, fanfare, effects, shakeStyle }: Props) {
   const { rules } = game;
   const hideHole = !game.holeRevealed && game.dealer.length > 0;
   // Your hands, shown large, in the same left-to-right order as the seats.
@@ -118,7 +122,7 @@ export function TableFelt({ game, table, casino, schedule, settled, instant, bub
       <FanfareOverlay fanfare={fanfare} effects={effects} />
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   felt: { borderRadius: 18, paddingVertical: spacing(1), paddingHorizontal: 4 },

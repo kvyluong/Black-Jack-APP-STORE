@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
 
 export interface Datum {
@@ -55,7 +55,7 @@ export function Chart({
   /** A labeled goal line, e.g. the 30-second target. */
   reference?: { value: number; label: string };
 }) {
-  useSettings(); // re-render on language change
+  usePrefs(); // re-render on language change
   const lastIndex = data.map((d) => d.value !== null).lastIndexOf(true);
   const [picked, setPicked] = useState<number | null>(null);
   const [table, setTable] = useState(false);

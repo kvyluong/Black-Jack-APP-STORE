@@ -417,13 +417,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     setBet(getTable('floor').minBet);
   };
 
-  // Winnings count up into your chips with rising ticks.
-  const shownBankroll = useCountUp(
-    betting && !testing ? settings.bankroll : countSource.bankroll,
-    (step) => settings.soundEffects && playSound('tick', 1 + step * 0.06),
-    !anim.reduceMotion,
-  );
-
   // Between rounds the test may ask a question (decks left) before the next bet.
   const gate = betting && testing ? exam?.gate?.(game) : null;
   const canDeal = betting && !gate && !needsRefill(bankroll) && !moveTo && bet >= unit && affordableSeats >= 1;
@@ -448,7 +441,12 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
         <View style={{ gap: 2 }}>
-          <Text style={styles.bankroll}>{testing ? T.examChips(formatChips(shownBankroll)) : T.chips(formatChips(shownBankroll))}</Text>
+          <ChipCount
+            value={betting && !testing ? settings.bankroll : countSource.bankroll}
+            testing={testing}
+            sound={settings.soundEffects}
+            animate={!anim.reduceMotion}
+          />
           {testing && <Text style={styles.count}>{T.hand(Math.max(1, rounds))}</Text>}
         </View>
         {testing ? (
@@ -577,6 +575,15 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       )}
     </Screen>
   );
+}
+
+/**
+ * Your chips. Winnings count up with rising ticks; it's its own component so each
+ * tick redraws this line, not the whole table.
+ */
+function ChipCount({ value, testing, sound, animate }: { value: number; testing: boolean; sound: boolean; animate: boolean }) {
+  const shown = useCountUp(value, (step) => sound && playSound('tick', 1 + step * 0.06), animate);
+  return <Text style={styles.bankroll}>{testing ? T.examChips(formatChips(shown)) : T.chips(formatChips(shown))}</Text>;
 }
 
 const styles = StyleSheet.create({

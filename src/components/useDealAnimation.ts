@@ -7,7 +7,7 @@ import { playSound, preloadSounds } from '../audio/sounds';
 import { DEAL_STEP_MS, DealSchedule, dealSchedule, hapticSchedule } from '../engine/dealSchedule';
 import { GameState } from '../engine/game';
 import { Fanfare, roundFanfare } from '../engine/juice';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { useShake } from './juice';
 import { useReduceMotion } from './useReduceMotion';
 
@@ -15,7 +15,7 @@ export type ShownFanfare = Fanfare & { key: number };
 
 /** `stepMs`: time between cards (the casino-conditions test deals faster). */
 export function useDealAnimation(stepMs = DEAL_STEP_MS) {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const reduceMotion = useReduceMotion();
   const shake = useShake();
   const [schedule, setSchedule] = useState<DealSchedule | null>(null);

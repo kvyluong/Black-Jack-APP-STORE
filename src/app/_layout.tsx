@@ -7,7 +7,7 @@ import { initAds } from '../ads/init';
 import { RemoveAdsProvider } from '../purchases/RemoveAds';
 import { useDailySnapshot } from '../components/goals';
 import { localized } from '../i18n/lang';
-import { SettingsProvider, useSettings } from '../state/settings';
+import { SettingsProvider, usePrefs } from '../state/settings';
 import { colors } from '../theme';
 
 const T = localized({
@@ -78,7 +78,7 @@ export default function RootLayout() {
 
 /** The navigator. Reads settings so the screen titles follow the language. */
 function AppStack() {
-  const { lang } = useSettings();
+  const { lang } = usePrefs();
   useDailySnapshot();
   // Rebuilt only when the language changes, not on every chip or stats update.
   return useMemo(
@@ -89,6 +89,8 @@ function AppStack() {
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: '700' },
           contentStyle: { backgroundColor: colors.felt },
+          // Screens underneath the one you're on stop re-rendering until you come back to them.
+          freezeOnBlur: true,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: T.index }} />

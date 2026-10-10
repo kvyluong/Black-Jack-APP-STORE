@@ -25,7 +25,7 @@ import { GameState, currentTrueCount } from '../engine/game';
 import { localDay } from '../engine/progression';
 import { formatTrueCount } from '../engine/strategy';
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs, useSettings } from '../state/settings';
 import { colors, spacing } from '../theme';
 
 const T = localized({
@@ -341,7 +341,7 @@ function DecksLeftQuestion({ decks, dealt, onAnswer }: { decks: number; dealt: n
 
 /** The report card after the shoe. */
 function ReportCard({ input, onAgain }: { input: ExamInput; onAgain: () => void }) {
-  const { lang } = useSettings();
+  const { lang } = usePrefs();
   const { good, bad } = useOutcomeColors();
   const r = useMemo(() => gradeExam(input), [input]);
   const rows = useMemo(

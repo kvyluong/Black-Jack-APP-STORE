@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../../audio/haptics';
 import { CasinoTable, STARTING_CHIPS, formatChips } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { BonusAdButton } from '../BonusAdButton';
 import { ChipButton, ChipStack } from '../chips';
@@ -67,7 +67,7 @@ interface Props {
 
 /** Between hands: 1 or 2 hands, the chip tray, and the Deal button. */
 export function BettingPanel({ extras = true, ...p }: Props) {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings } = usePrefs();
   const unit = p.casino.minBet;
   return (
     <Panel>

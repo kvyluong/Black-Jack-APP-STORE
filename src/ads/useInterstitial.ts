@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { InterstitialAd } from 'react-native-google-mobile-ads';
 
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { INTERSTITIAL_EVERY_N_ROUNDS, INTERSTITIAL_MIN_INTERVAL_MS, adUnitId, getAds } from './config';
 
 /**
@@ -9,7 +9,7 @@ import { INTERSTITIAL_EVERY_N_ROUNDS, INTERSTITIAL_MIN_INTERVAL_MS, adUnitId, ge
  * (between hands). It shows an ad at most every N rounds and every few minutes.
  */
 export function useInterstitial() {
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   const adsRemoved = settings.adsRemoved;
   const adRef = useRef<InterstitialAd | null>(null);
   const loaded = useRef(false);

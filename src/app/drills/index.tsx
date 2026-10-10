@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { P, Screen } from '../../components/ui';
 import { SYSTEM_NAME, getCountingSystem } from '../../engine/counting';
 import { localized } from '../../i18n/lang';
-import { useSettings } from '../../state/settings';
+import { usePrefs } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
 
 const T = localized({
@@ -45,7 +45,7 @@ const drills = (): { key: string; title: string; body: string; href: Href }[] =>
 ];
 
 export default function Drills() {
-  useSettings(); // re-render on language change
+  usePrefs(); // re-render on language change
   return (
     <Screen>
       <P muted>{T.intro}</P>

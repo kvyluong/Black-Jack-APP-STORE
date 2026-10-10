@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, isRed } from '../engine/cards';
 import { CountingSystem, cardTag } from '../engine/counting';
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colors, radius, tagColor, tagText } from '../theme';
 
 interface Props {
@@ -34,8 +35,8 @@ const T = localized({
 
 const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
 
-export function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
-  const { settings } = useSettings();
+/** Memoized: cards re-render only when what they show changes, not on every chip or stat update. */
+export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
   const s = SIZES[size];
   if (faceDown || !card) {
     return (
@@ -45,12 +46,7 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }:
     );
   }
   const color = isRed(card) ? colors.red : colors.black;
-  const tag = cardTag(card.rank, tagSystem ?? settings.countingSystem);
-  const tagLabel = showTag ? (
-    <Text style={[styles.tag, size === 'xs' && styles.tagXs, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={T.tag(tag)}>
-      {tagText(tag)}
-    </Text>
-  ) : null;
+  const tagLabel = showTag ? <CardTag card={card} tiny={size === 'xs'} system={tagSystem} /> : null;
   if (size === 'xs') {
     // Tiny cards for other players' seats: just rank over suit.
     const tiny = (
@@ -85,6 +81,17 @@ export function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }:
       </View>
       {tagLabel}
     </View>
+  );
+});
+
+/** The count tag under a card; only this part follows the counting-system and color-blind settings. */
+function CardTag({ card, tiny, system }: { card: Card; tiny: boolean; system?: CountingSystem }) {
+  const { settings } = usePrefs();
+  const tag = cardTag(card.rank, system ?? settings.countingSystem);
+  return (
+    <Text style={[styles.tag, tiny && styles.tagXs, { color: tagColor(tag, settings.colorblind) }]} accessibilityLabel={T.tag(tag)}>
+      {tagText(tag)}
+    </Text>
   );
 }
 

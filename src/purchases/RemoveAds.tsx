@@ -3,7 +3,7 @@
 import { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { REMOVE_ADS_SKU, getIap, iapSupported } from './iap';
 
 type Status = 'idle' | 'buying' | 'restoring';
@@ -45,7 +45,7 @@ interface RemoveAdsState {
 const Ctx = createContext<RemoveAdsState | null>(null);
 
 export function RemoveAdsProvider({ children }: { children: ReactNode }) {
-  const { ready, settings, updateSettings } = useSettings();
+  const { ready, settings, updateSettings } = usePrefs();
   const [price, setPrice] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState<MessageKey | null>(null);

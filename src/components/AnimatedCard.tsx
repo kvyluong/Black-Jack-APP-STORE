@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { memo, useEffect, useState } from 'react';
+import { Animated, Easing, Platform } from 'react-native';
 
 import { Card } from '../engine/cards';
 import { CARD_ANIM_MS } from '../engine/dealSchedule';
@@ -16,8 +16,20 @@ interface Props {
   instant: boolean;
 }
 
-/** A card that slides in from the shoe (top right) when it mounts and flips when revealed. */
-export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
+/**
+ * A card that slides in from the shoe (top right) when it mounts and flips when revealed.
+ * Memoized on what it shows: `dealDelay` is only read when the card mounts, so a new
+ * deal schedule doesn't re-render the cards already on the table.
+ */
+export const AnimatedCard = memo(AnimatedCardView, (a, b) =>
+  a.card.rank === b.card.rank &&
+  a.card.suit === b.card.suit &&
+  a.faceDown === b.faceDown &&
+  a.size === b.size &&
+  a.instant === b.instant,
+);
+
+function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
   const deal = useState(() => new Animated.Value(instant ? 1 : 0))[0];
   const flip = useState(() => new Animated.Value(1))[0];
   const sway = useState(() => new Animated.Value(0))[0];
@@ -33,7 +45,13 @@ export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, insta
       easing: Easing.out(Easing.back(1.6)),
       useNativeDriver: true,
     });
-    // After landing, the card idles with a slow, slightly random sway.
+    // After landing, the card idles with a slow, slightly random sway. The tiny cards at
+    // the other seats stay still: a dozen of them swaying costs frames for little effect.
+    // So does the web, where there's no native driver and every frame of it runs in JavaScript.
+    if (size === 'xs' || Platform.OS === 'web') {
+      anim.start();
+      return () => anim.stop();
+    }
     const period = 1600 + Math.random() * 900;
     const idle = Animated.loop(
       Animated.sequence([
@@ -76,7 +94,8 @@ export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, insta
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceDown]);
 
-  const style = {
+  // Built once: the animated values never change, so neither do their interpolations.
+  const [style] = useState(() => ({
     opacity: deal.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] }),
     transform: [
       { translateX: deal.interpolate({ inputRange: [0, 1], outputRange: [140, 0] }) },
@@ -86,7 +105,7 @@ export function AnimatedCard({ card, faceDown, size, dealDelay, flipDelay, insta
       { translateY: sway.interpolate({ inputRange: [-1, 1], outputRange: [1.5, -1.5] }) },
       { scaleX: flip },
     ],
-  };
+  }));
 
   return (
     <Animated.View style={style}>

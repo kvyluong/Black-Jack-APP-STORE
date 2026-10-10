@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { adUnitId, getAds } from './config';
 
 /** Anchored adaptive banner. Renders nothing when ads aren't available. */
 export function AdBanner() {
   const [failed, setFailed] = useState(false);
-  const { settings } = useSettings();
+  const { settings } = usePrefs();
   if (settings.adsRemoved) return null;
   const ads = getAds();
   const unitId = adUnitId('banner');

@@ -22,7 +22,7 @@ import {
   warnings,
 } from '../engine/simulator';
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { usePrefs } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 
 const T = localized({
@@ -155,7 +155,7 @@ const presetOf = (ramp: BetRamp): RampPreset | null =>
   (Object.keys(RAMP_PRESETS) as RampPreset[]).find((k) => RAMP_PRESETS[k].every((v, i) => v === ramp[i])) ?? null;
 
 export default function SimulatorScreen() {
-  const { settings, lang } = useSettings();
+  const { settings, lang } = usePrefs();
   const { good, bad } = useOutcomeColors();
   const [rules, setRules] = useState(() => ({
     ...settings.rules,
