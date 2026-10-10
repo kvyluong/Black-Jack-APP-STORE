@@ -91,8 +91,7 @@ function AppStack() {
           contentStyle: { backgroundColor: colors.felt },
         }}
       >
-        <Stack.Screen name="index" options={{ title: T.index }} />
-        <Stack.Screen name="tables" options={{ title: T.tables }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: T.index }} />
         <Stack.Screen name="play" options={{ title: T.play }} />
         <Stack.Screen name="learn/index" options={{ title: T.learn }} />
         <Stack.Screen name="learn/[id]" options={{ title: T.lesson }} />

@@ -60,6 +60,7 @@ import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors } from '../../theme';
 import { LevelBar } from '../chips';
+import { useUnlocks } from '../useUnlocks';
 import { StreakBadge, useCountUp } from '../juice';
 import { Button, Panel, Screen } from '../ui';
 import { useOutcomeColors } from '../useColors';
@@ -177,8 +178,11 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // Under casino conditions you're on your own: no hints, count or corrections.
   const showHints = !testing && settings.showHints;
   const correctMistakes = !testing && settings.correctMistakes;
-  const showCount = !testing && settings.showCount;
-  const countQuizzes = !testing && settings.countQuizzes;
+  // Beginners see just the cards, the coach and the buttons; the count bar, bet
+  // suggestion, level bar and count quizzes appear with the counting lessons.
+  const counting = useUnlocks().has('tableCount');
+  const showCount = !testing && counting && settings.showCount;
+  const countQuizzes = !testing && counting && settings.countQuizzes;
   // The count plays (DEVIATIONS) are Hi-Lo indices, so they only apply with Hi-Lo.
   // The test always grades them for Hi-Lo counters.
   const countPlays = countingSystem === 'hiLo' && (testing || settings.useDeviations);
@@ -449,14 +453,14 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
         </View>
         {testing ? (
           <DiscardTray cards={discardedCards(countSource)} decks={rules.decks} deckPx={9} caption={false} />
-        ) : (
+        ) : counting ? (
           <Text style={styles.count} onPress={() => setCountVisible(!countVisible)} accessibilityRole="button">
             {countVisible ? countText : T.tapCount}
           </Text>
-        )}
+        ) : null}
       </View>
-      {!testing && <LevelBar xp={stats.xp} compact />}
-      {!testing && game.justShuffled && (
+      {!testing && counting && <LevelBar xp={stats.xp} compact />}
+      {!testing && counting && game.justShuffled && (
         <Text style={styles.shuffle}>
           {isBalanced(countingSystem) ? T.shuffled : T.shuffledKo(signed(initialRunningCount(rules.decks)))}
         </Text>

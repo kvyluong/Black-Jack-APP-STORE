@@ -1,13 +1,13 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BonusAdButton } from '../components/BonusAdButton';
-import { LevelBar } from '../components/chips';
-import { P, Panel, Screen } from '../components/ui';
-import { TABLES, canSit, formatChips, isUnlocked } from '../engine/progression';
-import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
-import { colors, radius, spacing } from '../theme';
+import { BonusAdButton } from '../../components/BonusAdButton';
+import { LevelBar } from '../../components/chips';
+import { P, Panel, Screen } from '../../components/ui';
+import { TABLES, canSit, formatChips, isUnlocked } from '../../engine/progression';
+import { localized } from '../../i18n/lang';
+import { useSettings } from '../../state/settings';
+import { colors, radius, spacing } from '../../theme';
 
 const T = localized({
   en: {
@@ -30,7 +30,6 @@ const T = localized({
 
 /** The casino floor: pick a table. Higher-stakes rooms unlock as your chips grow. */
 export default function Tables() {
-  const { from } = useLocalSearchParams<{ from?: string }>();
   const { settings, stats, updateSettings } = useSettings();
   const chips = settings.bankroll;
   const peak = stats.peakChips;
@@ -64,9 +63,7 @@ export default function Tables() {
             disabled={!sit}
             onPress={() => {
               updateSettings({ tableId: t.id });
-              // Back to the table you came from instead of stacking another one on top.
-              if (from === 'play') router.dismissTo('/play');
-              else router.push('/play');
+              router.push('/play');
             }}
             style={({ pressed }) => [styles.table, { backgroundColor: t.felt }, !unlocked && styles.locked, pressed && { opacity: 0.85 }]}
           >

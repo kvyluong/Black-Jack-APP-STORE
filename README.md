@@ -8,6 +8,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
 ## Features
 
+- **Calm by design**: four tabs (Home, Play, Practice, Me). Home is one "Next step" card with a Continue button, today's goals in a single line and a quick-play button. New players start with just the lessons and the casino floor; drills, tools and the full table display (count bar, bet suggestion, level bar) unlock with the lessons that explain them, with "New" badges (rules in `src/engine/unlocks.ts`). "I already know how to play" in the welcome tour, or Settings → Show every feature, opens everything at once.
 - **Road to the Casino**: a casino-ready score built from the benchmarks serious counters use (99%+ basic strategy over your last 200 decisions, a full deck counted exactly in under 30 seconds, true count conversion, every count play learned, deck estimation within half a deck, a passed casino-conditions test, all lessons), each with progress, why it matters and a practice button, plus the next step to work on.
 - **Daily goals and progress charts**: three goals a day with chip and XP rewards and a streak; charts of accuracy, hands, best deck time and test grades over time.
 - **Casino Conditions test**: one full shoe with no hints or count on screen, chatty players, a faster dealer and a discard tray; decks-left questions during the shoe, then the running and true count at the end, and a report card grading play, count, bets and deck estimates.

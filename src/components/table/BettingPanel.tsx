@@ -125,7 +125,7 @@ export function BettingPanel({ extras = true, ...p }: Props) {
       )}
       {extras && <BonusAdButton onGranted={p.onBonus} />}
       {extras && (
-        <Text style={styles.lobby} onPress={() => router.push('/tables?from=play')} accessibilityRole="link">
+        <Text style={styles.lobby} onPress={() => router.navigate('/tables')} accessibilityRole="link">
           {T.changeTable}
         </Text>
       )}

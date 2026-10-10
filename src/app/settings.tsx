@@ -42,6 +42,8 @@ const T = localized({
     colorblind: 'Color-blind mode',
     colorblindHint: 'Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too.',
     replayTour: 'Replay the welcome tour',
+    allFeatures: 'Show every feature',
+    allFeaturesHint: 'Open all drills, tools and the full table display now, instead of as you finish the lessons.',
     table: 'The table',
     handsYouPlay: 'Hands you play',
     oneHand: '1 hand',
@@ -104,6 +106,8 @@ const T = localized({
     colorblind: 'Modo daltónico',
     colorblindHint: 'Azul y naranja en lugar de verde y rojo. Las etiquetas del conteo siempre muestran ▲ ● ▼ también.',
     replayTour: 'Repetir el tour de bienvenida',
+    allFeatures: 'Mostrar todas las funciones',
+    allFeaturesHint: 'Abre ya todos los ejercicios, las herramientas y la mesa completa, en vez de a medida que terminas las lecciones.',
     table: 'La mesa',
     handsYouPlay: 'Manos que juegas',
     oneHand: '1 mano',
@@ -231,6 +235,12 @@ export default function SettingsScreen() {
           hint={T.colorblindHint}
           value={settings.colorblind}
           onChange={(v) => updateSettings({ colorblind: v })}
+        />
+        <ToggleRow
+          label={T.allFeatures}
+          hint={T.allFeaturesHint}
+          value={settings.experienced}
+          onChange={(v) => updateSettings({ experienced: v })}
         />
         <Button
           title={T.replayTour}

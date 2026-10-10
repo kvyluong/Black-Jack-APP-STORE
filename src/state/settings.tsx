@@ -64,6 +64,8 @@ export interface Stats {
   goals: GoalsState;
   /** One point per day you used the app, for progress charts (kept to ~1 year). */
   history: HistoryPoint[];
+  /** Unlocked features you've opened (the rest show a "New" badge). */
+  seenFeatures: string[];
 }
 
 export interface Settings {
@@ -102,6 +104,8 @@ export interface Settings {
   countingSystem: CountingSystem;
   /** Play at the table with casino hand signals: tap the felt to hit, swipe sideways to stand. */
   handSignals: boolean;
+  /** "I already know how to play": every feature is open from the start (see engine/unlocks.ts). */
+  experienced: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -122,6 +126,7 @@ const DEFAULT_SETTINGS: Settings = {
   language: 'system',
   countingSystem: 'hiLo',
   handSignals: false,
+  experienced: false,
   tableId: 'floor',
 };
 
@@ -147,6 +152,7 @@ const DEFAULT_STATS: Stats = {
   deckEstimates: emptyDeckEstimates(),
   goals: emptyGoals(),
   history: [],
+  seenFeatures: [],
 };
 
 // Kept from the app's first name (Blackjack Coach) so saved progress carries over.

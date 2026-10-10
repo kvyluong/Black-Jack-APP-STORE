@@ -34,6 +34,9 @@ const T = localized({
     claimA11y: (goal: string, reward: string) => `Claim ${goal}: ${reward}`,
     goalA11y: (goal: string, done: number, target: number, reward: string) => `${goal}. ${done} of ${target}. Reward ${reward}. Opens practice`,
     streakA11y: (n: number) => `Daily goal streak: ${n} days`,
+    today: 'Today',
+    ready: 'Reward ready',
+    summaryA11y: (done: number, total: number, streak: number) => `Today’s goals: ${done} of ${total} done, ${streak}-day streak. Show goals`,
   },
   es: {
     title: 'Metas de hoy',
@@ -48,6 +51,10 @@ const T = localized({
     goalA11y: (goal: string, done: number, target: number, reward: string) =>
       `${goal}. ${done} de ${target}. Premio ${reward}. Abre la práctica`,
     streakA11y: (n: number) => `Racha de metas diarias: ${n} días`,
+    today: 'Hoy',
+    ready: 'Premio listo',
+    summaryA11y: (done: number, total: number, streak: number) =>
+      `Metas de hoy: ${done} de ${total} listas, racha de ${streak} días. Ver metas`,
   },
 });
 
@@ -87,8 +94,9 @@ export function useDailySnapshot() {
   }, [ready, today, snapshotDay, updateStats]);
 }
 
-/** Today's goals, shown on the home screen. */
-export function DailyGoalsCard() {
+/** Today's goals, shown on the home screen. `collapsible`: starts as one line that opens on tap. */
+export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean }) {
+  const [open, setOpen] = useState(!collapsible);
   const { stats, settings, addChips, updateStats } = useSettings();
   const today = useToday();
   const goals = todaysGoals(stats, today);
@@ -110,6 +118,29 @@ export function DailyGoalsCard() {
     updateStats((s) => ({ ...s, xp: s.xp + r.xp, goals: claimGoal(s.goals, g.id, today, ids) }));
     if (settings.soundEffects) playSound('chips');
   };
+
+  if (!open) {
+    const doneCount = goals.filter((g) => goalProgress(g, stats, today) >= g.target).length;
+    const rewardReady = goals.some((g) => goalProgress(g, stats, today) >= g.target && !claimed.includes(g.id));
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.summary, pressed && { opacity: 0.8 }]}
+        accessibilityRole="button"
+        accessibilityLabel={T.summaryA11y(doneCount, goals.length, streak)}
+        onPress={() => setOpen(true)}
+      >
+        <Text style={styles.summaryTitle}>{T.today}</Text>
+        <View style={styles.dots}>
+          {goals.map((g) => (
+            <View key={g.id} style={[styles.dot, goalProgress(g, stats, today) >= g.target && styles.dotDone]} />
+          ))}
+        </View>
+        {rewardReady && <Text style={styles.readyBadge}>{T.ready}</Text>}
+        <Text style={[styles.summaryStreak, streak === 0 && { color: colors.muted }]}>🔥 {streak}</Text>
+        <Text style={styles.chev}>›</Text>
+      </Pressable>
+    );
+  }
 
   const streakNote = allClaimed ? T.allDone : streak > 0 && stats.goals.lastCompleteDay !== today ? T.keepStreak(streak + 1) : T.noStreak;
 
@@ -195,6 +226,22 @@ function GoalRow({
 }
 
 const styles = StyleSheet.create({
+  summary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(1.5),
+    backgroundColor: colors.panel,
+    borderRadius: radius.md,
+    paddingVertical: spacing(1.5),
+    paddingHorizontal: spacing(2),
+  },
+  summaryTitle: { color: colors.text, fontWeight: '800', fontSize: 16 },
+  dots: { flexDirection: 'row', gap: 6, flex: 1 },
+  dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: colors.gold },
+  dotDone: { backgroundColor: colors.gold },
+  readyBadge: { color: colors.black, backgroundColor: colors.gold, fontWeight: '800', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  summaryStreak: { color: colors.gold, fontWeight: '800' },
+  chev: { color: colors.muted, fontSize: 22 },
   card: {
     backgroundColor: colors.panel,
     borderRadius: radius.md,

@@ -29,6 +29,8 @@ const T = localized({
     introBody: 'Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.',
     introNote: (chips: string) => `Takes about a minute. Practice chips only: your real stack of $${chips} is waiting for you after.`,
     letsPlay: 'Let’s play',
+    experienced: 'I already know how to play',
+    experiencedHint: 'Skips the tour and opens every feature now.',
     nicePlaying: 'Nice playing!',
     twoWins: 'Two hands, two wins',
     heart: 'You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.',
@@ -59,6 +61,8 @@ const T = localized({
     introBody: 'Juguemos juntos dos manos rápidas de práctica. Te diré exactamente qué hacer y por qué.',
     introNote: (chips: string) => `Toma como un minuto. Solo fichas de práctica: tu pila real de $${chips} te espera después.`,
     letsPlay: '¡A jugar!',
+    experienced: 'Ya sé jugar',
+    experiencedHint: 'Salta el tour y abre todas las funciones desde ya.',
     nicePlaying: '¡Bien jugado!',
     twoWins: 'Dos manos, dos victorias',
     heart: 'Ya conoces lo esencial del juego: plántate cuando el crupier probablemente se pase y pide cuando no.',
@@ -91,7 +95,7 @@ const PRACTICE_CHIPS = 100;
 type Stage = { kind: 'intro' } | { kind: 'hand'; index: number } | { kind: 'finish' };
 
 export default function Welcome() {
-  const { settings, updateStats } = useSettings();
+  const { updateSettings, settings, updateStats } = useSettings();
   const anim = useDealAnimation();
   const { schedule, settled, fanfare, reduceMotion } = anim;
   const [stage, setStage] = useState<Stage>({ kind: 'intro' });
@@ -146,6 +150,15 @@ export default function Welcome() {
           <P muted>{T.introNote(formatChips(STARTING_CHIPS))}</P>
         </Panel>
         <Button title={T.letsPlay} onPress={() => deal(0)} />
+        <Button
+          title={T.experienced}
+          variant="ghost"
+          onPress={() => {
+            updateSettings({ experienced: true });
+            finish();
+          }}
+        />
+        <Text style={styles.experiencedHint}>{T.experiencedHint}</Text>
         {skip}
       </Screen>
     );
@@ -260,6 +273,7 @@ const styles = StyleSheet.create({
   coachTitle: { color: colors.gold, fontSize: 18, fontWeight: '800', textAlign: 'center' },
   actions: { flexDirection: 'row', gap: spacing(1), justifyContent: 'center' },
   actionButton: { minWidth: 96, flexGrow: 1 },
+  experiencedHint: { color: colors.muted, textAlign: 'center', fontSize: 13, marginTop: -4 },
   skip: { color: colors.muted, textAlign: 'center', textDecorationLine: 'underline', marginTop: spacing(1) },
   seen: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' },
   rc: { color: colors.gold, fontSize: 22, fontWeight: '900', textAlign: 'center' },
