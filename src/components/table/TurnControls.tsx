@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { LegalActions } from '../../engine/game';
+import { formatChips } from '../../engine/progression';
 import { ACTION_LABEL, Action, Recommendation } from '../../engine/strategy';
 import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
@@ -15,6 +16,8 @@ const T = localized({
     take: 'Take insurance',
     decline: 'No insurance',
     signals: 'Tap the felt to hit · Swipe sideways to stand',
+    needSplit: (split: string, n: string) => `${split} · Need $${n}`,
+    needSplitLabel: (n: string) => `Split, not available: you need $${n} more in chips`,
   },
   es: {
     coachSeat: (seat: number, action: string) => `Asiento ${seat} · Coach: ${action}`,
@@ -24,6 +27,8 @@ const T = localized({
     take: 'Tomar seguro',
     decline: 'Sin seguro',
     signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
+    needSplit: (split: string, n: string) => `${split} · Faltan $${n}`,
+    needSplitLabel: (n: string) => `Separar, no disponible: te faltan $${n} en fichas`,
   },
 });
 
@@ -43,6 +48,7 @@ export function ActionBar({
   showHints,
   surrenderAllowed,
   handSignals = false,
+  splitShortfall = 0,
   onAction,
 }: {
   seat: number;
@@ -51,6 +57,8 @@ export function ActionBar({
   showHints: boolean;
   surrenderAllowed: boolean;
   handSignals?: boolean;
+  /** Chips you're short to split this pair: the Split button says so instead of just greying out. */
+  splitShortfall?: number;
   onAction: (a: Action) => void;
 }) {
   return (
@@ -63,17 +71,21 @@ export function ActionBar({
       )}
       {handSignals && <Text style={styles.signals}>✋ {T.signals}</Text>}
       <View style={styles.actions}>
-        {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => (
-          <Button
-            key={a}
-            title={ACTION_LABEL[a]}
-            variant="secondary"
-            disabled={!legal[a]}
-            highlighted={showHints && advice?.action === a}
-            onPress={() => onAction(a)}
-            style={handSignals && SIGNALED.includes(a) ? { ...styles.actionButton, ...styles.dimmed } : styles.actionButton}
-          />
-        ))}
+        {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => {
+          const short = a === 'split' && !legal.split && splitShortfall > 0 ? formatChips(splitShortfall) : null;
+          return (
+            <Button
+              key={a}
+              title={short ? T.needSplit(ACTION_LABEL[a], short) : ACTION_LABEL[a]}
+              accessibilityLabel={short ? T.needSplitLabel(short) : undefined}
+              variant="secondary"
+              disabled={!legal[a]}
+              highlighted={showHints && advice?.action === a}
+              onPress={() => onAction(a)}
+              style={handSignals && SIGNALED.includes(a) ? { ...styles.actionButton, ...styles.dimmed } : styles.actionButton}
+            />
+          );
+        })}
       </View>
     </>
   );

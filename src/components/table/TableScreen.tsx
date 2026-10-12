@@ -28,6 +28,7 @@ import {
   newGame,
   resolveInsurance,
   shuffleIfNeeded,
+  splitShortfall,
   startRound,
 } from '../../engine/game';
 import { streakPitch } from '../../engine/juice';
@@ -528,6 +529,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
           showHints={showHints}
           surrenderAllowed={rules.lateSurrender}
           handSignals={settings.handSignals}
+          splitShortfall={splitShortfall(game)}
           onAction={onAction}
         />
       )}

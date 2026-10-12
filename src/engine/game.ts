@@ -277,6 +277,18 @@ export function legalActions(s: GameState): LegalActions {
   };
 }
 
+/**
+ * Chips you're short to split the active hand: above 0 only when it's your pair and the
+ * split would be allowed except that your chips don't cover another bet the same size.
+ */
+export function splitShortfall(s: GameState): number {
+  if (s.phase !== 'playing') return 0;
+  const h = s.hands[s.active];
+  if (!h || h.done || !isYours(h) || h.cards.length !== 2 || !isPair(h.cards) || h.splitAces) return 0;
+  if (s.hands.filter((x) => x.seat === h.seat).length >= s.rules.maxHands) return 0;
+  return Math.max(0, h.bet - s.bankroll);
+}
+
 /** Builds the strategy context for the active hand, for coaching. */
 export function decisionContext(s: GameState, withCount: boolean): DecisionContext | null {
   if (s.phase !== 'playing') return null;
