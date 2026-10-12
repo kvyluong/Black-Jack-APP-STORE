@@ -27,7 +27,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Bonus chips from rewarded ads**: an optional "Watch an ad: +500 chips" button at the table and in the Casino Floor lobby. Chips are granted only when the ad reports it was watched to the end, up to 5 times a day (resets at local midnight). The bonus is 20 minimum bets at your best unlocked table (500 at the start, up to 50,000 at the Private Salon). In development builds without the ad SDK (Expo Go, web) a labeled test ad stands in; the HTML build shows a 5-second preview.
 - **A real casino table**: seven seats with computer players who sit down and leave between rounds (broke, bored, or up and cashing out). Before each deal you choose to play one hand or two, right in the betting panel (also in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards (watch their bets rise with the count), plays hunches, never busts, copies the dealer, or high roller. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
 - **Practice table**: a full blackjack game (splits, doubles, surrender, insurance, multi-deck shoe with penetration) with a coach that:
-  - highlights the best play before you act (optional)
+  - shows the best play when you tap "Ask the coach" (optional)
   - explains mistakes in plain English after you act
   - shows running count, decks remaining and true count, with a suggested bet
   - can quiz you on the running count between hands

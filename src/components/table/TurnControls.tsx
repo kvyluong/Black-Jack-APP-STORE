@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { LegalActions } from '../../engine/game';
@@ -16,6 +17,7 @@ const T = localized({
     take: 'Take insurance',
     decline: 'No insurance',
     signals: 'Tap the felt to hit · Swipe sideways to stand',
+    askCoach: '💡 Ask the coach',
     need: (play: string, n: string) => `${play} · Need $${n}`,
     needLabel: (play: string, n: string) => `${play}, not available: you need $${n} more in chips`,
   },
@@ -27,6 +29,7 @@ const T = localized({
     take: 'Tomar seguro',
     decline: 'Sin seguro',
     signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
+    askCoach: '💡 Pregúntale al coach',
     need: (play: string, n: string) => `${play} · Faltan $${n}`,
     needLabel: (play: string, n: string) => `${play}, no disponible: te faltan $${n} en fichas`,
   },
@@ -38,7 +41,9 @@ const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
 const SIGNALED: Action[] = ['hit', 'stand'];
 
 /**
- * Your turn: Hit / Stand / Double / Split / Surrender, with the coach's pick highlighted.
+ * Your turn: Hit / Stand / Double / Split / Surrender. With hints on, the coach waits to be
+ * asked: "Ask the coach" shows and highlights the best play for this decision only (the bar
+ * remounts for each decision, so it starts hidden again).
  * With `handSignals`, a hint explains the felt gestures and Hit/Stand are dimmed (still tappable).
  */
 export function ActionBar({
@@ -61,9 +66,12 @@ export function ActionBar({
   shortfall?: Partial<Record<'split' | 'double', number>>;
   onAction: (a: Action) => void;
 }) {
+  const [asked, setAsked] = useState(false);
+  const coach = showHints && asked;
   return (
     <>
-      {showHints && advice && (
+      {showHints && advice && !asked && <CoachButton onPress={() => setAsked(true)} />}
+      {coach && advice && (
         <Text style={styles.hint}>
           {T.coachSeat(seat + 1, ACTION_LABEL[advice.action])}
           {advice.deviation ? T.countPlay : ''}
@@ -81,7 +89,7 @@ export function ActionBar({
               accessibilityLabel={short ? T.needLabel(ACTION_LABEL[a], short) : undefined}
               variant="secondary"
               disabled={!legal[a]}
-              highlighted={showHints && advice?.action === a}
+              highlighted={coach && advice?.action === a}
               onPress={() => onAction(a)}
               style={handSignals && SIGNALED.includes(a) ? { ...styles.actionButton, ...styles.dimmed } : styles.actionButton}
             />
@@ -94,10 +102,11 @@ export function ActionBar({
 
 /** The dealer shows an Ace: take insurance or not. */
 export function InsurancePanel({ hint, onChoose }: { hint: string | null; onChoose: (take: boolean) => void }) {
+  const [asked, setAsked] = useState(false);
   return (
     <Panel>
       <Text style={styles.prompt}>{T.prompt}</Text>
-      {hint && <Text style={styles.hint}>{T.coach(hint)}</Text>}
+      {hint && (asked ? <Text style={styles.hint}>{T.coach(hint)}</Text> : <CoachButton onPress={() => setAsked(true)} />)}
       <View style={styles.actions}>
         <Button title={T.take} variant="secondary" onPress={() => onChoose(true)} style={styles.actionButton} />
         <Button title={T.decline} variant="secondary" onPress={() => onChoose(false)} style={styles.actionButton} />
@@ -106,7 +115,17 @@ export function InsurancePanel({ hint, onChoose }: { hint: string | null; onChoo
   );
 }
 
+/** A small link-style button that reveals the coach's advice. */
+function CoachButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Text style={styles.ask} onPress={onPress} accessibilityRole="button" suppressHighlighting>
+      {T.askCoach}
+    </Text>
+  );
+}
+
 const styles = StyleSheet.create({
+  ask: { color: colors.gold, fontWeight: '700', textAlign: 'center', paddingVertical: 4, textDecorationLine: 'underline' },
   hint: { color: colors.gold, fontWeight: '700', textAlign: 'center' },
   prompt: { color: colors.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1), justifyContent: 'center' },
