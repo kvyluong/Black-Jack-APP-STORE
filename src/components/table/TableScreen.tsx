@@ -19,6 +19,7 @@ import {
   GameState,
   YOU,
   act,
+  chipShortfall,
   currentTrueCount,
   hiLoTrueCount,
   decisionContext,
@@ -28,7 +29,6 @@ import {
   newGame,
   resolveInsurance,
   shuffleIfNeeded,
-  splitShortfall,
   startRound,
 } from '../../engine/game';
 import { streakPitch } from '../../engine/juice';
@@ -529,7 +529,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
           showHints={showHints}
           surrenderAllowed={rules.lateSurrender}
           handSignals={settings.handSignals}
-          splitShortfall={splitShortfall(game)}
+          shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
           onAction={onAction}
         />
       )}

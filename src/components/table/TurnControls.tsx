@@ -16,8 +16,8 @@ const T = localized({
     take: 'Take insurance',
     decline: 'No insurance',
     signals: 'Tap the felt to hit · Swipe sideways to stand',
-    needSplit: (split: string, n: string) => `${split} · Need $${n}`,
-    needSplitLabel: (n: string) => `Split, not available: you need $${n} more in chips`,
+    need: (play: string, n: string) => `${play} · Need $${n}`,
+    needLabel: (play: string, n: string) => `${play}, not available: you need $${n} more in chips`,
   },
   es: {
     coachSeat: (seat: number, action: string) => `Asiento ${seat} · Coach: ${action}`,
@@ -27,8 +27,8 @@ const T = localized({
     take: 'Tomar seguro',
     decline: 'Sin seguro',
     signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
-    needSplit: (split: string, n: string) => `${split} · Faltan $${n}`,
-    needSplitLabel: (n: string) => `Separar, no disponible: te faltan $${n} en fichas`,
+    need: (play: string, n: string) => `${play} · Faltan $${n}`,
+    needLabel: (play: string, n: string) => `${play}, no disponible: te faltan $${n} en fichas`,
   },
 });
 
@@ -48,7 +48,7 @@ export function ActionBar({
   showHints,
   surrenderAllowed,
   handSignals = false,
-  splitShortfall = 0,
+  shortfall = {},
   onAction,
 }: {
   seat: number;
@@ -57,8 +57,8 @@ export function ActionBar({
   showHints: boolean;
   surrenderAllowed: boolean;
   handSignals?: boolean;
-  /** Chips you're short to split this pair: the Split button says so instead of just greying out. */
-  splitShortfall?: number;
+  /** Chips you're short to split or double: those buttons say so instead of just greying out. */
+  shortfall?: Partial<Record<'split' | 'double', number>>;
   onAction: (a: Action) => void;
 }) {
   return (
@@ -72,12 +72,13 @@ export function ActionBar({
       {handSignals && <Text style={styles.signals}>✋ {T.signals}</Text>}
       <View style={styles.actions}>
         {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => {
-          const short = a === 'split' && !legal.split && splitShortfall > 0 ? formatChips(splitShortfall) : null;
+          const missing = a === 'split' || a === 'double' ? (shortfall[a] ?? 0) : 0;
+          const short = !legal[a] && missing > 0 ? formatChips(missing) : null;
           return (
             <Button
               key={a}
-              title={short ? T.needSplit(ACTION_LABEL[a], short) : ACTION_LABEL[a]}
-              accessibilityLabel={short ? T.needSplitLabel(short) : undefined}
+              title={short ? T.need(ACTION_LABEL[a], short) : ACTION_LABEL[a]}
+              accessibilityLabel={short ? T.needLabel(ACTION_LABEL[a], short) : undefined}
               variant="secondary"
               disabled={!legal[a]}
               highlighted={showHints && advice?.action === a}
