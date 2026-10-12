@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { Alert, Linking, Text } from 'react-native';
+import { Alert, Linking, Platform, Text } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
@@ -155,11 +155,17 @@ export default function SettingsScreen() {
     privacyOptionsRequired().then(setShowPrivacy);
   }, []);
 
-  const confirmReset = () =>
+  const confirmReset = () => {
+    // react-native-web's Alert.alert does nothing, so the browser asks instead.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${T.resetTitle}\n\n${T.resetBody}`)) resetProgress();
+      return;
+    }
     Alert.alert(T.resetTitle, T.resetBody, [
       { text: T.cancel, style: 'cancel' },
       { text: T.reset, style: 'destructive', onPress: resetProgress },
     ]);
+  };
 
   return (
     <Screen>

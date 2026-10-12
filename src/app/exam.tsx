@@ -1,6 +1,6 @@
 // Casino Conditions test: one full shoe with no help, then a report card.
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DiscardTray } from '../components/table/DiscardTray';
@@ -169,7 +169,10 @@ export default function ExamScreen() {
   const [tcGuess, setTcGuess] = useState(0);
   const [input, setInput] = useState<ExamInput | null>(null);
 
+  // Set once a shoe is graded, so a fast double tap on Submit saves one result, not two.
+  const graded = useRef(false);
   const start = () => {
+    graded.current = false;
     setTally(freshTally(rules.decks * CARDS_PER_DECK, rules.penetration));
     setFinal(null);
     setRcGuess(0);
@@ -204,7 +207,8 @@ export default function ExamScreen() {
 
   /** Grades the shoe and saves the result. */
   const finish = (trueGuess: number | null) => {
-    if (!final) return;
+    if (!final || graded.current) return;
+    graded.current = true;
     const x: ExamInput = {
       hands: tally.hands,
       decisions: tally.decisions,

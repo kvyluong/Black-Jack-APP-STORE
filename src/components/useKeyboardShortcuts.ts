@@ -11,7 +11,8 @@ export function useKeyboardShortcuts(handlers: Record<string, (() => void) | und
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // A held key auto-repeats; one press is one action.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
       const fn = ref.current[e.key.toLowerCase()];

@@ -107,6 +107,11 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
   const streak = currentStreak(stats.goals, today);
   const allClaimed = ids.every((id) => claimed.includes(id));
   const claiming = useRef(new Set<string>());
+  // Once the saved goals change (a claim landed, a new day, or Reset progress), they are the
+  // guard again; clearing lets a goal be claimed after a reset on the same day.
+  useEffect(() => {
+    claiming.current.clear();
+  }, [stats.goals]);
 
   const claim = (g: GoalDef) => {
     const key = `${today}:${g.id}`;

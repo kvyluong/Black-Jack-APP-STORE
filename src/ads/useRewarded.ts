@@ -28,8 +28,14 @@ export function useRewarded(): Rewarded {
     if (!ads || !unitId) return;
     const ad = ads.RewardedAd.createForAdRequest(unitId);
     adRef.current = ad;
+    // A failed load (e.g. offline for a moment) tries again later, waiting longer each time.
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0;
     const subs = [
-      ad.addAdEventListener(ads.RewardedAdEventType.LOADED, () => setReady(true)),
+      ad.addAdEventListener(ads.RewardedAdEventType.LOADED, () => {
+        failures = 0;
+        setReady(true);
+      }),
       ad.addAdEventListener(ads.RewardedAdEventType.EARNED_REWARD, () => {
         rewardRef.current?.();
         rewardRef.current = null;
@@ -39,10 +45,16 @@ export function useRewarded(): Rewarded {
         setReady(false);
         ad.load();
       }),
-      ad.addAdEventListener(ads.AdEventType.ERROR, () => setReady(false)),
+      ad.addAdEventListener(ads.AdEventType.ERROR, () => {
+        setReady(false);
+        failures++;
+        clearTimeout(retry);
+        retry = setTimeout(() => ad.load(), Math.min(5 * 60_000, 15_000 * 2 ** (failures - 1)));
+      }),
     ];
     ad.load();
     return () => {
+      clearTimeout(retry);
       subs.forEach((unsubscribe) => unsubscribe());
       adRef.current = null;
     };

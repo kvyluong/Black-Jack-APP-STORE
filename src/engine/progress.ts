@@ -140,7 +140,8 @@ export const GOAL_POOL: GoalDef[] = [
     xp: 40,
     route: '/academy',
     absolute: true,
-    eligible: (s) => basicsDone(s) || !!s.academy?.pref,
+    // Offered once the Academy unlocks (the why-counting lesson) or you've already used it.
+    eligible: counting(['why-counting'], (s) => !!s.academy?.pref || !!s.academy?.lastWorkoutDay),
   },
   {
     id: 'perfectDeck',

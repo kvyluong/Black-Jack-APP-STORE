@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Card, isRed } from '../engine/cards';
 import { CountingSystem, cardTag } from '../engine/counting';
 import { localized } from '../i18n/lang';
-import { usePrefs } from '../state/settings';
+import { useLang, usePrefs } from '../state/settings';
 import { colors, radius, tagColor, tagText } from '../theme';
 
 interface Props {
@@ -37,6 +37,7 @@ const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { 
 
 /** Memoized: cards re-render only when what they show changes, not on every chip or stat update. */
 export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
+  useLang(); // the screen-reader name ("K of spades") follows the language
   const s = SIZES[size];
   if (faceDown || !card) {
     return (

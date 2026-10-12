@@ -107,22 +107,22 @@ const isTenPair = (cards: Card[]) => isPair(cards) && pointValue(cards[0].rank) 
  * "Illustrious 18"). Insurance is handled separately in counting.ts.
  */
 const RAW_DEVIATIONS: Deviation[] = [
-  { id: '16v10', label: '16 vs 10', index: 0, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 16 && !isPair(c) },
+  { id: '16v10', label: '16 vs 10', index: 0, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 16 },
   { id: '15v10', label: '15 vs 10', index: 4, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 15 },
   { id: 'TTv5', label: '10,10 vs 5', index: 5, atOrAbove: 'split', below: 'stand', match: (c, u) => u === 5 && isTenPair(c) },
   { id: 'TTv6', label: '10,10 vs 6', index: 4, atOrAbove: 'split', below: 'stand', match: (c, u) => u === 6 && isTenPair(c) },
   { id: '10v10', label: '10 vs 10', index: 4, atOrAbove: 'double', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 10 },
-  { id: '12v3', label: '12 vs 3', index: 2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 3 && hardTotal(c) === 12 && !isPair(c) },
-  { id: '12v2', label: '12 vs 2', index: 3, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 2 && hardTotal(c) === 12 && !isPair(c) },
+  { id: '12v3', label: '12 vs 3', index: 2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 3 && hardTotal(c) === 12 },
+  { id: '12v2', label: '12 vs 2', index: 3, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 2 && hardTotal(c) === 12 },
   { id: '11vA', label: '11 vs A', index: 1, atOrAbove: 'double', below: 'hit', match: (c, u) => u === 11 && hardTotal(c) === 11 },
   { id: '9v2', label: '9 vs 2', index: 1, atOrAbove: 'double', below: 'hit', match: (c, u) => u === 2 && hardTotal(c) === 9 },
   { id: '10vA', label: '10 vs A', index: 4, atOrAbove: 'double', below: 'hit', match: (c, u) => u === 11 && hardTotal(c) === 10 },
   { id: '9v7', label: '9 vs 7', index: 3, atOrAbove: 'double', below: 'hit', match: (c, u) => u === 7 && hardTotal(c) === 9 },
-  { id: '16v9', label: '16 vs 9', index: 5, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 9 && hardTotal(c) === 16 && !isPair(c) },
+  { id: '16v9', label: '16 vs 9', index: 5, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 9 && hardTotal(c) === 16 },
   { id: '13v2', label: '13 vs 2', index: -1, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 2 && hardTotal(c) === 13 },
-  { id: '12v4', label: '12 vs 4', index: 0, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 4 && hardTotal(c) === 12 && !isPair(c) },
-  { id: '12v5', label: '12 vs 5', index: -2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 5 && hardTotal(c) === 12 && !isPair(c) },
-  { id: '12v6', label: '12 vs 6', index: -1, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 6 && hardTotal(c) === 12 && !isPair(c) },
+  { id: '12v4', label: '12 vs 4', index: 0, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 4 && hardTotal(c) === 12 },
+  { id: '12v5', label: '12 vs 5', index: -2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 5 && hardTotal(c) === 12 },
+  { id: '12v6', label: '12 vs 6', index: -1, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 6 && hardTotal(c) === 12 },
   { id: '13v3', label: '13 vs 3', index: -2, atOrAbove: 'stand', below: 'hit', match: (c, u) => u === 3 && hardTotal(c) === 13 },
 ];
 
@@ -142,7 +142,7 @@ export const DEVIATIONS: Deviation[] = RAW_DEVIATIONS.map(localizeLabel);
  * index, otherwise play the hand normally.
  */
 const RAW_SURRENDERS: Deviation[] = [
-  { id: 's14v10', label: '14 vs 10 (surrender)', index: 3, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 14 && !isPair(c) },
+  { id: 's14v10', label: '14 vs 10 (surrender)', index: 3, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 14 },
   { id: 's15v10', label: '15 vs 10 (surrender)', index: 0, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 10 && hardTotal(c) === 15 },
   { id: 's15v9', label: '15 vs 9 (surrender)', index: 2, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 9 && hardTotal(c) === 15 },
   { id: 's15vA', label: '15 vs A (surrender)', index: 1, atOrAbove: 'surrender', below: 'hit', match: (c, u) => u === 11 && hardTotal(c) === 15 },
@@ -238,7 +238,10 @@ export function recommend(ctx: DecisionContext): Recommendation {
   if (tc === undefined) return { action: basic, reason: explain(basic, ctx) };
 
   // Surrender first: the count can add a surrender or take one away.
-  const sur = ctx.canSurrender ? SURRENDER_DEVIATIONS.find((d) => d.match(ctx.cards, up)) : undefined;
+  // A pair the split chart splits is a split, not a total; any other pair plays as its total,
+  // so the total's count plays apply to it (e.g. 8,8 vs 10 that can't be split stands at 0+).
+  const splitting = basic === 'split';
+  const sur = ctx.canSurrender && !splitting ? SURRENDER_DEVIATIONS.find((d) => d.match(ctx.cards, up)) : undefined;
   if (sur) {
     if (tc >= sur.index && basic !== 'surrender') return countPlay(sur, sur.index, tc, 'surrender', basic);
     if (tc < sur.index && basic === 'surrender') {
@@ -247,7 +250,7 @@ export function recommend(ctx: DecisionContext): Recommendation {
     }
   }
 
-  if (basic !== 'surrender') {
+  if (basic !== 'surrender' && !splitting) {
     const dev = DEVIATIONS.find((d) => d.match(ctx.cards, up));
     if (dev) {
       const index = indexFor(dev, ctx.rules);

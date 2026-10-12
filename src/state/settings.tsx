@@ -180,9 +180,13 @@ export type Prefs = Omit<Store, 'stats'>;
 // re-render components that only read settings, and the reverse.
 const PrefsCtx = createContext<Prefs | null>(null);
 const StatsCtx = createContext<Stats | null>(null);
+/** Just the language, for memoized views (like cards) that only need to re-render when it changes. */
+const LangCtx = createContext<Lang>('en');
 
 /** Saving waits this long after the last change, so a burst of updates is written once. */
 const SAVE_DELAY_MS = 600;
+/** ...but never longer than this, so a steady stream of changes still gets saved. */
+const SAVE_MAX_WAIT_MS = 3000;
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -204,15 +208,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Saving serializes everything, so it's batched: one write a moment after the last
   // change, and straight away when the app goes to the background.
   const pending = useRef<{ settings: Settings; stats: Stats } | null>(null);
+  const lastSave = useRef(0);
   const flush = useCallback(() => {
     if (!pending.current) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pending.current)).catch(() => {});
     pending.current = null;
+    lastSave.current = Date.now();
   }, []);
+  // The state right after loading is what's already saved, so it isn't written back. That also
+  // means a save that couldn't be read isn't overwritten with defaults until you change something.
+  const loaded = useRef(false);
   useEffect(() => {
     if (!ready) return;
+    if (!loaded.current) {
+      loaded.current = true;
+      lastSave.current = Date.now();
+      return;
+    }
     pending.current = { settings, stats };
-    const id = setTimeout(flush, SAVE_DELAY_MS);
+    const wait = Math.max(0, Math.min(SAVE_DELAY_MS, lastSave.current + SAVE_MAX_WAIT_MS - Date.now()));
+    const id = setTimeout(flush, wait);
     return () => clearTimeout(id);
   }, [ready, settings, stats, flush]);
   useEffect(() => {
@@ -258,7 +273,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // first frame is already in the right language with the right chips.
   return (
     <PrefsCtx.Provider value={prefs}>
-      <StatsCtx.Provider value={stats}>{ready ? children : null}</StatsCtx.Provider>
+      <LangCtx.Provider value={lang}>
+        <StatsCtx.Provider value={stats}>{ready ? children : null}</StatsCtx.Provider>
+      </LangCtx.Provider>
     </PrefsCtx.Provider>
   );
 }
@@ -283,4 +300,9 @@ export function usePrefs(): Prefs {
   const prefs = useContext(PrefsCtx);
   if (!prefs) throw new Error('useSettings must be used inside SettingsProvider');
   return prefs;
+}
+
+/** The language in use; re-renders only when it changes. */
+export function useLang(): Lang {
+  return useContext(LangCtx);
 }

@@ -1,7 +1,7 @@
 // The Counting Academy's practice modes. Each reports back how accurate the
 // round was; the screen around it handles levels, XP and review scheduling.
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
@@ -116,6 +116,15 @@ function playTag(t: number) {
 /** The player's counting system (from settings). */
 const useSystem = (): CountingSystem => usePrefs().settings.countingSystem;
 
+/** `later(fn, ms)`: a timeout that's cancelled if the exercise is left first (no finishing a round you walked away from). */
+function useLater() {
+  const ids = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => ids.current.forEach(clearTimeout), []);
+  return useCallback((fn: () => void, ms: number) => {
+    ids.current.push(setTimeout(fn, ms));
+  }, []);
+}
+
 /** "Green ▲ = +1 · Gray ● = 0 · Red ▼ = −1" for the system's tag values. */
 export function colorLegend(system: CountingSystem, cb: boolean): string {
   return tagValues(system)
@@ -207,6 +216,7 @@ export function TagTap({ level, onFinish }: ModeProps) {
   const [combo, setCombo] = useState(0);
   const [flash, setFlash] = useState<'ok' | 'no' | null>(null);
   const clock = useState(() => new Animated.Value(1))[0];
+  const later = useLater();
   const seconds = tapSeconds(level);
 
   const answer = (value: number | null) => {
@@ -222,7 +232,7 @@ export function TagTap({ level, onFinish }: ModeProps) {
     setCombo(ok ? combo + 1 : 0);
     const nextRight = right + (ok ? 1 : 0);
     setRight(nextRight);
-    setTimeout(() => {
+    later(() => {
       setFlash(null);
       if (i + 1 >= cards.length) onFinish({ accuracy: nextRight / cards.length, correct: nextRight });
       else setI(i + 1);
@@ -321,9 +331,10 @@ export function SoundCount({ level, onFinish }: ModeProps) {
   const system = useSystem();
   const every = spokenEvery(level);
   const eyesFree = level >= 4;
+  const later = useLater();
   const { cards, i, done } = useFlashRun(level, system, (card, index, running) => {
     playTag(tagOf(card, system));
-    if (every && (index + 1) % every === 0) setTimeout(() => speak(spokenCount(running)), 250);
+    if (every && (index + 1) % every === 0) later(() => speak(spokenCount(running)), 250);
   });
   useEffect(() => () => stopSpeaking(), []);
   if (done) return <CountAnswer cards={cards} onDone={onFinish} />;
@@ -350,6 +361,7 @@ export function PairCancel({ level, onFinish }: ModeProps) {
   const [right, setRight] = useState(0);
   const [shown, setShown] = useState<{ ok: boolean; value: number } | null>(null);
   const group = groups[i];
+  const later = useLater();
   const choices = groupChoices(group.length, system);
 
   const answer = (v: number) => {
@@ -360,7 +372,7 @@ export function PairCancel({ level, onFinish }: ModeProps) {
     setShown({ ok, value });
     const nextRight = right + (ok ? 1 : 0);
     setRight(nextRight);
-    setTimeout(
+    later(
       () => {
         setShown(null);
         if (i + 1 >= groups.length) onFinish({ accuracy: nextRight / groups.length, correct: nextRight });

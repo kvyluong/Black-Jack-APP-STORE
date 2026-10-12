@@ -5,6 +5,7 @@ import { StyleSheet, Text } from 'react-native';
 import { ColorCount, PairCancel, ReadCount, RoundResult, SoundCount, SystemBadge, TagTap } from '../../components/academy';
 import { Button, P, Panel, Screen } from '../../components/ui';
 import { AcademyMode, MAX_LEVEL, MODES, academyXp, newProgress, recordRound } from '../../engine/academy';
+import { previousDay } from '../../engine/progress';
 import { levelInfo, localDay } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -63,7 +64,6 @@ export default function AcademyExercise() {
     const before = levelInfo(stats.xp).level;
     updateStats((s) => {
       const finishedWorkout = lastStep && s.academy.lastWorkoutDay !== today;
-      const yesterday = localDay(new Date(Date.now() - 86400000));
       return {
         ...s,
         xp: s.xp + xp,
@@ -71,7 +71,7 @@ export default function AcademyExercise() {
           ...s.academy,
           progress: { ...s.academy.progress, [mode.id]: next },
           ...(finishedWorkout
-            ? { lastWorkoutDay: today, streak: s.academy.lastWorkoutDay === yesterday ? s.academy.streak + 1 : 1 }
+            ? { lastWorkoutDay: today, streak: s.academy.lastWorkoutDay === previousDay(today) ? s.academy.streak + 1 : 1 }
             : {}),
         },
       };

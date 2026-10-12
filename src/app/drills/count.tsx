@@ -183,11 +183,14 @@ export default function CountDrill() {
   // Full-deck runs hold back a few cards (so the answer isn't always 0), so allow 47–51.
   const isFullDeckRun = length === FULL_DECK && cards.length > FULL_DECK - 6 && perFlash === 1;
 
+  // Full-deck time, scaled up to 52 cards so runs with a few cards held back compare fairly.
+  // The record, "New best" and the casino-speed check all use this one number.
+  const timed = isFullDeckRun && pace === 'self' && elapsed !== null ? Math.round((elapsed * FULL_DECK) / cards.length) : null;
+
   const check = () => {
+    if (phase !== 'answer') return; // a double tap counts once
     setPhase('result');
     if (!ok) return;
-    // Scaled up to 52 cards, so runs with a few cards held back compare fairly.
-    const timed = isFullDeckRun && pace === 'self' && elapsed !== null ? Math.round((elapsed * FULL_DECK) / cards.length) : null;
     setNewBest(timed !== null && (records.bestDeckMs === null || timed < records.bestDeckMs));
     updateStats((s) => ({
       ...s,
@@ -289,8 +292,8 @@ export default function CountDrill() {
               <Panel style={{ borderLeftWidth: 4, borderLeftColor: ok ? good : bad }}>
                 <Text style={{ color: ok ? good : bad, fontWeight: '800', fontSize: 18 }}>{ok ? T.perfect : T.wrong(signedTag(actual))}</Text>
                 {pace === 'self' && elapsed !== null && <Text style={styles.record}>{T.time(seconds(elapsed))}</Text>}
-                {newBest && elapsed !== null && <Text style={styles.record}>{T.newBest(seconds(elapsed))}</Text>}
-                {ok && isFullDeckRun && pace === 'self' && elapsed !== null && elapsed < TARGET_MS && (
+                {newBest && timed !== null && <Text style={styles.record}>{T.newBest(seconds(timed))}</Text>}
+                {ok && timed !== null && timed < TARGET_MS && (
                   <Text style={{ color: good, fontWeight: '700' }}>{T.underTarget}</Text>
                 )}
                 <Text style={styles.label}>{T.review}</Text>

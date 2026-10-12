@@ -13,6 +13,7 @@ import {
   modesFor,
 } from '../../engine/academy';
 import { SYSTEM_NAME, systemNote } from '../../engine/counting';
+import { previousDay } from '../../engine/progress';
 import { localDay } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -66,6 +67,8 @@ export default function Academy() {
   const today = localDay(new Date());
   const workout = dailyWorkout(academy.progress, today, pref);
   const doneToday = academy.lastWorkoutDay === today;
+  // The saved streak only updates when you finish a workout; a missed day means it's gone.
+  const streak = doneToday || academy.lastWorkoutDay === previousDay(today) ? academy.streak : 0;
 
   const setPref = (p: LearningPreference) => updateStats((s) => ({ ...s, academy: { ...s.academy, pref: p } }));
 
@@ -98,7 +101,7 @@ export default function Academy() {
       <Panel style={styles.workout}>
         <View style={styles.row}>
           <Text style={styles.workoutTitle}>{T.workoutTitle}</Text>
-          <Text style={styles.streak}>{academy.streak > 0 ? T.streak(academy.streak) : T.startStreak}</Text>
+          <Text style={styles.streak}>{streak > 0 ? T.streak(streak) : T.startStreak}</Text>
         </View>
         <Text style={styles.small}>{T.workoutNote}</Text>
         {workout.map((id, k) => (
