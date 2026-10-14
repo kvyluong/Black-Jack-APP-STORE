@@ -52,7 +52,7 @@ export default function Home() {
 
   const list = benchmarks(stats);
   const score = readyScore(list);
-  const next = nextStep(list);
+  const next = nextStep(list, settings.experienced);
   const lvl = levelInfo(stats.xp);
 
   // The next step: the next lesson while there are lessons left, then the weakest benchmark.

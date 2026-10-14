@@ -1,8 +1,9 @@
-// First-launch walkthrough: two scripted hands (stand, then hit), then a
-// first look at the running count.
+// First launch: "How well do you know blackjack?" New players get two scripted
+// hands (stand, then hit) and a first look at the running count; players who know
+// the game skip the rules lessons; card counters get every feature at once.
 import { Stack, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
 import { HandView } from '../components/HandView';
@@ -14,23 +15,27 @@ import { Card } from '../engine/cards';
 import { cardTag } from '../engine/counting';
 import { cardDelay } from '../engine/dealSchedule';
 import { GameState, act, startRound } from '../engine/game';
+import { KNOW_THE_GAME, markLessonsKnown } from '../engine/progress';
 import { STARTING_CHIPS, formatChips } from '../engine/progression';
 import { ACTION_LABEL, Action } from '../engine/strategy';
 import { TUTORIAL, TUTORIAL_BET, tutorialGame } from '../engine/tutorial';
 import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
-import { colors, spacing } from '../theme';
+import { colors, radius, spacing } from '../theme';
 
 const T = localized({
   en: {
     skip: 'Skip the tour',
     welcome: 'Welcome',
     welcomeTitle: 'Welcome to ShoeSharp',
-    introBody: 'Let’s play two quick practice hands together. I’ll tell you exactly what to do and why.',
-    introNote: (chips: string) => `Takes about a minute. Practice chips only: your real stack of $${chips} is waiting for you after.`,
-    letsPlay: 'Let’s play',
-    experienced: 'I already know how to play',
-    experiencedHint: 'Skips the tour and opens every feature now.',
+    levelQ: 'How well do you know blackjack?',
+    levelNote: 'Every lesson stays open to revisit, and Settings → Show every feature opens the rest anytime.',
+    newTitle: 'I’m new',
+    newBody: (chips: string) => `Two quick guided hands, then the rules step by step. Practice chips only: your $${chips} waits for you.`,
+    knowTitle: 'I know how to play',
+    knowBody: 'Skip the rules. Start at basic strategy, the best play for every hand, and take a seat.',
+    countTitle: 'I already count cards',
+    countBody: 'Open everything: count drills, count plays, the casino-conditions test. Go for your casino-ready score.',
     nicePlaying: 'Nice playing!',
     twoWins: 'Two hands, two wins',
     heart: 'You already know the heart of the game: stand when the dealer is likely to bust, hit when you can’t.',
@@ -58,11 +63,14 @@ const T = localized({
     skip: 'Saltar el tour',
     welcome: 'Bienvenida',
     welcomeTitle: 'Bienvenido a ShoeSharp',
-    introBody: 'Juguemos juntos dos manos rápidas de práctica. Te diré exactamente qué hacer y por qué.',
-    introNote: (chips: string) => `Toma como un minuto. Solo fichas de práctica: tu pila real de $${chips} te espera después.`,
-    letsPlay: '¡A jugar!',
-    experienced: 'Ya sé jugar',
-    experiencedHint: 'Salta el tour y abre todas las funciones desde ya.',
+    levelQ: '¿Qué tan bien conoces el blackjack?',
+    levelNote: 'Todas las lecciones siguen abiertas, y Ajustes → Mostrar todas las funciones abre el resto cuando quieras.',
+    newTitle: 'Soy nuevo',
+    newBody: (chips: string) => `Dos manos guiadas rápidas y luego las reglas paso a paso. Solo fichas de práctica: tus $${chips} te esperan.`,
+    knowTitle: 'Ya sé jugar',
+    knowBody: 'Salta las reglas. Empieza con la estrategia básica, la mejor jugada para cada mano, y siéntate a jugar.',
+    countTitle: 'Ya cuento cartas',
+    countBody: 'Ábrelo todo: ejercicios de conteo, jugadas por conteo y el examen en condiciones de casino. Ve por tu puntaje para el casino.',
     nicePlaying: '¡Bien jugado!',
     twoWins: 'Dos manos, dos victorias',
     heart: 'Ya conoces lo esencial del juego: plántate cuando el crupier probablemente se pase y pide cuando no.',
@@ -138,6 +146,27 @@ export default function Welcome() {
   );
 
   if (stage.kind === 'intro') {
+    const choices = [
+      { icon: '🃏', title: T.newTitle, body: T.newBody(formatChips(STARTING_CHIPS)), onPress: () => deal(0) },
+      {
+        icon: '♠',
+        title: T.knowTitle,
+        body: T.knowBody,
+        onPress: () => {
+          updateStats((s) => markLessonsKnown(s, KNOW_THE_GAME));
+          finish('/tables');
+        },
+      },
+      {
+        icon: '🧠',
+        title: T.countTitle,
+        body: T.countBody,
+        onPress: () => {
+          updateSettings({ experienced: true });
+          finish();
+        },
+      },
+    ];
     return (
       <Screen ads={false}>
         <Stack.Screen options={{ title: T.welcome, headerBackVisible: false }} />
@@ -145,21 +174,26 @@ export default function Welcome() {
           <Text style={styles.logo}>♠ ♥ 21 ♣ ♦</Text>
           <H1>{T.welcomeTitle}</H1>
         </View>
-        <Panel>
-          <P>{T.introBody}</P>
-          <P muted>{T.introNote(formatChips(STARTING_CHIPS))}</P>
-        </Panel>
-        <Button title={T.letsPlay} onPress={() => deal(0)} />
-        <Button
-          title={T.experienced}
-          variant="ghost"
-          onPress={() => {
-            updateSettings({ experienced: true });
-            finish();
-          }}
-        />
-        <Text style={styles.experiencedHint}>{T.experiencedHint}</Text>
-        {skip}
+        <Text style={styles.question} accessibilityRole="header">
+          {T.levelQ}
+        </Text>
+        {choices.map((c) => (
+          <Pressable
+            key={c.title}
+            accessibilityRole="button"
+            accessibilityLabel={`${c.title}. ${c.body}`}
+            onPress={c.onPress}
+            style={({ pressed }) => [styles.choice, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+          >
+            <Text style={styles.choiceIcon}>{c.icon}</Text>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.choiceTitle}>{c.title}</Text>
+              <Text style={styles.choiceBody}>{c.body}</Text>
+            </View>
+            <Text style={styles.chev}>›</Text>
+          </Pressable>
+        ))}
+        <Text style={styles.note}>{T.levelNote}</Text>
       </Screen>
     );
   }
@@ -273,7 +307,13 @@ const styles = StyleSheet.create({
   coachTitle: { color: colors.gold, fontSize: 18, fontWeight: '800', textAlign: 'center' },
   actions: { flexDirection: 'row', gap: spacing(1), justifyContent: 'center' },
   actionButton: { minWidth: 96, flexGrow: 1 },
-  experiencedHint: { color: colors.muted, textAlign: 'center', fontSize: 13, marginTop: -4 },
+  question: { color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, padding: spacing(2), borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(232,197,71,0.35)' },
+  choiceIcon: { fontSize: 28, width: 36, textAlign: 'center', color: colors.text },
+  choiceTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  choiceBody: { color: colors.muted, fontSize: 14 },
+  chev: { color: colors.gold, fontSize: 26 },
+  note: { color: colors.muted, textAlign: 'center', fontSize: 13 },
   skip: { color: colors.muted, textAlign: 'center', textDecorationLine: 'underline', marginTop: spacing(1) },
   seen: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' },
   rc: { color: colors.gold, fontSize: 22, fontWeight: '900', textAlign: 'center' },

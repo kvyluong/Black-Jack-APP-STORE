@@ -64,7 +64,7 @@ export default function Me() {
       {unlocks.has('ready') ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${featureInfo('ready').title}. ${T.score} ${score}. ${readyHeadline(list)}`}
+          accessibilityLabel={`${featureInfo('ready').title}. ${T.score} ${score}. ${readyHeadline(list, settings.experienced)}`}
           onPress={() => go('ready')}
           style={({ pressed }) => [styles.scoreCard, pressed && { opacity: 0.85 }]}
         >
@@ -73,7 +73,7 @@ export default function Me() {
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.scoreLabel}>{featureInfo('ready').title}</Text>
               <Meter value={score / 100} color={colors.gold} height={8} />
-              <Text style={styles.next}>{readyHeadline(list)}</Text>
+              <Text style={styles.next}>{readyHeadline(list, settings.experienced)}</Text>
             </View>
             <Text style={styles.chev}>›</Text>
           </View>

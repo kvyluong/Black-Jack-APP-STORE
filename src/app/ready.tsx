@@ -52,8 +52,8 @@ export default function ReadyScreen() {
   const { stats, settings } = useSettings();
   const list = benchmarks(stats);
   const score = readyScore(list);
-  const next = nextStep(list);
-  const headline = readyHeadline(list);
+  const next = nextStep(list, settings.experienced);
+  const headline = readyHeadline(list, settings.experienced);
   const hiLoNote = settings.countingSystem !== 'hiLo' ? T.hiLoNote(SYSTEM_NAME[settings.countingSystem]) : null;
 
   return (

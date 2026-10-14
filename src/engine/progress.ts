@@ -97,6 +97,26 @@ export function counters(s: ProgressStats, today: string): Record<CounterId, num
   };
 }
 
+// ---------- Starting level ----------
+
+/** The lessons a player who already knows how to play can skip: rules, soft vs hard, your options. */
+export const KNOW_THE_GAME = ['rules', 'soft-hard', 'actions'];
+
+/**
+ * Marks lessons as already known (the "I know how to play" start). Today's goal snapshot is
+ * raised by the same amount, so skipped lessons don't count toward "Finish a lesson".
+ */
+export function markLessonsKnown<S extends ProgressStats>(s: S, ids: string[]): S {
+  const added = ids.filter((id) => !s.lessonsCompleted.includes(id));
+  if (!added.length) return s;
+  const start = s.goals?.start;
+  return {
+    ...s,
+    lessonsCompleted: [...s.lessonsCompleted, ...added],
+    goals: start ? { ...s.goals, start: { ...start, lessons: (start.lessons ?? 0) + added.length } } : s.goals,
+  };
+}
+
 // ---------- Daily goals ----------
 
 /** The first four lessons: rules, soft vs hard, your options, basic strategy. */
@@ -629,12 +649,16 @@ export function readyScore(list: Benchmark[]): number {
   return list.every((b) => b.done) ? 100 : Math.min(99, score);
 }
 
-/** The next benchmark to work on, in READY_ORDER; undefined when you're ready. */
-export const nextStep = (list: Benchmark[]) => list.find((b) => !b.done);
+/**
+ * The next benchmark to work on, in READY_ORDER; undefined when you're ready.
+ * `skipLessons`: players who said they already count cards aren't sent back to the lessons.
+ */
+export const nextStep = (list: Benchmark[], skipLessons = false) =>
+  list.find((b) => !b.done && !(skipLessons && b.id === 'lessons'));
 
 /** "Ready for the casino", or what to do next. */
-export function readyHeadline(list: Benchmark[]): string {
-  const next = nextStep(list);
+export function readyHeadline(list: Benchmark[], skipLessons = false): string {
+  const next = nextStep(list, skipLessons);
   if (!next) return tr('Ready for the casino', 'Listo para el casino');
   return tr(`Next step: ${BENCHMARK_TEXT[next.id].title}`, `Siguiente paso: ${BENCHMARK_TEXT[next.id].title}`);
 }

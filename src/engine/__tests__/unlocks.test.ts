@@ -1,3 +1,4 @@
+import { Benchmark, KNOW_THE_GAME, ProgressStats, markLessonsKnown, nextStep } from '../progress';
 import { setLang } from '../../i18n/lang';
 import { FEATURES, isUnlocked, newFeatures, unlockHint, unlockedFeatures } from '../unlocks';
 
@@ -36,5 +37,27 @@ describe('unlocks', () => {
     expect(unlockHint('academy', num)).toBe('Unlocks after lesson 5');
     setLang('es');
     expect(unlockHint('academy', num)).toBe('Se desbloquea tras la lección 5');
+  });
+});
+
+describe('starting level', () => {
+
+  it('"I know how to play" skips the rules lessons without paying the lesson goal', () => {
+    const s = { lessonsCompleted: [] as string[], goals: { day: '2026-10-14', start: { lessons: 0, hands: 0 }, claimed: [], streak: 0, lastCompleteDay: null } };
+    const next = markLessonsKnown(s as unknown as ProgressStats, KNOW_THE_GAME);
+    expect(next.lessonsCompleted).toEqual(['rules', 'soft-hard', 'actions']);
+    expect(next.goals.start?.lessons).toBe(3);
+    expect(isUnlocked('strategyDrill', { lessonsCompleted: next.lessonsCompleted, handsPlayed: 0, experienced: false })).toBe(true);
+    expect(isUnlocked('academy', { lessonsCompleted: next.lessonsCompleted, handsPlayed: 0, experienced: false })).toBe(false);
+    expect(markLessonsKnown(next, KNOW_THE_GAME)).toBe(next);
+  });
+
+  it('card counters are not sent back to the lessons', () => {
+    const list = [
+      { id: 'lessons', done: false },
+      { id: 'strategy', done: false },
+    ] as unknown as Benchmark[];
+    expect(nextStep(list)?.id).toBe('lessons');
+    expect(nextStep(list, true)?.id).toBe('strategy');
   });
 });
