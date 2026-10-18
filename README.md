@@ -117,6 +117,8 @@ Development builds always use Google's test ad units.
 
 ## Before you publish
 
+The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect, TestFlight, submission) is in [docs/APP_STORE_LAUNCH.md](docs/APP_STORE_LAUNCH.md).
+
 1. **Pick your app ID.** Replace `com.REPLACE_ME.shoesharp` in `app.json` (`ios.bundleIdentifier` and `android.package`).
 2. **Remove ads product.** In App Store Connect and the Google Play Console, create a non-consumable in-app product with the ID `remove_ads` (or change `extra.iap.removeAds` in `app.json`), and set its price ($2.99–$4.99 is typical). Test with a sandbox account (iOS) or a license tester (Android) on a development build.
 3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
