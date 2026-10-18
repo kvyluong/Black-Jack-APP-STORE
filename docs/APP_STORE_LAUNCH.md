@@ -49,7 +49,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
   - the 3 **unit IDs** (`ca-app-pub-…/…`) → `extra.adUnits.ios.banner`, `.interstitial` and `.rewarded`.
 - [x] Leave the Android placeholders. Units still set to `REPLACE…` simply show no ads (see `src/ads/config.ts`). Development builds always use Google's test ads.
 - [x] **Publisher ID** (`pub-…`, from AdMob → Settings → Account): put it in `website/app-ads.txt`.
-- [ ] Optional: **AdMob → Privacy & messaging**. Create the GDPR (EU/UK) message and the IDFA explainer for iOS. The app already shows Google's consent form (`src/ads/init.ts`) and the iOS tracking prompt.
+- [x] Optional: **AdMob → Privacy & messaging**. Create the GDPR (EU/UK) message and the IDFA explainer for iOS. The app already shows Google's consent form (`src/ads/init.ts`) and the iOS tracking prompt.
 - [x] Commit.
 
 ## 4. Website, privacy policy, app-ads.txt
