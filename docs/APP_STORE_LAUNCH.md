@@ -17,7 +17,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 ## 0. Mac setup
 - [ ] Install Node.js LTS (nodejs.org) and git.
 - [ ] `git clone https://github.com/kvyluong/Black-Jack-APP-STORE && cd Black-Jack-APP-STORE`
-- [ ] `git checkout claude/tender-johnson-c6wf0q`, or `main` once this is merged.
+- [ ] Work on `main` (the clone starts there once `main` is the default branch; otherwise `git checkout main`).
 - [ ] `npm install`
 - [ ] Check it's healthy: `npx tsc --noEmit && npx expo lint && npx jest`
 - [ ] Xcode is **not** needed: EAS builds and signs in the cloud.
@@ -55,6 +55,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 ## 4. Website, privacy policy, app-ads.txt
 Apple requires a privacy policy URL, and the page is already written (`website/privacy.html`). AdMob reads `app-ads.txt` only at the **root of a domain**.
 
+- [ ] **🛑 OWNER:** GitHub repo → Settings → General → **Default branch → `main`**. The website deploys only from the default branch.
 - [ ] **🛑 OWNER:** GitHub repo → Settings → Pages → Source: **GitHub Actions**. `.github/workflows/site.yml` then deploys `website/` to https://kvyluong.github.io/Black-Jack-APP-STORE/
 - [ ] Privacy policy URL for App Store Connect: https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html
 - [ ] Root domain for `app-ads.txt`. The owner picks one option:
