@@ -80,11 +80,10 @@ Apple requires a privacy policy URL, and the page is already written (`website/p
   - review screenshot: the Settings screen showing the Remove ads button.
 
 ## 6. Store listing
-- [ ] **Subtitle:** Blackjack & Card Counting Trainer
-- [ ] **Category:** primary Games → Casino (or Education); secondary Games → Card.
-- [ ] **Keywords** (100 characters max, comma-separated, no spaces):
-  `blackjack,card counting,hi-lo,basic strategy,21,trainer,casino,count cards,practice,strategy chart`
-- [ ] **Description:** adapt the feature list in `README.md`. Lead with "Learn to play perfect blackjack and count cards like a pro" and end with "For entertainment and education only. No real-money gambling." Add the Spanish localization from `website/es/`.
+All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LISTING.md**: name, subtitle, keywords, promotional text, description and screenshot captions, in English (U.S.) and Spanish (Mexico). Copy it from there.
+- [ ] English (U.S.) name, subtitle, keywords, promotional text and description.
+- [ ] Add the **Spanish (Mexico)** localization with its own name, subtitle, keywords and description. The US store indexes it too, so it's a second keyword field.
+- [ ] **Category:** primary Games → Card; secondary Education.
 - [ ] **Screenshots:**
   - required: iPhone 6.9" (1320×2868) and, because `ios.supportsTablet` is true, iPad 13" (2064×2752);
   - 3–6 each, of Home, the table with the coach, Practice, the count drill, Road to the Casino, and the Casino Conditions report;
@@ -124,6 +123,9 @@ gets test ads.
 - [ ] If it's rejected: read the note, fix, resubmit. The most common casino-app issue is real-money confusion; the review notes and in-app disclaimer cover that.
 
 ## 9. After launch
+- [ ] **Google Search Console** (search.google.com/search-console): add the website, verify it, and submit `sitemap.xml`. The build generates it, along with structured data for the app and FAQ.
+- [ ] Add the Smart App Banner to `website/index.html` and `website/es/index.html`: `<meta name="apple-itunes-app" content="app-id=YOUR_APP_ID">`. iPhone visitors then see an "Open in App Store" bar.
+- [ ] Update `docs/APP_STORE_LISTING.md` keywords after 4–6 weeks of App Analytics data.
 - [ ] AdMob → the app → **App settings → link to the App Store listing**, so ads serve at full rate.
 - [ ] Check `app-ads.txt` shows as verified in AdMob (it can take up to 24 hours).
 - [ ] Watch AdMob for a week; earnings take a few days to settle.
