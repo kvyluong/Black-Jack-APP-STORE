@@ -34,9 +34,9 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 
 ## 2. App identity
 - [ ] **🛑 OWNER: choose the bundle ID**, e.g. `com.kvyluong.shoesharp`. It can't change after release.
-- [ ] Put it in `app.json` → `expo.ios.bundleIdentifier`, replacing `com.REPLACE_ME.shoesharp`. Use the same value for `expo.android.package`.
+- [x] Put it in `app.json` → `expo.ios.bundleIdentifier`, replacing `com.REPLACE_ME.shoesharp`. Use the same value for `expo.android.package`.
 - [ ] `npx eas-cli@latest init`, which links the EAS project and adds `extra.eas.projectId` to `app.json`.
-- [ ] App icon and splash screen. `assets/icon.png` is still the template:
+- [x] App icon and splash screen. `assets/icon.png` is still the template:
   - replace it with a 1024×1024 PNG with no transparency;
   - update `assets/splash-icon.png`.
 - [ ] Commit.
