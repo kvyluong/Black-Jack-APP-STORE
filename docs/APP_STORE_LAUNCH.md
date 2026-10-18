@@ -28,7 +28,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
   - Approval usually takes 1–2 days.
 - [x] **🛑 OWNER: AdMob** at https://admob.google.com
   - Sign up.
-  - [ ] Payments (still to do): add the payment method and the tax form (W-9 in the US). AdMob pays monthly once the balance passes $100.
+  - [x] Payments: profile and W-9 done. The bank account is added later: Google asks once earnings reach about $10 and mails a PIN to verify the address. AdMob pays monthly once the balance passes $100.
 - [ ] **Expo account** at https://expo.dev/signup (free).
 - [ ] `npx eas-cli@latest login`
 
