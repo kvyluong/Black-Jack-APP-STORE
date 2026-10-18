@@ -11,6 +11,7 @@ import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { useOutcomeColors } from '../../components/useColors';
+import { useReviewPrompt } from '../../components/useReviewPrompt';
 
 type Phase = 'setup' | 'running' | 'answer' | 'result';
 type Pace = 'auto' | 'self';
@@ -108,6 +109,7 @@ const seconds = (ms: number) => (ms / 1000).toFixed(1);
 /** Running count drill in the player's counting system, with timed full-deck records. */
 export default function CountDrill() {
   const { settings, stats, updateStats } = useSettings();
+  const askForReview = useReviewPrompt();
   const system = settings.countingSystem;
   const records = stats.countRecords;
   const speeds = [
@@ -204,6 +206,7 @@ export default function CountDrill() {
           }
         : {}),
     }));
+    if (isFullDeckRun) askForReview();
   };
 
   return (

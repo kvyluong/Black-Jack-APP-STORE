@@ -66,6 +66,7 @@ import { StreakBadge, useCountUp } from '../juice';
 import { Button, Panel, Screen } from '../ui';
 import { useOutcomeColors } from '../useColors';
 import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
+import { useReviewPrompt } from '../useReviewPrompt';
 import { BettingPanel } from './BettingPanel';
 import { CountQuiz, Quiz } from './CountQuiz';
 import { DiscardTray } from './DiscardTray';
@@ -208,6 +209,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // Correct decisions this round, for XP.
   const [roundCorrect, setRoundCorrect] = useState(0);
   const roundBreak = useInterstitial();
+  const askForReview = useReviewPrompt();
   const anim = useDealAnimation(DEAL_STEP[mode]);
   const { settled } = anim;
 
@@ -266,6 +268,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     if (after.level > before.level) found.push({ text: T.level(after.level, after.title) });
     for (const t of newlyUnlocked(stats.peakChips, g.bankroll)) found.push({ text: T.unlocked(t.name), table: t });
     if (found.length) setMilestones(found);
+    if (after.level > before.level) askForReview();
     updateStats((s) => ({
       ...s,
       handsPlayed: s.handsPlayed + 1,

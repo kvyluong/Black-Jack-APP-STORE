@@ -21,6 +21,7 @@ import {
 } from '../engine/records';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
+import { ReviewState } from '../engine/review';
 import { Lang, LanguageSetting, resolveLang, setLang } from '../i18n/lang';
 
 export interface Stats {
@@ -67,6 +68,8 @@ export interface Stats {
   history: HistoryPoint[];
   /** Unlocked features you've opened (the rest show a "New" badge). */
   seenFeatures: string[];
+  /** Store rating prompt: how often it was asked (see engine/review). */
+  review?: ReviewState;
 }
 
 export interface Settings {

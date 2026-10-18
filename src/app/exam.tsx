@@ -7,6 +7,7 @@ import { DiscardTray } from '../components/table/DiscardTray';
 import { ExamHooks, TableScreen } from '../components/table/TableScreen';
 import { Button, H2, P, Panel, Screen, STEP_LABEL } from '../components/ui';
 import { useOutcomeColors } from '../components/useColors';
+import { useReviewPrompt } from '../components/useReviewPrompt';
 import { SYSTEM_NAME, isBalanced } from '../engine/counting';
 import { CARDS_PER_DECK, formatDecks, questionFor, scoreDeckGuess } from '../engine/decks';
 import {
@@ -159,6 +160,7 @@ const num = (n: number, digits = 2) => n.toFixed(digits).replace('.', T.decimal)
 
 export default function ExamScreen() {
   const { ready, settings, stats, updateStats } = useSettings();
+  const askForReview = useReviewPrompt();
   const { rules, countingSystem } = settings;
   const balanced = isBalanced(countingSystem);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -224,6 +226,7 @@ export default function ExamScreen() {
     const result = examResult(x, gradeExam(x), localDay(new Date()));
     updateStats((s) => ({ ...s, exams: addExam(s.exams ?? [], result) }));
     setPhase('report');
+    if (result.passed) askForReview();
   };
 
   if (!ready) return <Screen>{null}</Screen>;
