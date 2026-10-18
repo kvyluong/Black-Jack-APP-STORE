@@ -26,9 +26,9 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 - [ ] **🛑 OWNER: Apple Developer Program** at https://developer.apple.com/programs/enroll/
   - $99/year. Individual, unless there's a company.
   - Approval usually takes 1–2 days.
-- [ ] **🛑 OWNER: AdMob** at https://admob.google.com
+- [x] **🛑 OWNER: AdMob** at https://admob.google.com
   - Sign up.
-  - Payments: add the payment method and the tax form (W-9 in the US). AdMob pays monthly once the balance passes $100.
+  - [ ] Payments (still to do): add the payment method and the tax form (W-9 in the US). AdMob pays monthly once the balance passes $100.
 - [ ] **Expo account** at https://expo.dev/signup (free).
 - [ ] `npx eas-cli@latest login`
 
@@ -42,15 +42,15 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 - [ ] Commit.
 
 ## 3. AdMob (iOS)
-- [ ] In AdMob, **Apps → Add app → iOS**. Choose "not listed yet"; you link it after launch (step 9).
-- [ ] Create 3 ad units: **Banner**, **Interstitial** and **Rewarded**.
-- [ ] Put the IDs in `app.json`:
+- [x] In AdMob, **Apps → Add app → iOS**. Choose "not listed yet"; you link it after launch (step 9).
+- [x] Create 3 ad units: **Banner**, **Interstitial** and **Rewarded**.
+- [x] Put the IDs in `app.json`:
   - the AdMob **app ID** (`ca-app-pub-…~…`) → `plugins` → `react-native-google-mobile-ads` → `iosAppId`, replacing Google's test ID;
   - the 3 **unit IDs** (`ca-app-pub-…/…`) → `extra.adUnits.ios.banner`, `.interstitial` and `.rewarded`.
-- [ ] Leave the Android placeholders. Units still set to `REPLACE…` simply show no ads (see `src/ads/config.ts`). Development builds always use Google's test ads.
-- [ ] **Publisher ID** (`pub-…`, from AdMob → Settings → Account): put it in `website/app-ads.txt`.
+- [x] Leave the Android placeholders. Units still set to `REPLACE…` simply show no ads (see `src/ads/config.ts`). Development builds always use Google's test ads.
+- [x] **Publisher ID** (`pub-…`, from AdMob → Settings → Account): put it in `website/app-ads.txt`.
 - [ ] Optional: **AdMob → Privacy & messaging**. Create the GDPR (EU/UK) message and the IDFA explainer for iOS. The app already shows Google's consent form (`src/ads/init.ts`) and the iOS tracking prompt.
-- [ ] Commit.
+- [x] Commit.
 
 ## 4. Website, privacy policy, app-ads.txt
 Apple requires a privacy policy URL, and the page is already written (`website/privacy.html`). AdMob reads `app-ads.txt` only at the **root of a domain**.
