@@ -33,7 +33,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 - [ ] `npx eas-cli@latest login`
 
 ## 2. App identity
-- [ ] **🛑 OWNER: choose the bundle ID**, e.g. `com.kvyluong.shoesharp`. It can't change after release.
+- [x] **🛑 OWNER: choose the bundle ID**, e.g. `com.kvyluong.shoesharp`. It can't change after release.
 - [x] Put it in `app.json` → `expo.ios.bundleIdentifier`, replacing `com.REPLACE_ME.shoesharp`. Use the same value for `expo.android.package`.
 - [ ] `npx eas-cli@latest init`, which links the EAS project and adds `extra.eas.projectId` to `app.json`.
 - [x] App icon and splash screen. `assets/icon.png` is still the template:
@@ -55,9 +55,9 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 ## 4. Website, privacy policy, app-ads.txt
 Apple requires a privacy policy URL, and the page is already written (`website/privacy.html`). AdMob reads `app-ads.txt` only at the **root of a domain**.
 
-- [ ] **🛑 OWNER:** GitHub repo → Settings → General → **Default branch → `main`**. The website deploys only from the default branch.
-- [ ] **🛑 OWNER:** GitHub repo → Settings → Pages → Source: **GitHub Actions**. `.github/workflows/site.yml` then deploys `website/` to https://kvyluong.github.io/Black-Jack-APP-STORE/
-- [ ] Privacy policy URL for App Store Connect: https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html
+- [x] **🛑 OWNER:** GitHub repo → Settings → General → **Default branch → `main`**. The website deploys only from the default branch.
+- [x] **🛑 OWNER:** GitHub repo → Settings → Pages → Source: **GitHub Actions**. `.github/workflows/site.yml` then deploys `website/` to https://kvyluong.github.io/Black-Jack-APP-STORE/
+- [x] Privacy policy URL for App Store Connect: https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html
 - [ ] Root domain for `app-ads.txt`. The owner picks one option:
   - **A)** buy a domain (e.g. `shoesharp.app`) and point it at Pages (Settings → Pages → Custom domain);
   - **B)** create a repo named `kvyluong.github.io` containing only `app-ads.txt` at its root.
