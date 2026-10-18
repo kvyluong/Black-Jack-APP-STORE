@@ -43,7 +43,7 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "androidAppId": "ca-app-pub-2452034460168771~8351378637",
           "iosAppId": "ca-app-pub-2452034460168771~4623052468",
           "delayAppMeasurementInit": true,
           "userTrackingUsageDescription": "This identifier will be used to deliver more relevant ads to you."
@@ -68,9 +68,9 @@
           "rewarded": "ca-app-pub-2452034460168771/3309970797"
         },
         "android": {
-          "banner": "REPLACE_WITH_ANDROID_BANNER_UNIT_ID",
-          "interstitial": "REPLACE_WITH_ANDROID_INTERSTITIAL_UNIT_ID",
-          "rewarded": "REPLACE_WITH_ANDROID_REWARDED_UNIT_ID"
+          "banner": "ca-app-pub-2452034460168771/7038296963",
+          "interstitial": "ca-app-pub-2452034460168771/1557905422",
+          "rewarded": "ca-app-pub-2452034460168771/5189108804"
         }
       },
       "iap": {

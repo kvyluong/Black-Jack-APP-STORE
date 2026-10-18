@@ -12,6 +12,8 @@ Everything else Claude can do: fill in forms, edit files, run commands.
 
 Tick boxes as you go and commit this file, so the next session knows where things stand.
 
+Android / Google Play has its own runbook: [GOOGLE_PLAY_LAUNCH.md](GOOGLE_PLAY_LAUNCH.md).
+
 ---
 
 ## 0. Mac setup
