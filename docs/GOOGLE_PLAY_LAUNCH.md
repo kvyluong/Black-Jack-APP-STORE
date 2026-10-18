@@ -58,7 +58,7 @@ Full description: use the one in [APP_STORE_LISTING.md](APP_STORE_LISTING.md), w
 - [ ] Category **Card**; tags: Card, Casino, Educational (whatever Play offers closest). Contact email, website `https://kvyluong.github.io/Black-Jack-APP-STORE/`.
 
 ## 7. App content (Policy → App content)
-- [ ] **Privacy policy:** `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html`
+- [ ] **Privacy policy:** `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html` (placeholders filled in first; see APP_STORE_LAUNCH.md step 4)
 - [ ] **Ads:** Yes, the app contains ads.
 - [ ] **App access:** All functionality is available without special access (no login).
 - [ ] **Content rating (IARC questionnaire):** category Game. Answer honestly: **simulated gambling: Yes**; real-money gambling: No; no violence, sex, drugs or user-to-user chat; purchases of digital goods: Yes. The rating comes out from the answers.
