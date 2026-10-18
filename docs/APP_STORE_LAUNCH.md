@@ -59,7 +59,7 @@ Apple requires a privacy policy URL, and the page is already written (`website/p
 - [x] **🛑 OWNER:** GitHub repo → Settings → General → **Default branch → `main`**. The website deploys only from the default branch.
 - [x] **🛑 OWNER:** GitHub repo → Settings → Pages → Source: **GitHub Actions**. `.github/workflows/site.yml` then deploys `website/` to https://kvyluong.github.io/Black-Jack-APP-STORE/
 - [x] Privacy policy URL for App Store Connect: https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html
-- [ ] Root domain for `app-ads.txt`. The owner picks one option:
+- [x] Root domain for `app-ads.txt`. **Done with option B:** https://kvyluong.github.io/app-ads.txt (repo `kvyluong/kvyluong.github.io`). In App Store Connect, use `https://kvyluong.github.io` as the Marketing URL so AdMob finds it. The owner picks one option:
   - **A)** buy a domain (e.g. `shoesharp.app`) and point it at Pages (Settings → Pages → Custom domain);
   - **B)** create a repo named `kvyluong.github.io` containing only `app-ads.txt` at its root.
 

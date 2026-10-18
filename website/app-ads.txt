@@ -1,4 +1,4 @@
 # Authorized sellers of ads in ShoeSharp (https://iabtechlab.com/ads-txt/).
-# Replace the publisher ID with yours: AdMob → Settings → Account information.
-# AdMob only reads this file at the root of your domain, e.g. https://example.com/app-ads.txt
+# AdMob reads this only at the domain root; the live copy is https://kvyluong.github.io/app-ads.txt
+# (repo kvyluong/kvyluong.github.io). Keep the two in sync.
 google.com, pub-2452034460168771, DIRECT, f08c47fec0942fa0
