@@ -28,7 +28,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -73,11 +76,16 @@
       "iap": {
         "removeAds": "remove_ads"
       },
-      "website": "https://kvyluong.github.io/Black-Jack-APP-STORE"
+      "website": "https://kvyluong.github.io/Black-Jack-APP-STORE",
+      "router": {},
+      "eas": {
+        "projectId": "42b31f8a-cf00-4e18-bce1-beefe9249cee"
+      }
     },
     "locales": {
       "en": "./locales/en.json",
       "es": "./locales/es.json"
-    }
+    },
+    "owner": "kvyluong"
   }
 }

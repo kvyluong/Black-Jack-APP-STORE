@@ -29,17 +29,17 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 - [x] **🛑 OWNER: AdMob** at https://admob.google.com
   - Sign up.
   - [x] Payments: profile and W-9 done. The bank account is added later: Google asks once earnings reach about $10 and mails a PIN to verify the address. AdMob pays monthly once the balance passes $100.
-- [ ] **Expo account** at https://expo.dev/signup (free).
-- [ ] `npx eas-cli@latest login`
+- [x] **Expo account** at https://expo.dev/signup (free).
+- [x] `npx eas-cli@latest login`
 
 ## 2. App identity
 - [x] **🛑 OWNER: choose the bundle ID**, e.g. `com.kvyluong.shoesharp`. It can't change after release.
 - [x] Put it in `app.json` → `expo.ios.bundleIdentifier`, replacing `com.REPLACE_ME.shoesharp`. Use the same value for `expo.android.package`.
-- [ ] `npx eas-cli@latest init`, which links the EAS project and adds `extra.eas.projectId` to `app.json`.
+- [x] `npx eas-cli@latest init`, which links the EAS project and adds `extra.eas.projectId` to `app.json`.
 - [x] App icon and splash screen. `assets/icon.png` is still the template:
   - replace it with a 1024×1024 PNG with no transparency;
   - update `assets/splash-icon.png`.
-- [ ] Commit.
+- [x] Commit.
 
 ## 3. AdMob (iOS)
 - [x] In AdMob, **Apps → Add app → iOS**. Choose "not listed yet"; you link it after launch (step 9).
