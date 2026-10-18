@@ -15,12 +15,12 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 ---
 
 ## 0. Mac setup
-- [ ] Install Node.js LTS (nodejs.org) and git.
-- [ ] `git clone https://github.com/kvyluong/Black-Jack-APP-STORE && cd Black-Jack-APP-STORE`
-- [ ] Work on `main` (the clone starts there once `main` is the default branch; otherwise `git checkout main`).
-- [ ] `npm install`
-- [ ] Check it's healthy: `npx tsc --noEmit && npx expo lint && npx jest`
-- [ ] Xcode is **not** needed: EAS builds and signs in the cloud.
+- [x] Install Node.js LTS (nodejs.org) and git.
+- [x] `git clone https://github.com/kvyluong/Black-Jack-APP-STORE && cd Black-Jack-APP-STORE`
+- [x] Work on `main` (the clone starts there once `main` is the default branch; otherwise `git checkout main`).
+- [x] `npm install`
+- [x] Check it's healthy: `npx tsc --noEmit && npx expo lint && npx jest`
+- [x] Xcode is **not** needed: EAS builds and signs in the cloud.
 
 ## 1. Accounts
 - [ ] **🛑 OWNER: Apple Developer Program** at https://developer.apple.com/programs/enroll/
