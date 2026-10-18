@@ -8,11 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B5D3B",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B5D3B"
-    },
     "ios": {
       "bundleIdentifier": "com.kvyluong.shoesharp",
       "supportsTablet": true,
@@ -58,7 +53,17 @@
         }
       ],
       "expo-iap",
-      "expo-localization"
+      "expo-localization",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B5D3B"
+        }
+      ]
     ],
     "extra": {
       "adUnits": {
