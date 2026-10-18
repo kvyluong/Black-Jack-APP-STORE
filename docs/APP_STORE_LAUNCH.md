@@ -26,6 +26,7 @@ Tick boxes as you go and commit this file, so the next session knows where thing
 - [ ] **🛑 OWNER: Apple Developer Program** at https://developer.apple.com/programs/enroll/
   - $99/year. Individual, unless there's a company.
   - Approval usually takes 1–2 days.
+  - Status (2026-10-18): enrolled as an individual and paid (enrollment ID 2D6YZ24WBJ). Waiting for Apple to process it (up to 48 hours) and send the "Welcome to the Apple Developer Program" email. Tick this box then.
 - [x] **🛑 OWNER: AdMob** at https://admob.google.com
   - Sign up.
   - [x] Payments: profile and W-9 done. The bank account is added later: Google asks once earnings reach about $10 and mails a PIN to verify the address. AdMob pays monthly once the balance passes $100.
