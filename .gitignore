@@ -42,3 +42,7 @@ yarn-error.*
 
 # Website build
 site-dist/
+
+# Store screenshot scratch
+scripts/store-screenshots/raw/
+scripts/store-screenshots/node_modules/

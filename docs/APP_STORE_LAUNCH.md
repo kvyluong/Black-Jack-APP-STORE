@@ -67,6 +67,8 @@ Apple requires a privacy policy URL, and the page is already written (`website/p
 - [x] Update `expo.extra.website` in `app.json` if the domain changes. The in-app privacy link uses it. (No change needed: the website stays at kvyluong.github.io/Black-Jack-APP-STORE.)
 
 ## 5. App Store Connect: app record and purchase
+Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.md**. Captioned screenshots are ready in `store-assets/screenshots/` (rebuild with `scripts/store-screenshots/`).
+
 - [ ] **🛑 OWNER:** App Store Connect → **Business** (Agreements, Tax, and Banking):
   - accept the **Paid Apps** agreement;
   - add bank and tax details.
