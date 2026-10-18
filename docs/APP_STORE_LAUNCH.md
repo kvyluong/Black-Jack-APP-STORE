@@ -64,7 +64,7 @@ Apple requires a privacy policy URL, and the page is already written (`website/p
   - **B)** create a repo named `kvyluong.github.io` containing only `app-ads.txt` at its root.
 
   Then use that domain as the app's "Marketing URL" or developer website.
-- [ ] Update `expo.extra.website` in `app.json` if the domain changes. The in-app privacy link uses it.
+- [x] Update `expo.extra.website` in `app.json` if the domain changes. The in-app privacy link uses it. (No change needed: the website stays at kvyluong.github.io/Black-Jack-APP-STORE.)
 
 ## 5. App Store Connect: app record and purchase
 - [ ] **🛑 OWNER:** App Store Connect → **Business** (Agreements, Tax, and Banking):
