@@ -20,6 +20,7 @@ inside those two weeks.
   - Account type **Personal** (a company needs a D-U-N-S number).
   - One-time **$25** fee, then identity verification with a government ID. Approval can take a few days.
   - Verify the contact phone and email it asks for. Android device verification may also be asked for (the Play Console app on an Android phone).
+  - Status (2026-10-18): account created and paid (personal, developer name "9in1shampoo", account ID 7923078639624714826). Still to do: **verify identity** (upload an ID), **verify an Android device** (sign in to the Play Console app on an Android phone), then **verify the contact phone**. "Create app" stays locked until these are done.
 - [ ] **🛑 OWNER: Payments profile / merchant account**: Play Console → Settings → Payments profile. Needed to sell "Remove ads". It can reuse the Google payments profile AdMob created (same Google account).
 
 ## 2. AdMob (Android)
