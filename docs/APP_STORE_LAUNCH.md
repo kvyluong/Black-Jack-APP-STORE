@@ -104,6 +104,11 @@ All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LI
   - Re-check against Google's current AdMob guidance for Apple's privacy labels before submitting.
 - [ ] **Review notes:** "ShoeSharp is a blackjack training app. No real-money gambling: chips are virtual, can't be bought or cashed out, and have no value. The only purchase removes ads."
 
+## 6b. Simulator check on the Mac (done 2026-10-18)
+EAS `simulator` profile build on the iOS 27.1 simulator (iPhone Duo): the splash, the IDFA explainer, Apple's tracking prompt (declining it still lets you use everything), the level picker, Casino Floor, a Google **test** banner, the bonus-chips button and the table (deal, other players) all work. Not covered: purchases and real ads (TestFlight, step 7).
+
+To run it again: `npx eas-cli@latest build --platform ios --profile simulator`, unpack the `.tar.gz`, then `xcrun simctl install booted ShoeSharp.app` and `xcrun simctl launch booted com.kvyluong.shoesharp`.
+
 ## 7. Test build on the owner's iPhone (TestFlight)
 A production/TestFlight build uses the **real** ad units, unlike development builds.
 **Never tap your own live ads**: AdMob can suspend the account. Before installing, add the
