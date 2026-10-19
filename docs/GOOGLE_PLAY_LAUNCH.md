@@ -38,6 +38,11 @@ inside those two weeks.
 - [ ] **Google service account key** so EAS can upload: follow https://github.com/expo/fyi/blob/main/creating-google-service-account.md, then upload the JSON in the EAS dashboard → Credentials → Android → `com.kvyluong.shoesharp` → Google service account key. **🛑 OWNER:** granting the account access in Play Console → Users and permissions.
 - [ ] `npx eas-cli@latest submit --platform android --latest`. The first release lands on the **internal testing** track.
 
+## 4b. Emulator check on the Mac (done 2026-10-18)
+EAS `preview` build (APK) on an Android 15 Pixel 8 emulator: the new splash and icon show, the level picker, home, Casino Floor and the table (deal, coach, actions) all work, and the tab bar clears the gesture bar. Not covered: purchases (needs Play), ads (AdMob answers "no fill" (code 3) until the app is live and linked in AdMob, step 10), and the EU consent form (the GDPR message isn't attached to the Android app yet, step 2).
+
+To run it again: `$ANDROID_HOME/emulator/emulator -avd ShoeSharp_Pixel`, with `ANDROID_HOME=/opt/homebrew/share/android-commandlinetools`, then install a fresh `eas build --platform android --profile preview` APK with `adb install -r`.
+
 ## 5. Closed test (start early: 12 testers × 14 days)
 - [ ] Play Console → Testing → **Closed testing** → create a track, add the build, and a tester list (Google Group or email list) with **at least 12** people. Tell them to accept the opt-in link **and keep the app installed**; anyone who opts out resets their 14 days.
 - [ ] Note the start date here: ____ . Earliest production application: start + 14 days.
