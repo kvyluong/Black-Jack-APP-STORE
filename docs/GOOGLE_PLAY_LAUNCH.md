@@ -33,7 +33,7 @@ inside those two weeks.
 - [ ] Add the **Spanish (Latin America) – es-419** translation for the listing (step 6).
 
 ## 4. First build and the service account
-- [ ] `npx eas-cli@latest build --platform android --profile production` (an `.aab`; EAS creates and keeps the upload key).
+- [x] `npx eas-cli@latest build --platform android --profile production` (an `.aab`; EAS creates and keeps the upload key). First build done 2026-10-18: 1.0.0 (versionCode 2), https://expo.dev/accounts/kvyluong/projects/shoesharp/builds/cd79ac40-2770-4389-a877-334a0241cb48. Rebuild after any native change.
 - [ ] **Google service account key** so EAS can upload: follow https://github.com/expo/fyi/blob/main/creating-google-service-account.md, then upload the JSON in the EAS dashboard → Credentials → Android → `com.kvyluong.shoesharp` → Google service account key. **🛑 OWNER:** granting the account access in Play Console → Users and permissions.
 - [ ] `npx eas-cli@latest submit --platform android --latest`. The first release lands on the **internal testing** track.
 
