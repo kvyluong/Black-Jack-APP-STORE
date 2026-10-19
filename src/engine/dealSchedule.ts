@@ -2,9 +2,12 @@ import { GameState, YOU } from './game';
 import { FanfareTier, roundFanfare } from './juice';
 
 /** Milliseconds between cards being dealt. */
-export const DEAL_STEP_MS = 280;
+export const DEAL_STEP_MS = 200;
 /** How long one card takes to slide into place (or flip over). */
-export const CARD_ANIM_MS = 260;
+export const CARD_ANIM_MS = 220;
+/** Settings → Game speed: how much faster than normal the practice table deals and players act. */
+export type GameSpeed = 'normal' | 'fast';
+export const SPEED_FACTOR: Record<GameSpeed, number> = { normal: 1, fast: 0.55 };
 const SHUFFLE_MS = 700;
 
 export type SoundName =

@@ -12,7 +12,7 @@ import { useInterstitial } from '../../ads/useInterstitial';
 import { haptic } from '../../audio/haptics';
 import { playSound } from '../../audio/sounds';
 import { betUnitsForCount, decksRemaining, initialRunningCount, isBalanced, shouldTakeInsurance } from '../../engine/counting';
-import { DEAL_STEP_MS } from '../../engine/dealSchedule';
+import { DEAL_STEP_MS, SPEED_FACTOR } from '../../engine/dealSchedule';
 import { discardedCards } from '../../engine/decks';
 import { EXAM_STACK_UNITS, chatterLine } from '../../engine/exam';
 import {
@@ -77,7 +77,7 @@ import { useDealAnimation } from '../useDealAnimation';
 
 const QUIZ_CHANCE = 0.25;
 /** How long a computer player "thinks" before acting (quicker under casino conditions). */
-const NPC_THINK_MS = { practice: 650, exam: 450 };
+const NPC_THINK_MS = { practice: 450, exam: 320 };
 /** Time between dealt cards: a busy casino dealer is quicker than the practice table. */
 const DEAL_STEP = { practice: DEAL_STEP_MS, exam: Math.round(DEAL_STEP_MS * 0.65) };
 /** How often a computer player says something instead of just signaling their play (test only). */
@@ -210,7 +210,9 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   const [roundCorrect, setRoundCorrect] = useState(0);
   const roundBreak = useInterstitial();
   const askForReview = useReviewPrompt();
-  const anim = useDealAnimation(DEAL_STEP[mode]);
+  // Settings → Game speed scales the practice table; the casino test keeps its own pace.
+  const speed = testing ? 1 : SPEED_FACTOR[settings.gameSpeed ?? 'normal'];
+  const anim = useDealAnimation(Math.round(DEAL_STEP[mode] * speed));
   const { settled } = anim;
 
   // You can hide or peek at the count; turning "Show the count" on or off in Settings resets that.
@@ -303,7 +305,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
         setBubbles((b) => ({ ...b, [npc.id]: text }));
       }
       commit(game, act(game, action));
-    }, NPC_THINK_MS[mode]);
+    }, Math.round(NPC_THINK_MS[mode] * speed));
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settled, game]);

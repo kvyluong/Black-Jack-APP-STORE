@@ -106,11 +106,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    // A darker bottom edge instead of a drop shadow: real shadows on cards that move are drawn
+    // off-screen on every frame on iOS (and add a render layer per card on Android).
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(0,0,0,0.28)',
   },
   // Rank in the corner so it stays readable when cards are stacked.
   xs: { alignItems: 'flex-start', justifyContent: 'flex-start', paddingHorizontal: 3, paddingTop: 1 },

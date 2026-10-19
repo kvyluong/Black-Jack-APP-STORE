@@ -188,7 +188,8 @@ export function StreakBadge({ streak }: { streak: number }) {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  chip: { position: 'absolute', borderWidth: 2, borderColor: 'rgba(0,0,0,0.25)', borderStyle: 'dashed' },
+  // Solid edges: dashed borders are slow to draw on Android, and two dozen of these fly at once.
+  chip: { position: 'absolute', borderWidth: 2, borderColor: 'rgba(0,0,0,0.25)' },
   label: {
     position: 'absolute',
     fontSize: 34,

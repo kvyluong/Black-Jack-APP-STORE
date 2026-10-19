@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import { Animated, Easing, Platform } from 'react-native';
+import { Animated, Easing } from 'react-native';
 
 import { Card } from '../engine/cards';
 import { CARD_ANIM_MS } from '../engine/dealSchedule';
@@ -32,7 +32,6 @@ export const AnimatedCard = memo(AnimatedCardView, (a, b) =>
 function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
   const deal = useState(() => new Animated.Value(instant ? 1 : 0))[0];
   const flip = useState(() => new Animated.Value(1))[0];
-  const sway = useState(() => new Animated.Value(0))[0];
   const [showBack, setShowBack] = useState(faceDown);
 
   useEffect(() => {
@@ -45,25 +44,8 @@ function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant 
       easing: Easing.out(Easing.back(1.6)),
       useNativeDriver: true,
     });
-    // After landing, the card idles with a slow, slightly random sway. The tiny cards at
-    // the other seats stay still: a dozen of them swaying costs frames for little effect.
-    // So does the web, where there's no native driver and every frame of it runs in JavaScript.
-    if (size === 'xs' || Platform.OS === 'web') {
-      anim.start();
-      return () => anim.stop();
-    }
-    const period = 1600 + Math.random() * 900;
-    const idle = Animated.loop(
-      Animated.sequence([
-        Animated.timing(sway, { toValue: 1, duration: period, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(sway, { toValue: -1, duration: period, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    );
-    anim.start(({ finished }) => finished && idle.start());
-    return () => {
-      anim.stop();
-      idle.stop();
-    };
+    anim.start();
+    return () => anim.stop();
     // Runs once per card: later prop changes must not re-deal it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -101,8 +83,6 @@ function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant 
       { translateX: deal.interpolate({ inputRange: [0, 1], outputRange: [140, 0] }) },
       { translateY: deal.interpolate({ inputRange: [0, 1], outputRange: [-220, 0] }) },
       { rotate: deal.interpolate({ inputRange: [0, 1], outputRange: ['-25deg', '0deg'] }) },
-      { rotate: sway.interpolate({ inputRange: [-1, 1], outputRange: ['-1.5deg', '1.5deg'] }) },
-      { translateY: sway.interpolate({ inputRange: [-1, 1], outputRange: [1.5, -1.5] }) },
       { scaleX: flip },
     ],
   }));

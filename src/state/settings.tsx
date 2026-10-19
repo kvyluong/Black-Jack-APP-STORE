@@ -6,6 +6,7 @@ import { getLocales } from 'expo-localization';
 
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
 import { CountingSystem, setCountingSystem } from '../engine/counting';
+import type { GameSpeed } from '../engine/dealSchedule';
 import { LeakStats, emptyLeaks } from '../engine/leaks';
 import { GoalsState, HistoryPoint, emptyGoals } from '../engine/progress';
 import {
@@ -110,6 +111,8 @@ export interface Settings {
   handSignals: boolean;
   /** "I already know how to play": every feature is open from the start (see engine/unlocks.ts). */
   experienced: boolean;
+  /** How fast the practice table deals and the other players act (the casino test keeps its own pace). */
+  gameSpeed: GameSpeed;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -131,6 +134,7 @@ const DEFAULT_SETTINGS: Settings = {
   countingSystem: 'hiLo',
   handSignals: false,
   experienced: false,
+  gameSpeed: 'normal',
   tableId: 'floor',
 };
 

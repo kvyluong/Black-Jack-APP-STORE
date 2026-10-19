@@ -7,6 +7,7 @@ import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
 import { useRemoveAds } from '../purchases/RemoveAds';
 import { COUNTING_SYSTEMS, CountingSystem, SYSTEM_NAME } from '../engine/counting';
+import type { GameSpeed } from '../engine/dealSchedule';
 import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
 import { usePrefs } from '../state/settings';
 import { colors } from '../theme';
@@ -46,6 +47,10 @@ const T = localized({
     allFeaturesHint: 'Open all drills, tools and the full table display now, instead of as you finish the lessons.',
     table: 'The table',
     handsYouPlay: 'Hands you play',
+    speed: 'Game speed',
+    speedNormal: 'Normal',
+    speedFast: 'Fast',
+    speedHint: 'How quickly cards are dealt and the other players act at the practice table.',
     oneHand: '1 hand',
     twoHands: '2 hands',
     others: 'Other players',
@@ -110,6 +115,10 @@ const T = localized({
     allFeaturesHint: 'Abre ya todos los ejercicios, las herramientas y la mesa completa, en vez de a medida que terminas las lecciones.',
     table: 'La mesa',
     handsYouPlay: 'Manos que juegas',
+    speed: 'Velocidad del juego',
+    speedNormal: 'Normal',
+    speedFast: 'Rápida',
+    speedHint: 'Qué tan rápido se reparten las cartas y juegan los demás en la mesa de práctica.',
     oneHand: '1 mano',
     twoHands: '2 manos',
     others: 'Otros jugadores',
@@ -269,6 +278,16 @@ export default function SettingsScreen() {
           value={settings.yourHands}
           onChange={(v) => updateSettings({ yourHands: v })}
         />
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.speed}</Text>
+        <Segmented<GameSpeed>
+          options={[
+            { label: T.speedNormal, value: 'normal' },
+            { label: T.speedFast, value: 'fast' },
+          ]}
+          value={settings.gameSpeed}
+          onChange={(v) => updateSettings({ gameSpeed: v })}
+        />
+        <P muted style={{ fontSize: 13 }}>{T.speedHint}</P>
         <ToggleRow
           label={T.others}
           hint={T.othersHint}
