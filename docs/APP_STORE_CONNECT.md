@@ -106,17 +106,17 @@ Localizations:
 
 | | Display name | Description |
 |---|---|---|
-| English (U.S.) | `Remove ads` | `No more banner or between-hand ads. Rewarded bonus chips stay available.` |
-| Spanish (Mexico) | `Quitar anuncios` | `Sin banners ni anuncios entre manos. Las fichas extra con anuncio siguen disponibles.` |
+| English (U.S.) | `Remove ads` | `No banner or between-hand ads. Bonus-chip videos stay.` (54/55) |
+| Spanish (Mexico) | `Quitar anuncios` | `Sin banners ni anuncios entre manos.` (36/55) |
 
 **Review screenshot:** the Settings screen showing the Remove ads and Restore purchase
 buttons. Take it on the phone from the TestFlight build (step 7): the web build has no store,
 so it shows a note instead of the buttons.
 **Review notes:** "Tap the Me tab → Settings → Remove ads. Restore purchase is on the same screen."
 
-On the app's version page, attach this purchase under **In-App Purchases and
-Subscriptions** before you submit. The first purchase must be reviewed together with
-an app version.
+Descriptions are capped at **55 characters**. The first purchase is reviewed together with an
+app version: when submitting, click **Add for Review** on the purchase and on version 1.0.0 so
+both go into the same submission. Created 2026-10-19: Apple ID 6824753924, USD 2.99, all countries.
 
 ## 7. Version page (iOS App → 1.0 Prepare for Submission)
 

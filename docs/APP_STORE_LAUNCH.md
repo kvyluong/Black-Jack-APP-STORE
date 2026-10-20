@@ -71,13 +71,13 @@ Apple requires a privacy policy URL, and the page is already written (`website/p
 ## 5. App Store Connect: app record and purchase
 Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.md**. Captioned screenshots are ready in `store-assets/screenshots/` (rebuild with `scripts/store-screenshots/`).
 
-- [ ] **🛑 OWNER:** App Store Connect → **Business** (Agreements, Tax, and Banking):
+- [x] **🛑 OWNER:** App Store Connect → **Business** (Agreements, Tax, and Banking) (done 2026-10-19: W-9 active; Paid Apps agreement, bank and EU trader verification processing):
   - accept the **Paid Apps** agreement;
   - add bank and tax details.
 
   Without this, "Remove ads" can't be sold.
 - [x] **Apps → + → New App** (created 2026-10-19: "ShoeSharp: Blackjack Trainer", Apple ID 6824730148, in `eas.json` → `submit.production.ios.ascAppId`): iOS. Name **ShoeSharp** (if it's taken, try "ShoeSharp: Blackjack Trainer"). Primary language English (U.S.). The bundle ID from step 2, and SKU `shoesharp`.
-- [ ] **In-App Purchases → +**:
+- [x] **In-App Purchases → +** (created 2026-10-19, Apple ID 6824753924; still needs the review screenshot from TestFlight):
   - type **Non-Consumable**;
   - product ID **`remove_ads`**, which must match `extra.iap.removeAds`;
   - reference name "Remove ads";
