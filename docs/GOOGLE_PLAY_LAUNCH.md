@@ -66,6 +66,7 @@ Full description: use the one in [APP_STORE_LISTING.md](APP_STORE_LISTING.md), w
 
 ## 7. App content (Policy → App content)
 - [ ] **Privacy policy:** `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html` (placeholders filled in 2026-10-19)
+- [ ] **Data deletion** (Data safety form, if asked for a URL): `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html#delete`. Terms of use and refunds: `terms.html`.
 - [ ] **Ads:** Yes, the app contains ads.
 - [ ] **App access:** All functionality is available without special access (no login).
 - [ ] **Content rating (IARC questionnaire):** category Game. Answer honestly: **simulated gambling: Yes**; real-money gambling: No; no violence, sex, drugs or user-to-user chat; purchases of digital goods: Yes. The rating comes out from the answers.

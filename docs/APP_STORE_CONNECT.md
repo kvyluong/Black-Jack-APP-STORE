@@ -51,6 +51,8 @@ tick **In-App Purchase** (on by default).
 
 **Privacy policy URL:** `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html`
 
+**Terms of use:** `https://kvyluong.github.io/Black-Jack-APP-STORE/terms.html` (refunds go through Apple; Apple's standard EULA still applies, so leave App Information → License Agreement on the standard one). Data deletion steps: `privacy.html#delete`.
+
 "Do you or your third-party partners collect data from this app?" → **Yes.** Everything
 below is collected by the Google Mobile Ads SDK. The app itself has no accounts and no
 analytics, and keeps progress on the device.

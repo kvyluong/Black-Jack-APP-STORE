@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { Alert, Linking, Platform, Text } from 'react-native';
+import { Alert, Linking, Platform, StyleSheet, Text } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
@@ -76,6 +76,8 @@ const T = localized({
     privacy: 'Ad privacy choices',
     resetButton: 'Reset progress and chips',
     privacyPolicy: 'Privacy policy',
+    terms: 'Terms of use & refunds',
+    contact: 'Contact the developer',
     about: 'About',
     aboutText:
       'ShoeSharp is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
@@ -144,15 +146,19 @@ const T = localized({
     privacy: 'Opciones de privacidad de anuncios',
     resetButton: 'Reiniciar progreso y fichas',
     privacyPolicy: 'Política de privacidad',
+    terms: 'Términos de uso y reembolsos',
+    contact: 'Contactar al desarrollador',
     about: 'Acerca de',
     aboutText:
       'ShoeSharp es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
   },
 });
 
-/** The website (app.json `extra.website`) hosts the privacy policy in both languages. */
+/** The website (app.json `extra.website`) hosts the privacy policy and terms in both languages. */
 const website = (Constants.expoConfig?.extra?.website as string | undefined)?.replace(/\/$/, '');
 const privacyUrl = (base: string, lang: string) => `${base}/${lang === 'es' ? 'es/privacidad.html' : 'privacy.html'}`;
+const termsUrl = (base: string, lang: string) => `${base}/${lang === 'es' ? 'es/terminos.html' : 'terms.html'}`;
+const CONTACT_EMAIL = 'kvy.luong@gmail.com';
 
 export default function SettingsScreen() {
   const { lang, settings, updateSettings, updateStats, updateRules, resetProgress } = usePrefs();
@@ -387,10 +393,28 @@ export default function SettingsScreen() {
         {T.aboutText}
       </P>
       {website && (
-        <Text style={{ color: colors.gold, textDecorationLine: 'underline' }} accessibilityRole="link" onPress={() => Linking.openURL(privacyUrl(website, lang))}>
-          {T.privacyPolicy}
-        </Text>
+        <>
+          <Text style={styles.link} accessibilityRole="link" onPress={() => Linking.openURL(privacyUrl(website, lang))}>
+            {T.privacyPolicy}
+          </Text>
+          <Text style={styles.link} accessibilityRole="link" onPress={() => Linking.openURL(termsUrl(website, lang))}>
+            {T.terms}
+          </Text>
+        </>
       )}
+      <Text
+        style={styles.link}
+        accessibilityRole="link"
+        accessibilityHint={CONTACT_EMAIL}
+        onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}?subject=ShoeSharp`)}
+      >
+        {T.contact} · Kevin Luong
+      </Text>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  // Spaced out so each link is an easy tap target.
+  link: { color: colors.gold, textDecorationLine: 'underline', paddingVertical: 6 },
+});

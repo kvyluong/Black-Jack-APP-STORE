@@ -11,7 +11,8 @@ export const colors = {
   black: '#1A1A1A',
   red: '#C8323C',
   good: '#4ADE80',
-  bad: '#FF7A7A',
+  // Light enough for 4.5:1 contrast on the felt (WCAG AA for body text).
+  bad: '#FFB0B0',
   warn: '#FBBF24',
 };
 
@@ -20,14 +21,14 @@ export const spacing = (n: number) => n * 8;
 export const radius = { sm: 6, md: 12, lg: 20 };
 
 /** Color-blind-safe pair used instead of green/red when the setting is on. */
-export const colorblindColors = { good: '#4C9AFF', bad: '#FFB020' };
+export const colorblindColors = { good: '#9CC8FF', bad: '#FFB020' };
 
 /**
  * Brighter tints for level-two tags (±2, Omega II): higher contrast on the felt,
  * always paired with a doubled symbol so the size never depends on color alone.
  */
-const strongTag = { good: '#9BF5BA', bad: '#FFB0B0' };
-const strongTagColorblind = { good: '#9CC8FF', bad: '#FFD27A' };
+const strongTag = { good: '#9BF5BA', bad: '#FFCFCF' };
+const strongTagColorblind = { good: '#C4DEFF', bad: '#FFD27A' };
 
 /** Shape for a count tag, so it never depends on color alone: ▲▲ +2, ▲ +1, ● 0, ▼ −1, ▼▼ −2. */
 export const tagSymbol = (t: number) => (t >= 2 ? '▲▲' : t > 0 ? '▲' : t <= -2 ? '▼▼' : t < 0 ? '▼' : '●');

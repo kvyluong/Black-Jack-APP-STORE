@@ -110,6 +110,7 @@ for (const f of walk(out).filter((f) => /\.(html|txt|xml)$/.test(f) && !f.endsWi
     ['', 'es/', '1.0'],
     ['play.html', null, '0.9'],
     ['privacy.html', 'es/privacidad.html', '0.3'],
+    ['terms.html', 'es/terminos.html', '0.3'],
   ];
   const urls = pairs.flatMap(([en, es, priority]) => {
     const alts = es
