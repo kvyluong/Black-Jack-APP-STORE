@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { DealSchedule, cardDelay } from '../../engine/dealSchedule';
 import { GameState, Outcome, isYours } from '../../engine/game';
