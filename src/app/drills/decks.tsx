@@ -37,7 +37,7 @@ const T = localized({
     finish: 'See your score',
     done: (right: number, total: number) => `${right}/${total} within half a deck`,
     verdict: (right: number, total: number): string =>
-      right === total ? 'Perfect round. You read trays like a pro. 🎯' : right >= total * 0.8 ? 'Casino-ready.' : 'Keep practicing: aim for 8/10.',
+      right === total ? 'Perfect round. You read trays like a pro.' : right >= total * 0.8 ? 'Casino-ready.' : 'Keep practicing: aim for 8/10.',
     allTime: (right: number, total: number) => `All time: ${right}/${total} right`,
     avgError: (err: string) => `Average error (last 20): ${err} deck${err === '1' ? '' : 's'}`,
     again: 'Another round',
@@ -57,7 +57,7 @@ const T = localized({
     done: (right: number, total: number) => `${right}/${total} con un margen de media baraja`,
     verdict: (right: number, total: number) =>
       right === total
-        ? 'Ronda perfecta. Lees bandejas como un profesional. 🎯'
+        ? 'Ronda perfecta. Lees bandejas como un profesional.'
         : right >= total * 0.8
           ? 'Listo para el casino.'
           : 'Sigue practicando: apunta a 8/10.',

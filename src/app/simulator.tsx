@@ -72,7 +72,7 @@ const T = localized({
     chart: 'How often each true count comes up',
     warnTitle: 'Watch out',
     warn: {
-      sixFive: '6:5 blackjack costs about 1.4% — more than a typical spread can win back. Look for 3:2 tables.',
+      sixFive: '6:5 blackjack costs about 1.4%, more than a typical spread can win back. Look for 3:2 tables.',
       losing: 'This game and spread lose money on average. Counting can’t fix bad rules or a too-small spread.',
       ror: 'Your risk of ruin is above 10%. Bet smaller units or bring a bigger bankroll.',
       spread: 'A spread wider than about 1–10 in a shoe game is the kind casinos notice and back off.',

@@ -16,7 +16,7 @@ const T = localized({
     quiz: 'Quiz',
     correct: '✓ Correct. ',
     wrong: '✗ Not quite. Try again. ',
-    complete: 'Lesson complete! 🎉',
+    complete: 'Lesson complete!',
     next: (title: string) => `Next: ${title}`,
   },
   es: {
@@ -24,7 +24,7 @@ const T = localized({
     quiz: 'Cuestionario',
     correct: '✓ ¡Correcto! ',
     wrong: '✗ No exactamente. Inténtalo de nuevo. ',
-    complete: '¡Lección completada! 🎉',
+    complete: '¡Lección completada!',
     next: (title: string) => `Siguiente: ${title}`,
   },
 });
@@ -107,7 +107,7 @@ export default function LessonScreen() {
       })}
 
       {allCorrect && (
-        <Panel style={{ borderColor: colors.gold, borderWidth: 1 }}>
+        <Panel style={{ backgroundColor: colors.feltDark }}>
           <Text style={styles.done}>{T.complete}</Text>
           {lesson.practice && (
             <Button title={lesson.practice.label} onPress={() => router.push(lesson.practice!.href)} />

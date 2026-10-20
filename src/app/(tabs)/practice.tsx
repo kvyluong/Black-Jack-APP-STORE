@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ListedFeature, featureInfo } from '../../components/featureInfo';
+import { IconWell } from '../../components/Icon';
 import { Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
 import { localized } from '../../i18n/lang';
@@ -18,7 +19,7 @@ const T = localized({
     test: 'Test yourself',
     tools: 'Tools',
     new: 'NEW',
-    locked: (n: number) => `🔒 ${n} more unlock as you learn`,
+    locked: (n: number) => `${n} more unlock as you learn`,
     hideLocked: 'Hide',
   },
   es: {
@@ -27,7 +28,7 @@ const T = localized({
     test: 'Ponte a prueba',
     tools: 'Herramientas',
     new: 'NUEVO',
-    locked: (n: number) => `🔒 ${n} más se desbloquean mientras aprendes`,
+    locked: (n: number) => `${n} más se desbloquean mientras aprendes`,
     hideLocked: 'Ocultar',
   },
 });
@@ -75,7 +76,7 @@ export default function Practice() {
           {showLocked &&
             locked.map((f) => (
               <View key={f} style={styles.lockedRow}>
-                <Text style={styles.lockedIcon}>{featureInfo(f).icon}</Text>
+                <IconWell name={featureInfo(f).icon} dim />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.lockedTitle}>{featureInfo(f).title}</Text>
                   <Text style={styles.lockedHint}>{unlocks.hint(f)}</Text>
@@ -97,7 +98,7 @@ function Item({ feature, isNew, onPress }: { feature: ListedFeature; isNew: bool
       onPress={onPress}
       style={({ pressed }) => [styles.item, pressed && { opacity: 0.8 }]}
     >
-      <Text style={styles.icon}>{info.icon}</Text>
+      <IconWell name={info.icon} />
       <View style={{ flex: 1 }}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>{info.title}</Text>
@@ -112,9 +113,8 @@ function Item({ feature, isNew, onPress }: { feature: ListedFeature; isNew: bool
 
 const styles = StyleSheet.create({
   section: { gap: spacing(1) },
-  heading: { color: colors.gold, fontSize: 13, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase', marginTop: spacing(1) },
+  heading: { color: colors.muted, fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: spacing(1) },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, padding: spacing(1.75), borderRadius: radius.md },
-  icon: { fontSize: 26 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing(1) },
   title: { color: colors.text, fontSize: 17, fontWeight: '700' },
   badge: { color: colors.black, backgroundColor: colors.gold, fontSize: 11, fontWeight: '900', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1, overflow: 'hidden' },
@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
   lockedBox: { marginTop: spacing(1), gap: spacing(1) },
   lockedToggle: { color: colors.muted, textAlign: 'center', paddingVertical: spacing(1), textDecorationLine: 'underline' },
   lockedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), opacity: 0.6, paddingHorizontal: spacing(1) },
-  lockedIcon: { fontSize: 22 },
   lockedTitle: { color: colors.text, fontWeight: '700' },
   lockedHint: { color: colors.muted, fontSize: 13 },
 });

@@ -4,6 +4,7 @@ import { Href } from 'expo-router';
 import { SYSTEM_NAME, getCountingSystem } from '../engine/counting';
 import { Feature } from '../engine/unlocks';
 import { localized } from '../i18n/lang';
+import type { IconName } from './Icon';
 
 type Info = { title: string; body: string };
 
@@ -44,26 +45,26 @@ const T = localized<Record<Exclude<Feature, 'tableCount'>, Info> & { countBody: 
   },
 });
 
-const ROUTES: Record<Exclude<Feature, 'tableCount'>, { href: Href; icon: string }> = {
-  lessons: { href: '/learn', icon: '📘' },
-  tables: { href: '/tables', icon: '🃏' },
-  academy: { href: '/academy', icon: '🧠' },
-  strategyDrill: { href: '/drills/strategy', icon: '🎯' },
-  countDrill: { href: '/drills/count', icon: '🔢' },
-  trueCountDrill: { href: '/drills/true-count', icon: '➗' },
-  decksDrill: { href: '/drills/decks', icon: '🗂️' },
-  deviations: { href: '/drills/deviations', icon: '📇' },
-  leaks: { href: '/leaks', icon: '🔍' },
-  exam: { href: '/exam', icon: '🎓' },
-  chart: { href: '/chart', icon: '📊' },
-  simulator: { href: '/simulator', icon: '🧮' },
-  ready: { href: '/ready', icon: '🏆' },
-  progress: { href: '/progress', icon: '📈' },
+const ROUTES: Record<Exclude<Feature, 'tableCount'>, { href: Href; icon: IconName }> = {
+  lessons: { href: '/learn', icon: 'lessons' },
+  tables: { href: '/tables', icon: 'tables' },
+  academy: { href: '/academy', icon: 'academy' },
+  strategyDrill: { href: '/drills/strategy', icon: 'strategy' },
+  countDrill: { href: '/drills/count', icon: 'count' },
+  trueCountDrill: { href: '/drills/true-count', icon: 'trueCount' },
+  decksDrill: { href: '/drills/decks', icon: 'decks' },
+  deviations: { href: '/drills/deviations', icon: 'deviations' },
+  leaks: { href: '/leaks', icon: 'leaks' },
+  exam: { href: '/exam', icon: 'exam' },
+  chart: { href: '/chart', icon: 'chart' },
+  simulator: { href: '/simulator', icon: 'simulator' },
+  ready: { href: '/ready', icon: 'ready' },
+  progress: { href: '/progress', icon: 'progress' },
 };
 
 export type ListedFeature = Exclude<Feature, 'tableCount'>;
 
-export function featureInfo(f: ListedFeature): Info & { href: Href; icon: string } {
+export function featureInfo(f: ListedFeature): Info & { href: Href; icon: IconName } {
   const info = T[f];
   const body = f === 'countDrill' ? T.countBody(SYSTEM_NAME[getCountingSystem()]) : info.body;
   return { ...info, body, ...ROUTES[f] };

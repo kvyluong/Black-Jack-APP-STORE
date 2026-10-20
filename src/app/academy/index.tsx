@@ -28,7 +28,7 @@ const T = localized({
     prefNote:
       'Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses several.',
     workoutTitle: 'Today’s workout',
-    streak: (n: number) => `🔥 ${n}-day streak`,
+    streak: (n: number) => `${n}-day streak`,
     startStreak: 'Start a streak',
     workoutNote: 'Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.',
     goAgain: 'Done for today. Go again',
@@ -45,7 +45,7 @@ const T = localized({
     prefNote:
       'Tu elección solo define qué ejercicios salen primero. Las investigaciones muestran que todos aprendemos mejor combinando, por eso el entrenamiento diario usa varios.',
     workoutTitle: 'Entrenamiento de hoy',
-    streak: (n: number) => `🔥 Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
+    streak: (n: number) => `Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
     startStreak: 'Empieza una racha',
     workoutNote: 'Tres ejercicios cortos, mezclados. Unos minutos al día valen más que una sesión larga: espaciar la práctica ayuda a recordar.',
     goAgain: 'Listo por hoy. Otra vez',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: colors.gold },
   chipText: { color: colors.gold, fontWeight: '700' },
   small: { color: colors.muted, fontSize: 13, lineHeight: 18 },
-  workout: { borderWidth: 2, borderColor: colors.gold },
+  workout: { backgroundColor: colors.feltDark },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing(1) },
   workoutTitle: { color: colors.gold, fontSize: 18, fontWeight: '900' },
   streak: { color: colors.text, fontWeight: '700' },

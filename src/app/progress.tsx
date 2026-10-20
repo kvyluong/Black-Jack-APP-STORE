@@ -119,12 +119,12 @@ export default function ProgressScreen() {
         <Tile label={T.accuracyAll} value={accAll} />
         <Tile label={T.handsWeek} value={String(week)} />
         <Tile label={T.bestDeck} value={best ? formatSeconds(best) : '—'} />
-        <Tile label={T.streak} value={`🔥 ${T.days(streak)}`} />
+        <Tile label={T.streak} value={T.days(streak)} />
       </View>
 
       {isNew ? (
         <Panel style={styles.empty}>
-          <Text style={styles.emptyTitle}>📈 {T.emptyTitle}</Text>
+          <Text style={styles.emptyTitle}>{T.emptyTitle}</Text>
           <P muted>{T.emptyBody}</P>
           <Button title={T.play} onPress={() => router.push('/tables')} />
           <Button title={T.drills} variant="secondary" onPress={() => router.push('/drills')} />
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   tileValue: { color: colors.gold, fontSize: 22, fontWeight: '800', fontVariant: ['tabular-nums'] },
   tileLabel: { color: colors.muted, fontSize: 13 },
-  empty: { borderWidth: 1, borderColor: 'rgba(232,197,71,0.45)' },
+  empty: { backgroundColor: colors.feltDark },
   emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800' },
   sub: { color: colors.muted, fontSize: 13 },
   small: { fontSize: 14, lineHeight: 20 },

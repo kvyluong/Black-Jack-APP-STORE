@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BonusAdButton } from '../../components/BonusAdButton';
 import { LevelBar } from '../../components/chips';
+import { Icon } from '../../components/Icon';
 import { P, Panel, Screen } from '../../components/ui';
 import { TABLES, canSit, formatChips, isUnlocked } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
@@ -68,11 +69,13 @@ export default function Tables() {
             style={({ pressed }) => [styles.table, { backgroundColor: t.felt }, !unlocked && styles.locked, pressed && { opacity: 0.85 }]}
           >
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={styles.name}>
-                {unlocked ? '' : '🔒 '}
-                {t.name}
-                {here ? `  · ${T.yourTable}` : ''}
-              </Text>
+              <View style={styles.nameRow}>
+                {!unlocked && <Icon name="lock" size={15} color={colors.text} />}
+                <Text style={styles.name}>
+                  {t.name}
+                  {here ? `  · ${T.yourTable}` : ''}
+                </Text>
+              </View>
               <Text style={styles.limits}>
                 ${formatChips(t.minBet)} – ${formatChips(t.maxBet)}
               </Text>
@@ -105,10 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing(2),
     borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: 'rgba(232,197,71,0.35)',
   },
-  locked: { opacity: 0.6, borderColor: 'transparent' },
+  locked: { opacity: 0.6 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { color: colors.text, fontSize: 18, fontWeight: '800' },
   limits: { color: colors.gold, fontWeight: '800' },
   blurb: { color: colors.muted, fontSize: 13 },

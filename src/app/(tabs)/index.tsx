@@ -120,7 +120,7 @@ export default function Home() {
         </Pressable>
       )}
 
-      <Button title={`🃏  ${T.quickPlay}`} variant="secondary" onPress={() => router.push('/play')} />
+      <Button title={T.quickPlay} variant="secondary" onPress={() => router.push('/play')} />
     </Screen>
   );
 }
@@ -130,13 +130,13 @@ const styles = StyleSheet.create({
   logo: { color: colors.gold, fontSize: 18, letterSpacing: 4 },
   chips: { color: colors.gold, fontSize: 20, fontWeight: '900' },
   level: { color: colors.muted, fontSize: 13, fontWeight: '600' },
-  next: { backgroundColor: colors.feltDark, borderRadius: radius.lg, padding: spacing(2.5), gap: spacing(1.25), borderWidth: 2, borderColor: colors.gold },
-  eyebrow: { color: colors.gold, fontSize: 12, fontWeight: '900', letterSpacing: 2, textTransform: 'uppercase' },
+  next: { backgroundColor: colors.feltDark, borderRadius: radius.lg, padding: spacing(2.5), gap: spacing(1.25) },
+  eyebrow: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   nextTitle: { color: colors.text, fontSize: 22, fontWeight: '800' },
   nextBody: { color: colors.muted, fontSize: 15 },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing(1) },
   scoreText: { color: colors.gold, fontWeight: '700', fontSize: 13 },
-  newBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(232,197,71,0.12)', borderRadius: radius.md, padding: spacing(1.5), borderWidth: 1, borderColor: 'rgba(232,197,71,0.4)' },
+  newBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(232,197,71,0.12)', borderRadius: radius.md, padding: spacing(1.5) },
   newText: { color: colors.gold, fontWeight: '700', flex: 1 },
   chev: { color: colors.gold, fontSize: 22 },
 });

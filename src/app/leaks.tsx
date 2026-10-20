@@ -29,7 +29,7 @@ const T = localized({
     strategyDrill: 'Strategy drill',
     biggest: 'BIGGEST LEAK',
     drillWeakest: 'Drill my weakest spot',
-    noLeaks: 'No leaks found 🎯',
+    noLeaks: 'No leaks found',
     noLeaksBody: 'Every category you’ve played is at 100%. Keep it up.',
     byType: 'By decision type',
     rowA11y: (title: string, p: number, right: number, total: number) => `${title}: ${p} percent correct, ${right} of ${total}`,
@@ -47,7 +47,7 @@ const T = localized({
     strategyDrill: 'Ejercicio de estrategia',
     biggest: 'TU MAYOR FUGA',
     drillWeakest: 'Practicar mi punto débil',
-    noLeaks: 'Sin fugas 🎯',
+    noLeaks: 'Sin fugas',
     noLeaksBody: 'Cada categoría que has jugado está al 100%. Sigue así.',
     byType: 'Por tipo de decisión',
     rowA11y: (title: string, p: number, right: number, total: number) => `${title}: ${p} por ciento de aciertos, ${right} de ${total}`,
@@ -162,8 +162,8 @@ export default function Leaks() {
 }
 
 const styles = StyleSheet.create({
-  focus: { borderWidth: 2, borderColor: colors.gold },
-  label: { color: colors.gold, fontWeight: '900', fontSize: 12, letterSpacing: 2 },
+  focus: { backgroundColor: colors.feltDark },
+  label: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   title: { color: colors.text, fontSize: 20, fontWeight: '800' },
   row: { gap: 4, paddingVertical: 4 },
   rowHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing(1) },

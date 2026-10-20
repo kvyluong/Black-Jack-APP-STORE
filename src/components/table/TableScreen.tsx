@@ -91,7 +91,7 @@ const T = localized({
     countPlay: ' · count play',
     book: (a: string) => ` ✗ book: ${a}`,
     correct: 'Correct!',
-    inARow: (n: number) => `Correct! ${n} in a row 🔥`,
+    inARow: (n: number) => `Correct! ${n} in a row`,
     best: (a: string, reason: string) => `Best play: ${a}. ${reason}`,
     takeIns: (tc: string) =>
       `Take insurance: the true count is ${tc} (+3 or more), so over a third of the remaining cards are 10s.`,
@@ -122,7 +122,7 @@ const T = localized({
     countPlay: ' · jugada por conteo',
     book: (a: string) => ` ✗ manual: ${a}`,
     correct: '¡Correcto!',
-    inARow: (n: number) => `¡Correcto! ${n} seguidas 🔥`,
+    inARow: (n: number) => `¡Correcto! ${n} seguidas`,
     best: (a: string, reason: string) => `Mejor jugada: ${a}. ${reason}`,
     takeIns: (tc: string) =>
       `Toma el seguro: el conteo real es ${tc} (+3 o más), así que más de un tercio de las cartas restantes son 10.`,
@@ -594,7 +594,7 @@ function ChipCount({ value, testing, sound, animate }: { value: number; testing:
 }
 
 const styles = StyleSheet.create({
-  milestone: { borderWidth: 2, borderColor: colors.gold },
+  milestone: { backgroundColor: colors.feltDark },
   milestoneText: { color: colors.gold, fontSize: 17, fontWeight: '900', textAlign: 'center' },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   bankroll: { color: colors.gold, fontWeight: '800', fontSize: 16 },

@@ -18,6 +18,7 @@ import {
 import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
+import { Icon } from './Icon';
 import { Meter } from './progress/Meter';
 import { useOutcomeColors } from './useColors';
 
@@ -141,7 +142,10 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
           ))}
         </View>
         {rewardReady && <Text style={styles.readyBadge}>{T.ready}</Text>}
-        <Text style={[styles.summaryStreak, streak === 0 && { color: colors.muted }]}>🔥 {streak}</Text>
+        <View style={styles.summaryStreakRow}>
+          <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
+          <Text style={[styles.summaryStreak, streak === 0 && { color: colors.muted }]}>{streak}</Text>
+        </View>
         <Text style={styles.chev}>›</Text>
       </Pressable>
     );
@@ -156,7 +160,7 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
           {T.title}
         </Text>
         <View style={[styles.flame, streak === 0 && styles.flameOff]} accessible accessibilityLabel={T.streakA11y(streak)}>
-          <Text style={styles.flameIcon}>🔥</Text>
+          <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
           <Text style={[styles.flameText, streak === 0 && { color: colors.muted }]}>{T.streak(streak)}</Text>
         </View>
       </View>
@@ -245,6 +249,7 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: colors.gold },
   dotDone: { backgroundColor: colors.gold },
   readyBadge: { color: colors.black, backgroundColor: colors.gold, fontWeight: '800', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  summaryStreakRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   summaryStreak: { color: colors.gold, fontWeight: '800' },
   chev: { color: colors.muted, fontSize: 22 },
   card: {
@@ -252,8 +257,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing(2),
     gap: spacing(1.5),
-    borderWidth: 1,
-    borderColor: 'rgba(232,197,71,0.45)',
   },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(1) },
   title: { color: colors.gold, fontSize: 18, fontWeight: '800' },
@@ -267,7 +270,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   flameOff: { backgroundColor: colors.feltDark, opacity: 0.85 },
-  flameIcon: { fontSize: 15 },
   flameText: { color: colors.text, fontWeight: '800', fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5) },
   rowMain: { flex: 1, gap: 4 },

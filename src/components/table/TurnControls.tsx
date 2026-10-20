@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LegalActions } from '../../engine/game';
 import { formatChips } from '../../engine/progression';
 import { ACTION_LABEL, Action, Recommendation } from '../../engine/strategy';
 import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
+import { Icon } from '../Icon';
 import { Button, Panel } from '../ui';
 
 const T = localized({
@@ -17,7 +18,7 @@ const T = localized({
     take: 'Take insurance',
     decline: 'No insurance',
     signals: 'Tap the felt to hit · Swipe sideways to stand',
-    askCoach: '💡 Ask the coach',
+    askCoach: 'Ask the coach',
     need: (play: string, n: string) => `${play} · Need $${n}`,
     needLabel: (play: string, n: string) => `${play}, not available: you need $${n} more in chips`,
   },
@@ -29,7 +30,7 @@ const T = localized({
     take: 'Tomar seguro',
     decline: 'Sin seguro',
     signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
-    askCoach: '💡 Pregúntale al coach',
+    askCoach: 'Pregúntale al coach',
     need: (play: string, n: string) => `${play} · Faltan $${n}`,
     needLabel: (play: string, n: string) => `${play}, no disponible: te faltan $${n} en fichas`,
   },
@@ -77,7 +78,7 @@ export function ActionBar({
           {advice.deviation ? T.countPlay : ''}
         </Text>
       )}
-      {handSignals && <Text style={styles.signals}>✋ {T.signals}</Text>}
+      {handSignals && <Text style={styles.signals}>{T.signals}</Text>}
       <View style={styles.actions}>
         {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => {
           const missing = a === 'split' || a === 'double' ? (shortfall[a] ?? 0) : 0;
@@ -118,13 +119,15 @@ export function InsurancePanel({ hint, onChoose }: { hint: string | null; onChoo
 /** A small link-style button that reveals the coach's advice. */
 function CoachButton({ onPress }: { onPress: () => void }) {
   return (
-    <Text style={styles.ask} onPress={onPress} accessibilityRole="button" suppressHighlighting>
-      {T.askCoach}
-    </Text>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={T.askCoach} hitSlop={8} style={styles.askRow}>
+      <Icon name="coach" size={16} />
+      <Text style={styles.ask}>{T.askCoach}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  askRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, alignSelf: 'center' },
   ask: { color: colors.gold, fontWeight: '700', textAlign: 'center', paddingVertical: 4, textDecorationLine: 'underline' },
   hint: { color: colors.gold, fontWeight: '700', textAlign: 'center' },
   prompt: { color: colors.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },

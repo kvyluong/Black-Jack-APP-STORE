@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LevelBar } from '../../components/chips';
 import { featureInfo } from '../../components/featureInfo';
+import { IconName, IconWell } from '../../components/Icon';
 import { Meter } from '../../components/progress/Meter';
 import { P, Panel, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
@@ -80,12 +81,12 @@ export default function Me() {
         </Pressable>
       ) : (
         <Text style={styles.lockedNote}>
-          🔒 {featureInfo('ready').title} · {unlocks.hint('ready')}
+          {featureInfo('ready').title} · {unlocks.hint('ready')}
         </Text>
       )}
 
-      {unlocks.has('progress') && <Row icon="📈" title={featureInfo('progress').title} body={featureInfo('progress').body} isNew={unlocks.isNew('progress')} onPress={() => go('progress')} />}
-      <Row icon="⚙️" title={T.settings} body={T.settingsBody} onPress={() => router.push('/settings' as Href)} />
+      {unlocks.has('progress') && <Row icon="progress" title={featureInfo('progress').title} body={featureInfo('progress').body} isNew={unlocks.isNew('progress')} onPress={() => go('progress')} />}
+      <Row icon="settings" title={T.settings} body={T.settingsBody} onPress={() => router.push('/settings' as Href)} />
 
       {!settings.adsRemoved && (removeAds.available || __DEV__) && (
         <Text style={styles.removeAds} onPress={() => router.push('/settings')} accessibilityRole="link">
@@ -109,10 +110,10 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Row({ icon, title, body, isNew, onPress }: { icon: string; title: string; body: string; isNew?: boolean; onPress: () => void }) {
+function Row({ icon, title, body, isNew, onPress }: { icon: IconName; title: string; body: string; isNew?: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${title}. ${body}`} onPress={onPress} style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
-      <Text style={styles.icon}>{icon}</Text>
+      <IconWell name={icon} />
       <View style={{ flex: 1 }}>
         <Text style={styles.rowTitle}>
           {title}
@@ -129,14 +130,13 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row' },
   statValue: { color: colors.gold, fontSize: 20, fontWeight: '800' },
   statLabel: { color: colors.muted, fontSize: 13 },
-  scoreCard: { backgroundColor: colors.feltDark, borderRadius: radius.md, padding: spacing(2), borderWidth: 2, borderColor: colors.gold },
+  scoreCard: { backgroundColor: colors.feltDark, borderRadius: radius.md, padding: spacing(2) },
   scoreHead: { flexDirection: 'row', alignItems: 'center', gap: spacing(2) },
   scoreNum: { color: colors.gold, fontSize: 40, fontWeight: '900', minWidth: 60, textAlign: 'center' },
   scoreLabel: { color: colors.text, fontWeight: '800', fontSize: 16 },
   next: { color: colors.muted, fontSize: 13 },
   lockedNote: { color: colors.muted, textAlign: 'center', paddingVertical: spacing(1) },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, padding: spacing(1.75), borderRadius: radius.md },
-  icon: { fontSize: 26 },
   rowTitle: { color: colors.text, fontSize: 17, fontWeight: '700' },
   rowBody: { color: colors.muted, fontSize: 14, marginTop: 2 },
   chev: { color: colors.muted, fontSize: 26 },

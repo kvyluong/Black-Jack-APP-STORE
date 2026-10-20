@@ -79,7 +79,7 @@ export default function ReadyScreen() {
             <Button title={T.practice} accessibilityLabel={T.practiceA11y(BENCHMARK_TEXT[next.id].title)} onPress={() => go(next)} />
           </View>
         ) : (
-          <P>🏆 {T.readyBody}</P>
+          <P>{T.readyBody}</P>
         )}
       </Panel>
 
@@ -133,17 +133,17 @@ function BenchmarkCard({ b, isNext, note }: { b: Benchmark; isNext: boolean; not
 }
 
 const styles = StyleSheet.create({
-  hero: { borderWidth: 2, borderColor: colors.gold, gap: spacing(1.5) },
+  hero: { gap: spacing(1.5) },
   question: { color: colors.text, fontSize: 20, fontWeight: '800' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing(2) },
   score: { color: colors.gold, fontSize: 56, fontWeight: '900', fontVariant: ['tabular-nums'], minWidth: 72, textAlign: 'center' },
   scoreLabel: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   headline: { color: colors.text, fontSize: 16, fontWeight: '700' },
   next: { backgroundColor: colors.feltDark, borderRadius: radius.md, padding: spacing(1.5), gap: 6 },
-  label: { color: colors.gold, fontWeight: '900', fontSize: 12, letterSpacing: 2 },
+  label: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   nextTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   small: { fontSize: 14, lineHeight: 20 },
-  cardNext: { borderWidth: 1, borderColor: 'rgba(232,197,71,0.6)' },
+  cardNext: { backgroundColor: colors.feltDark },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: spacing(1) },
   cardTitle: { color: colors.text, fontSize: 17, fontWeight: '800', flexShrink: 1 },
   status: { fontSize: 13, fontWeight: '800' },

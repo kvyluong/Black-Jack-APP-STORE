@@ -1,7 +1,9 @@
 // The four tabs: Home (your next step), Play (the casino floor), Practice and Me.
 import { Tabs } from 'expo-router';
 import { useMemo } from 'react';
-import { Platform, Text } from 'react-native';
+import { ColorValue, Platform } from 'react-native';
+
+import { Icon, IconName } from '../../components/Icon';
 
 import { useUnlocks } from '../../components/useUnlocks';
 import { localized } from '../../i18n/lang';
@@ -13,10 +15,10 @@ const T = localized({
   es: { home: 'Inicio', play: 'Jugar', practice: 'Práctica', me: 'Perfil', floor: 'Sala del casino' },
 });
 
-const icon = (glyph: string) =>
-  function TabIcon({ focused }: { focused: boolean }) {
-    // Sized to the tab bar's icon slot (about 24 px) so the label underneath isn't squeezed.
-    return <Text style={{ fontSize: 18, lineHeight: 24, opacity: focused ? 1 : 0.55 }}>{glyph}</Text>;
+const icon = (name: IconName) =>
+  function TabIcon({ color }: { color: ColorValue }) {
+    // The tab bar's own tint: gold when selected, muted otherwise.
+    return <Icon name={name} size={24} color={color} />;
   };
 
 export default function TabsLayout() {
@@ -44,13 +46,13 @@ export default function TabsLayout() {
           freezeOnBlur: true,
         }}
       >
-        <Tabs.Screen name="index" options={{ title: T.home, headerTitle: 'ShoeSharp', tabBarIcon: icon('🏠') }} />
-        <Tabs.Screen name="tables" options={{ title: T.play, headerTitle: T.floor, tabBarIcon: icon('🃏') }} />
+        <Tabs.Screen name="index" options={{ title: T.home, headerTitle: 'ShoeSharp', tabBarIcon: icon('home') }} />
+        <Tabs.Screen name="tables" options={{ title: T.play, headerTitle: T.floor, tabBarIcon: icon('tables') }} />
         <Tabs.Screen
           name="practice"
-          options={{ title: T.practice, tabBarIcon: icon('🎯'), tabBarBadge: badge, tabBarBadgeStyle: { backgroundColor: colors.gold, color: colors.black } }}
+          options={{ title: T.practice, tabBarIcon: icon('practice'), tabBarBadge: badge, tabBarBadgeStyle: { backgroundColor: colors.gold, color: colors.black } }}
         />
-        <Tabs.Screen name="me" options={{ title: T.me, tabBarIcon: icon('👤') }} />
+        <Tabs.Screen name="me" options={{ title: T.me, tabBarIcon: icon('me') }} />
       </Tabs>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps

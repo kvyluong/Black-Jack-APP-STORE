@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
 import { HandView } from '../components/HandView';
+import { IconWell } from '../components/Icon';
 import { FanfareOverlay } from '../components/juice';
 import { PlayingCard } from '../components/PlayingCard';
 import { Button, H1, P, Panel, Screen } from '../components/ui';
@@ -147,9 +148,9 @@ export default function Welcome() {
 
   if (stage.kind === 'intro') {
     const choices = [
-      { icon: '🃏', title: T.newTitle, body: T.newBody(formatChips(STARTING_CHIPS)), onPress: () => deal(0) },
+      { icon: 'newPlayer' as const, title: T.newTitle, body: T.newBody(formatChips(STARTING_CHIPS)), onPress: () => deal(0) },
       {
-        icon: '♠',
+        icon: 'knowsPlay' as const,
         title: T.knowTitle,
         body: T.knowBody,
         onPress: () => {
@@ -158,7 +159,7 @@ export default function Welcome() {
         },
       },
       {
-        icon: '🧠',
+        icon: 'counter' as const,
         title: T.countTitle,
         body: T.countBody,
         onPress: () => {
@@ -185,7 +186,7 @@ export default function Welcome() {
             onPress={c.onPress}
             style={({ pressed }) => [styles.choice, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
           >
-            <Text style={styles.choiceIcon}>{c.icon}</Text>
+            <IconWell name={c.icon} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.choiceTitle}>{c.title}</Text>
               <Text style={styles.choiceBody}>{c.body}</Text>
@@ -303,13 +304,12 @@ const styles = StyleSheet.create({
   logo: { color: colors.gold, fontSize: 22, letterSpacing: 4 },
   felt: { backgroundColor: colors.feltDark, borderRadius: 18, padding: spacing(2), gap: spacing(2), alignItems: 'center', minHeight: 260 },
   coach: { borderLeftWidth: 4, borderLeftColor: colors.gold },
-  coachLabel: { color: colors.gold, fontWeight: '900', fontSize: 12, letterSpacing: 2 },
+  coachLabel: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   coachTitle: { color: colors.gold, fontSize: 18, fontWeight: '800', textAlign: 'center' },
   actions: { flexDirection: 'row', gap: spacing(1), justifyContent: 'center' },
   actionButton: { minWidth: 96, flexGrow: 1 },
   question: { color: colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center' },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, padding: spacing(2), borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(232,197,71,0.35)' },
-  choiceIcon: { fontSize: 28, width: 36, textAlign: 'center', color: colors.text },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5), backgroundColor: colors.feltDark, padding: spacing(2), borderRadius: radius.md },
   choiceTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   choiceBody: { color: colors.muted, fontSize: 14 },
   chev: { color: colors.gold, fontSize: 26 },
