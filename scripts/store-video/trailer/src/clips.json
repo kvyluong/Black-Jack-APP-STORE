@@ -1,0 +1,37 @@
+{
+  "en": {
+    "level": [{ "file": "iphone-en-level", "start": 0.5, "dur": 2.85 }],
+    "table": [
+      { "file": "iphone-en-table2", "start": 13.0, "dur": 3.8 },
+      { "file": "iphone-en-table2", "start": 25.7, "dur": 1.6 },
+      { "file": "iphone-en-table2", "start": 35.8, "dur": 2.6 }
+    ],
+    "count": [
+      { "file": "iphone-en-count", "start": 3.0, "dur": 3.0 },
+      { "file": "iphone-en-countanswer", "start": 0.9, "dur": 3.7 }
+    ],
+    "exam": [
+      { "file": "iphone-en-exam", "start": 10.5, "dur": 1.6 },
+      { "file": "iphone-en-exam", "start": 22.6, "dur": 3.2 }
+    ],
+    "ready": [{ "file": "iphone-en-ready", "start": 1.0, "dur": 4.4, "reverse": true }]
+  },
+  "es": {
+    "level": [{ "file": "iphone-es-level", "start": 0.6, "dur": 2.75 }],
+    "table": [
+      { "file": "iphone-es-table", "start": 29.2, "dur": 3.6 },
+      { "file": "iphone-es-table", "start": 34.6, "dur": 1.4 },
+      { "file": "iphone-es-table", "start": 42.1, "dur": 1.3 },
+      { "file": "iphone-es-table", "start": 51.8, "dur": 2.5 }
+    ],
+    "count": [
+      { "file": "iphone-es-count", "start": 3.0, "dur": 3.0 },
+      { "file": "iphone-es-countanswer", "start": 0.9, "dur": 3.4 }
+    ],
+    "exam": [
+      { "file": "iphone-es-exam", "start": 0.5, "dur": 1.6 },
+      { "file": "iphone-es-exam", "start": 13.2, "dur": 3.2 }
+    ],
+    "ready": [{ "file": "iphone-es-ready", "start": 1.0, "dur": 4.4, "reverse": true }]
+  }
+}

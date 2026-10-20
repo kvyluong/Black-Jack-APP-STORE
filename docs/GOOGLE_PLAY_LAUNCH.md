@@ -61,6 +61,7 @@ Full description: use the one in [APP_STORE_LISTING.md](APP_STORE_LISTING.md), w
 - [ ] **Feature graphic** 1024×500: `store-assets/play/feature-graphic-en.png` / `-es.png`.
 - [ ] **Phone screenshots** (1080×1920): `store-assets/play/phone/en-US` and `es-419`, 01–06 in order.
 - [ ] **Tablet screenshots** (7" and 10"): reuse `store-assets/screenshots/ipad-13/` (en-US for English, es-MX for Spanish).
+- [ ] **Preview video:** Play takes a YouTube link, not a file. Upload `store-assets/video/trailer-16x9-en.mp4` (and `-es` for the Spanish listing) to YouTube as public or unlisted, with ads off, then paste the URL.
 - [ ] Category **Card**; tags: Card, Casino, Educational (whatever Play offers closest). Contact email, website `https://kvyluong.github.io/Black-Jack-APP-STORE/`.
 
 ## 7. App content (Policy → App content)

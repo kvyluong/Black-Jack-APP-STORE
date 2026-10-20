@@ -98,6 +98,7 @@ All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LI
   - required: iPhone 6.9" (1320×2868) and, because `ios.supportsTablet` is true, iPad 13" (2064×2752);
   - 3–6 each, of Home, the table with the coach, Practice, the count drill, Road to the Casino, and the Casino Conditions report;
   - capture them from the web build at those sizes, or from the simulator or TestFlight build.
+- [ ] **App Previews** (optional, autoplay above the screenshots): `store-assets/video/` has 24 s captioned previews for iPhone 6.9" (886×1920) and iPad 13" (1200×1600) in English and Spanish, recorded on the simulator. Rebuild with `scripts/store-video/` (see its README).
 - [x] **Support URL:** the website.
 - [x] **Age rating questionnaire:** "Simulated Gambling" = **Frequent/Intense**, which gives **17+**; everything else None.
 - [ ] **App Privacy (nutrition labels):**

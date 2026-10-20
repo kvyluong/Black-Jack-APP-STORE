@@ -1,0 +1,252 @@
+{
+  "iphone": {
+    "en": [
+      {
+        "file": "iphone-en-level.mov",
+        "start": 0.5,
+        "dur": 2.85,
+        "caption": "level"
+      },
+      {
+        "file": "iphone-en-table2.mov",
+        "start": 13.0,
+        "dur": 3.8,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-en-table2.mov",
+        "start": 25.7,
+        "dur": 1.6,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-en-table2.mov",
+        "start": 35.8,
+        "dur": 2.6,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-en-count.mov",
+        "start": 3.0,
+        "dur": 3.0,
+        "caption": "count"
+      },
+      {
+        "file": "iphone-en-countanswer.mov",
+        "start": 0.9,
+        "dur": 3.7,
+        "caption": "count"
+      },
+      {
+        "file": "iphone-en-exam.mov",
+        "start": 10.5,
+        "dur": 1.6,
+        "caption": "exam"
+      },
+      {
+        "file": "iphone-en-exam.mov",
+        "start": 22.6,
+        "dur": 3.2,
+        "caption": "exam"
+      },
+      {
+        "file": "iphone-en-ready.mov",
+        "start": 1.0,
+        "dur": 4.4,
+        "caption": "ready",
+        "reverse": true
+      }
+    ],
+    "es": [
+      {
+        "file": "iphone-es-level.mov",
+        "start": 0.6,
+        "dur": 2.75,
+        "caption": "level"
+      },
+      {
+        "file": "iphone-es-table.mov",
+        "start": 29.2,
+        "dur": 3.6,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-es-table.mov",
+        "start": 34.6,
+        "dur": 1.4,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-es-table.mov",
+        "start": 42.1,
+        "dur": 1.3,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-es-table.mov",
+        "start": 51.8,
+        "dur": 2.5,
+        "caption": "table"
+      },
+      {
+        "file": "iphone-es-count.mov",
+        "start": 3.0,
+        "dur": 3.0,
+        "caption": "count"
+      },
+      {
+        "file": "iphone-es-countanswer.mov",
+        "start": 0.9,
+        "dur": 3.4,
+        "caption": "count"
+      },
+      {
+        "file": "iphone-es-exam.mov",
+        "start": 0.5,
+        "dur": 1.6,
+        "caption": "exam"
+      },
+      {
+        "file": "iphone-es-exam.mov",
+        "start": 13.2,
+        "dur": 3.2,
+        "caption": "exam"
+      },
+      {
+        "file": "iphone-es-ready.mov",
+        "start": 1.0,
+        "dur": 4.4,
+        "caption": "ready",
+        "reverse": true
+      }
+    ]
+  },
+  "ipad": {
+    "en": [
+      {
+        "file": "ipad-en-level.mov",
+        "start": 0,
+        "dur": 2.85,
+        "caption": "level"
+      },
+      {
+        "file": "ipad-en-table.mov",
+        "start": 58.9,
+        "dur": 2.9,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-en-table.mov",
+        "start": 71.3,
+        "dur": 1.8,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-en-table.mov",
+        "start": 81.8,
+        "dur": 2.8,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-en-count2.mov",
+        "start": 3.0,
+        "dur": 3.0,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-en-countanswer.mov",
+        "start": 1.0,
+        "dur": 1.9,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-en-countanswer.mov",
+        "start": 11.1,
+        "dur": 2.6,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-en-exam.mov",
+        "start": 0.5,
+        "dur": 1.6,
+        "caption": "exam"
+      },
+      {
+        "file": "ipad-en-exam.mov",
+        "start": 12.8,
+        "dur": 3.6,
+        "caption": "exam"
+      },
+      {
+        "file": "ipad-en-ready.mov",
+        "start": 1.0,
+        "dur": 4.4,
+        "caption": "ready",
+        "reverse": true
+      }
+    ],
+    "es": [
+      {
+        "file": "ipad-es-level.mov",
+        "start": 0,
+        "dur": 2.85,
+        "caption": "level"
+      },
+      {
+        "file": "ipad-es-table.mov",
+        "start": 11.700000000000001,
+        "dur": 2.9,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-es-table.mov",
+        "start": 23.3,
+        "dur": 1.8,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-es-table.mov",
+        "start": 36.8,
+        "dur": 2.5,
+        "caption": "table"
+      },
+      {
+        "file": "ipad-es-count.mov",
+        "start": 3.0,
+        "dur": 3.0,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-es-countanswer.mov",
+        "start": 1.0,
+        "dur": 1.9,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-es-countanswer.mov",
+        "start": 11.2,
+        "dur": 2.6,
+        "caption": "count"
+      },
+      {
+        "file": "ipad-es-exam.mov",
+        "start": 0.5,
+        "dur": 1.6,
+        "caption": "exam"
+      },
+      {
+        "file": "ipad-es-exam.mov",
+        "start": 14.0,
+        "dur": 3.6,
+        "caption": "exam"
+      },
+      {
+        "file": "ipad-es-ready.mov",
+        "start": 1.0,
+        "dur": 4.4,
+        "caption": "ready",
+        "reverse": true
+      }
+    ]
+  }
+}
