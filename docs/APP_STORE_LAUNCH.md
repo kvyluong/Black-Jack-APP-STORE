@@ -25,10 +25,9 @@ Android / Google Play has its own runbook: [GOOGLE_PLAY_LAUNCH.md](GOOGLE_PLAY_L
 - [x] Xcode is **not** needed: EAS builds and signs in the cloud.
 
 ## 1. Accounts
-- [ ] **🛑 OWNER: Apple Developer Program** at https://developer.apple.com/programs/enroll/
+- [x] **🛑 OWNER: Apple Developer Program** (approved 2026-10-19) at https://developer.apple.com/programs/enroll/
   - $99/year. Individual, unless there's a company.
   - Approval usually takes 1–2 days.
-  - Status (2026-10-18): enrolled as an individual (enrollment ID 2D6YZ24WBJ), $99 paid, membership **pending**. Apple can take up to 48 hours; tick this box when the "Welcome to the Apple Developer Program" email arrives.
 - [x] **🛑 OWNER: AdMob** at https://admob.google.com
   - Sign up.
   - [x] Payments: profile and W-9 done. The bank account is added later: Google asks once earnings reach about $10 and mails a PIN to verify the address. AdMob pays monthly once the balance passes $100.
@@ -86,23 +85,27 @@ Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.
   - display name and description in English and Spanish: "Remove ads" / "Quitar anuncios", and "No more banner or between-hand ads. Rewarded bonus chips stay available." / "Sin banners ni anuncios entre manos. Las fichas extra con anuncio siguen disponibles.";
   - review screenshot: the Settings screen showing the Remove ads button.
 
+
+**Status 2026-10-19 (App Store Connect, filled in by Claude):** App Information (subtitle, Games → Card + Education, content rights, Spanish (Mexico) name and subtitle), age rating questionnaire (**18+**), price Free in 173 countries (China mainland and South Korea left out: they need a game licence / GRAC rating), App Privacy answers (from the Google Mobile Ads privacy manifest; **saved, not published**), version 1.0.0 page in English and Spanish (promo text, description, keywords, support and marketing URLs, copyright, review notes, sign-in not required, manual release) with **build 2 attached**.
+Still to do: Paid Apps agreement + bank + tax and EU trader status (owner), publish App Privacy (owner attests), App Review contact name/phone/email (owner), screenshots (drag in from `store-assets/screenshots/`), the `remove_ads` purchase (needs the Paid Apps agreement), privacy policy placeholders, TestFlight test on the phone, then Submit for Review.
+
 ## 6. Store listing
 All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LISTING.md**: name, subtitle, keywords, promotional text, description and screenshot captions, in English (U.S.) and Spanish (Mexico). Copy it from there.
-- [ ] English (U.S.) name, subtitle, keywords, promotional text and description.
-- [ ] Add the **Spanish (Mexico)** localization with its own name, subtitle, keywords and description. The US store indexes it too, so it's a second keyword field.
-- [ ] **Category:** primary Games → Card; secondary Education.
+- [x] English (U.S.) name, subtitle, keywords, promotional text and description.
+- [x] Add the **Spanish (Mexico)** localization with its own name, subtitle, keywords and description. The US store indexes it too, so it's a second keyword field.
+- [x] **Category:** primary Games → Card; secondary Education.
 - [ ] **Screenshots:**
   - required: iPhone 6.9" (1320×2868) and, because `ios.supportsTablet` is true, iPad 13" (2064×2752);
   - 3–6 each, of Home, the table with the coach, Practice, the count drill, Road to the Casino, and the Casino Conditions report;
   - capture them from the web build at those sizes, or from the simulator or TestFlight build.
-- [ ] **Support URL:** the website.
-- [ ] **Age rating questionnaire:** "Simulated Gambling" = **Frequent/Intense**, which gives **17+**; everything else None.
+- [x] **Support URL:** the website.
+- [x] **Age rating questionnaire:** "Simulated Gambling" = **Frequent/Intense**, which gives **17+**; everything else None.
 - [ ] **App Privacy (nutrition labels):**
   - Data used to track you: **Device ID** (advertising identifier, via AdMob).
   - Data linked to you: none (no accounts).
   - Data not linked to you: **Product interaction**, **Advertising data**, **Crash data**, **Performance data** (collected by the Google Mobile Ads SDK).
   - Re-check against Google's current AdMob guidance for Apple's privacy labels before submitting.
-- [ ] **Review notes:** "ShoeSharp is a blackjack training app. No real-money gambling: chips are virtual, can't be bought or cashed out, and have no value. The only purchase removes ads."
+- [x] **Review notes:** "ShoeSharp is a blackjack training app. No real-money gambling: chips are virtual, can't be bought or cashed out, and have no value. The only purchase removes ads."
 
 ## 6b. Simulator check on the Mac (done 2026-10-18)
 EAS `simulator` profile build on the iOS 27.1 simulator (iPhone Duo): the splash, the IDFA explainer, Apple's tracking prompt (declining it still lets you use everything), the level picker, Casino Floor, a Google **test** banner, the bonus-chips button and the table (deal, other players) all work. Not covered: purchases and real ads (TestFlight, step 7).
