@@ -77,7 +77,7 @@ Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.
   - add bank and tax details.
 
   Without this, "Remove ads" can't be sold.
-- [ ] **Apps → + → New App**: iOS. Name **ShoeSharp** (if it's taken, try "ShoeSharp: Blackjack Trainer"). Primary language English (U.S.). The bundle ID from step 2, and SKU `shoesharp`.
+- [x] **Apps → + → New App** (created 2026-10-19: "ShoeSharp: Blackjack Trainer", Apple ID 6824730148, in `eas.json` → `submit.production.ios.ascAppId`): iOS. Name **ShoeSharp** (if it's taken, try "ShoeSharp: Blackjack Trainer"). Primary language English (U.S.). The bundle ID from step 2, and SKU `shoesharp`.
 - [ ] **In-App Purchases → +**:
   - type **Non-Consumable**;
   - product ID **`remove_ads`**, which must match `extra.iap.removeAds`;
