@@ -55,14 +55,21 @@ tick **In-App Purchase** (on by default).
 below is collected by the Google Mobile Ads SDK. The app itself has no accounts and no
 analytics, and keeps progress on the device.
 
+Answers below follow the Google Mobile Ads SDK's own privacy manifest (`PrivacyInfo.xcprivacy`
+in SDK 13.11.0), entered in App Store Connect on 2026-10-19.
+
 | Data type | Linked to user? | Used for tracking? | Purposes |
 |---|---|---|---|
-| **Identifiers → Device ID** | No | **Yes** | Third-party advertising |
-| **Usage Data → Product Interaction** | No | No | Third-party advertising, Analytics |
-| **Usage Data → Advertising Data** | No | **Yes** | Third-party advertising |
+| **Location → Coarse Location** | **Yes** | No | Third-party advertising, Developer's advertising, Analytics |
+| **Identifiers → Device ID** | **Yes** | **Yes** | Third-party advertising, Developer's advertising, Analytics |
+| **Usage Data → Product Interaction** | **Yes** | No | Third-party advertising, Developer's advertising, Analytics |
+| **Usage Data → Advertising Data** | **Yes** | No | Third-party advertising, Developer's advertising, Analytics |
 | **Diagnostics → Crash Data** | No | No | Analytics |
-| **Diagnostics → Performance Data** | No | No | Analytics |
-| **Location → Coarse Location** | No | No | Third-party advertising |
+| **Diagnostics → Performance Data** | No | No | Third-party advertising, Developer's advertising, Analytics |
+| **Diagnostics → Other Diagnostic Data** | No | No | Third-party advertising, Developer's advertising, Analytics |
+
+After an SDK upgrade, re-check against the new manifest:
+`plutil -convert json -o - PrivacyInfo.xcprivacy` from the SDK zip.
 
 Before publishing, check these against Google's current page,
 "Prepare for Apple's App Store data disclosure requirements" (AdMob help). Google
