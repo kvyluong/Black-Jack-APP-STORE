@@ -46,9 +46,12 @@ export function useDealAnimation(stepMs = DEAL_STEP_MS) {
       setSettled(true);
       onLand?.();
       const f = roundFanfare(next);
+      // A frame later, so mounting the burst doesn't land in the same frame as the result render.
       if (f) {
-        setFanfare({ ...f, key: Date.now() });
-        if (settings.bigEffects && !reduceMotion) shake.shake(f.shake);
+        requestAnimationFrame(() => {
+          setFanfare({ ...f, key: Date.now() });
+          if (settings.bigEffects && !reduceMotion) shake.shake(f.shake);
+        });
       }
     };
     if (s.doneAt > 0) {

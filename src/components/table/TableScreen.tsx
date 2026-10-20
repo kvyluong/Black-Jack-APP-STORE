@@ -59,7 +59,7 @@ import {
 } from '../../engine/table';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
-import { colors } from '../../theme';
+import { colors, spacing } from '../../theme';
 import { LevelBar } from '../chips';
 import { useUnlocks } from '../useUnlocks';
 import { StreakBadge, useCountUp } from '../juice';
@@ -464,13 +464,18 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
         ) : null}
       </View>
       {!testing && counting && <LevelBar xp={stats.xp} compact />}
-      {!testing && counting && game.justShuffled && (
-        <Text style={styles.shuffle}>
-          {isBalanced(countingSystem) ? T.shuffled : T.shuffledKo(signed(initialRunningCount(rules.decks)))}
-        </Text>
+      {/* One fixed-height line for the shuffle notice or your streak, so neither pushes the table down when it appears. */}
+      {!testing && (
+        <View style={styles.notice}>
+          {counting && game.justShuffled ? (
+            <Text style={styles.shuffle} numberOfLines={2}>
+              {isBalanced(countingSystem) ? T.shuffled : T.shuffledKo(signed(initialRunningCount(rules.decks)))}
+            </Text>
+          ) : (
+            <StreakBadge streak={streak} />
+          )}
+        </View>
       )}
-
-      {!testing && <StreakBadge streak={streak} />}
 
       <HandSignalArea enabled={signals} onSignal={onSignal}>
         <TableFelt
@@ -526,17 +531,21 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
 
       {settled && waitingOn && <Text style={styles.waiting}>{T.playing(waitingOn.name)}</Text>}
 
-      {settled && yourTurn && (
-        <ActionBar
-          seat={activeHand!.seat}
-          legal={legal}
-          advice={advice}
-          showHints={showHints}
-          surrenderAllowed={rules.lateSurrender}
-          handSignals={settings.handSignals}
-          shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
-          onAction={onAction}
-        />
+      {/* The buttons stay in place while a card lands (they just don't take taps yet), instead of
+          vanishing and reappearing on every hit. Keyed by the decision, so the coach hint resets. */}
+      {yourTurn && (
+        <View pointerEvents={settled ? 'auto' : 'none'} style={{ gap: spacing(1.5) }} key={`${game.active}-${activeHand!.cards.length}`}>
+          <ActionBar
+            seat={activeHand!.seat}
+            legal={legal}
+            advice={advice}
+            showHints={showHints}
+            surrenderAllowed={rules.lateSurrender}
+            handSignals={settings.handSignals}
+            shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
+            onAction={(a) => settled && onAction(a)}
+          />
+        </View>
       )}
 
       {settled && game.phase === 'insurance' && (
@@ -574,7 +583,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
           onRefill={refill}
           onBonus={(amount) => {
             // Bonus chips land in your stack with the usual count-up and a chip burst.
-            anim.setFanfare({ tier: 'bigWin', label: T.bonus(formatChips(amount)), net: amount, shake: 0, particles: 28, key: Date.now() });
+            anim.setFanfare({ tier: 'bigWin', label: T.bonus(formatChips(amount)), net: amount, shake: 0, particles: 18, key: Date.now() });
             if (settings.soundEffects) playSound('chips');
             if (settings.haptics) haptic('bigWin');
           }}
@@ -599,6 +608,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   bankroll: { color: colors.gold, fontWeight: '800', fontSize: 16 },
   count: { color: colors.text, fontSize: 14, fontVariant: ['tabular-nums'] },
+  notice: { minHeight: 32, alignItems: 'center', justifyContent: 'center' },
   shuffle: { color: colors.warn, textAlign: 'center', fontSize: 13 },
   events: { gap: 2 },
   event: { color: colors.muted, fontSize: 13, textAlign: 'center' },

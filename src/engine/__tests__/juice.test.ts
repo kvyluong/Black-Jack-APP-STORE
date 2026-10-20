@@ -21,7 +21,7 @@ describe('roundFanfare', () => {
     const f = roundFanfare(startRound(rigged(['A', '9', 'K', '7']), 10))!;
     expect(f.tier).toBe('blackjack');
     expect(f.net).toBe(15);
-    expect(f.particles).toBeGreaterThan(30);
+    expect(f.particles).toBeGreaterThan(20);
   });
 
   it('calls a won double a big win', () => {

@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdBanner } from '../ads/AdBanner';
 import { localized } from '../i18n/lang';
 import { colors, radius, spacing } from '../theme';
 
@@ -12,7 +11,8 @@ export const STEP_LABEL = localized({
   es: { down: 'Bajar tu respuesta', up: 'Subir tu respuesta' },
 });
 
-export function Screen({ children, scroll = true, ads = true }: { children: ReactNode; scroll?: boolean; ads?: boolean }) {
+/** A screen's scrolling body. The app has no banner ads; its ads are all full-screen. */
+export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   return (
     <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}>
       {scroll ? (
@@ -20,7 +20,6 @@ export function Screen({ children, scroll = true, ads = true }: { children: Reac
       ) : (
         <View style={[styles.content, { flex: 1 }]}>{children}</View>
       )}
-      {ads && <AdBanner />}
     </SafeAreaView>
   );
 }

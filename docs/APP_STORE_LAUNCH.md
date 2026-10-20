@@ -82,7 +82,7 @@ Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.
   - product ID **`remove_ads`**, which must match `extra.iap.removeAds`;
   - reference name "Remove ads";
   - price $2.99–$4.99;
-  - display name and description in English and Spanish: "Remove ads" / "Quitar anuncios", and "No more banner or between-hand ads. Rewarded bonus chips stay available." / "Sin banners ni anuncios entre manos. Las fichas extra con anuncio siguen disponibles.";
+  - display name and description in English and Spanish: "Remove ads" / "Quitar anuncios", and "No more ads between hands. Rewarded bonus chips stay available." / "Sin anuncios entre manos. Las fichas extra con anuncio siguen disponibles.";
   - review screenshot: the Settings screen showing the Remove ads button.
 
 
@@ -126,7 +126,7 @@ gets test ads.
 - [ ] **🛑 OWNER on the phone**, checking each of these:
   - [ ] first launch shows the tracking prompt (and the consent form in the EU/UK);
   - [ ] the level picker works (new / know how to play / count cards);
-  - [ ] the banner shows, an interstitial appears between some hands, and the rewarded bonus-chips button pays out;
+  - [ ] no banner anywhere (removed 2026-10-20), an interstitial appears between some hands, and the rewarded bonus-chips button pays out;
   - [ ] Remove ads buys (sandbox account) and ads disappear;
   - [ ] Restore purchase works after reinstalling;
   - [ ] sound, vibration and hand signals (tap = hit, swipe = stand) work;

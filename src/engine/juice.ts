@@ -47,12 +47,12 @@ export function roundFanfare(g: GameState): Fanfare | null {
     .reduce((sum, h) => sum + (h.doubled ? h.bet / 2 : h.bet), 0);
 
   if (yours.some((h) => h.outcome === 'blackjack')) {
-    return { tier: 'blackjack', label: T.blackjack, net, shake: 0.8, particles: 42 };
+    return { tier: 'blackjack', label: T.blackjack, net, shake: 0.8, particles: 24 };
   }
   if (net > originalBet) {
-    return { tier: 'bigWin', label: T.bigWin(money(net)), net, shake: 0.5, particles: 28 };
+    return { tier: 'bigWin', label: T.bigWin(money(net)), net, shake: 0.5, particles: 18 };
   }
-  if (net > 0) return { tier: 'win', label: `+${money(net)}`, net, shake: 0, particles: 14 };
+  if (net > 0) return { tier: 'win', label: `+${money(net)}`, net, shake: 0, particles: 10 };
   if (net === 0) return { tier: 'push', label: T.push, net, shake: 0, particles: 0 };
   if (yours.every((h) => h.surrendered)) {
     return { tier: 'surrender', label: T.surrender(money(-net)), net, shake: 0, particles: 0 };

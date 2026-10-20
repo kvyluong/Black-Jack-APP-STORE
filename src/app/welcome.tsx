@@ -169,7 +169,7 @@ export default function Welcome() {
       },
     ];
     return (
-      <Screen ads={false}>
+      <Screen>
         <Stack.Screen options={{ title: T.welcome, headerBackVisible: false }} />
         <View style={styles.hero}>
           <Text style={styles.logo}>♠ ♥ 21 ♣ ♦</Text>
@@ -202,7 +202,7 @@ export default function Welcome() {
   if (stage.kind === 'finish') {
     const rc = seen.reduce((sum, c) => sum + cardTag(c.rank, 'hiLo'), 0);
     return (
-      <Screen ads={false}>
+      <Screen>
         <Stack.Screen options={{ title: T.nicePlaying, headerBackVisible: false }} />
         <H1>{T.twoWins}</H1>
         <P>{T.heart}</P>
@@ -238,7 +238,7 @@ export default function Welcome() {
   const last = stage.index === TUTORIAL.length - 1;
 
   return (
-    <Screen ads={false}>
+    <Screen>
       <Stack.Screen options={{ title: T.practiceHand(stage.index + 1, TUTORIAL.length), headerBackVisible: false }} />
       <Text style={styles.coachTitle}>{hand.title}</Text>
       <View style={styles.felt}>

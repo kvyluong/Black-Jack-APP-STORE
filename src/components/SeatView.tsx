@@ -48,6 +48,15 @@ interface Props {
   bubble?: string;
 }
 
+/**
+ * A computer player's cards stack in a box of fixed size (room for four), so a hit
+ * never grows the table and shoves your hand and buttons down mid-deal. Longer hands
+ * squeeze closer together instead: `stackStep` scales the 12 × 6 pt offset per card.
+ */
+const STACK_ROOM = 3;
+const stackStep = (n: number) => (n <= STACK_ROOM + 1 ? 1 : STACK_ROOM / (n - 1));
+const STACK_SIZE = { height: 42 + 12 * STACK_ROOM, width: 30 + 6 * STACK_ROOM };
+
 /** One seat at the table: a computer player's avatar, bet and small cards, your spot, or an open seat. */
 export function SeatView({ seat, occupant, game, schedule, settled, instant, bubble }: Props) {
   const { good, bad } = useOutcomeColors();
@@ -106,9 +115,12 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
       {hands.map(({ h, i }) => (
         <View key={h.id} style={styles.hand}>
           <Text style={styles.bet}>${h.bet}</Text>
-          <View style={{ height: 42 + (h.cards.length - 1) * 14, width: 30 + (h.cards.length - 1) * 6 }}>
+          <View style={STACK_SIZE}>
             {h.cards.map((c, ci) => (
-              <View key={`${ci}-${c.rank}${c.suit}`} style={{ position: 'absolute', top: ci * 14, left: ci * 6 }}>
+              <View
+                key={`${ci}-${c.rank}${c.suit}`}
+                style={{ position: 'absolute', top: ci * stackStep(h.cards.length) * 12, left: ci * stackStep(h.cards.length) * 6 }}
+              >
                 <AnimatedCard card={c} faceDown={false} size="xs" dealDelay={cardDelay(schedule, i, ci)} flipDelay={0} instant={instant} />
               </View>
             ))}
@@ -142,7 +154,13 @@ const styles = StyleSheet.create({
   hand: { alignItems: 'center', gap: 2, marginTop: 2 },
   bet: { color: colors.gold, fontSize: 10, fontWeight: '800' },
   total: { color: colors.text, fontSize: 10, fontWeight: '700' },
+  // Floats over the name, so a new bubble doesn't make the seat taller.
   bubble: {
+    position: 'absolute',
+    top: 30,
+    left: 0,
+    right: 0,
+    zIndex: 1,
     color: colors.black,
     backgroundColor: colors.text,
     fontSize: 9,

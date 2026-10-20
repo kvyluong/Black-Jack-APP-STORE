@@ -46,7 +46,7 @@ To run it again: `$ANDROID_HOME/emulator/emulator -avd ShoeSharp_Pixel`, with `A
 ## 5. Closed test (start early: 12 testers × 14 days)
 - [ ] Play Console → Testing → **Closed testing** → create a track, add the build, and a tester list (Google Group or email list) with **at least 12** people. Tell them to accept the opt-in link **and keep the app installed**; anyone who opts out resets their 14 days.
 - [ ] Note the start date here: ____ . Earliest production application: start + 14 days.
-- [ ] Testers check what the iPhone checklist checks (APP_STORE_LAUNCH.md step 7): consent form (EU/UK), level picker, banner / interstitial / rewarded ads, Remove ads purchase (licence testers buy for free) and restore, sound, vibration, Spanish.
+- [ ] Testers check what the iPhone checklist checks (APP_STORE_LAUNCH.md step 7): consent form (EU/UK), level picker, interstitial and rewarded ads (no banners), Remove ads purchase (licence testers buy for free) and restore, sound, vibration, Spanish.
 - [ ] Add the testers' Gmail addresses under Settings → **License testing**, so their test purchases aren't charged.
 
 ## 6. Store listing (Grow → Store presence → Main store listing)

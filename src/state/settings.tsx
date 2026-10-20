@@ -101,7 +101,7 @@ export interface Settings {
   bankroll: number;
   /** The casino table you're sitting at (see TABLES in engine/progression). */
   tableId: string;
-  /** Bought "Remove ads": no banner or between-hand ads. Kept on reset (it was paid for). */
+  /** Bought "Remove ads": no between-hand ads. Kept on reset (it was paid for). */
   adsRemoved: boolean;
   /** App language; "system" follows the phone. */
   language: LanguageSetting;
@@ -215,12 +215,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Saving serializes everything, so it's batched: one write a moment after the last
   // change, and straight away when the app goes to the background.
   const pending = useRef<{ settings: Settings; stats: Stats } | null>(null);
-  const lastSave = useRef(0);
+  // When the oldest unsaved change was made: saves wait for a quiet moment, but never longer than the max.
+  const firstPending = useRef(0);
   const flush = useCallback(() => {
     if (!pending.current) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pending.current)).catch(() => {});
     pending.current = null;
-    lastSave.current = Date.now();
   }, []);
   // The state right after loading is what's already saved, so it isn't written back. That also
   // means a save that couldn't be read isn't overwritten with defaults until you change something.
@@ -229,11 +229,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     if (!loaded.current) {
       loaded.current = true;
-      lastSave.current = Date.now();
       return;
     }
+    if (!pending.current) firstPending.current = Date.now();
     pending.current = { settings, stats };
-    const wait = Math.max(0, Math.min(SAVE_DELAY_MS, lastSave.current + SAVE_MAX_WAIT_MS - Date.now()));
+    const wait = Math.max(0, Math.min(SAVE_DELAY_MS, firstPending.current + SAVE_MAX_WAIT_MS - Date.now()));
     const id = setTimeout(flush, wait);
     return () => clearTimeout(id);
   }, [ready, settings, stats, flush]);

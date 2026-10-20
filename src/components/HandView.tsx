@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, LinearTransition } from 'react-native-reanimated';
 
 import { Card } from '../engine/cards';
 import { describeHand } from '../engine/hand';
@@ -34,7 +35,7 @@ export function HandView({
   instant = false,
 }: Props) {
   return (
-    <View style={[styles.wrap, active && styles.active]}>
+    <Animated.View layout={instant ? undefined : MAKE_ROOM} style={[styles.wrap, active && styles.active]}>
       <View style={styles.row}>
         {cards.map((c, i) => (
           // Keyed by the card itself so a replaced card (e.g. after a split) deals in fresh.
@@ -57,9 +58,12 @@ export function HandView({
           {result && !settling ? ` · ${result}` : ''}
         </Text>
       )}
-    </View>
+    </Animated.View>
   );
 }
+
+/** When a card joins the hand, the cards already down slide over to make room instead of jumping. */
+const MAKE_ROOM = LinearTransition.duration(240).easing(Easing.out(Easing.quad));
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', padding: 6, borderRadius: 10, borderWidth: 2, borderColor: 'transparent' },

@@ -25,7 +25,7 @@ export function getAds(): AdsModule | null {
   return cached;
 }
 
-export type Placement = 'banner' | 'interstitial' | 'rewarded';
+export type Placement = 'interstitial' | 'rewarded';
 
 interface AdUnitConfig {
   ios?: Partial<Record<Placement, string>>;
@@ -40,7 +40,7 @@ export function adUnitId(placement: Placement): string | null {
   const ads = getAds();
   if (!ads) return null;
   if (__DEV__) {
-    return { banner: ads.TestIds.ADAPTIVE_BANNER, interstitial: ads.TestIds.INTERSTITIAL, rewarded: ads.TestIds.REWARDED }[placement];
+    return { interstitial: ads.TestIds.INTERSTITIAL, rewarded: ads.TestIds.REWARDED }[placement];
   }
   const units = (Constants.expoConfig?.extra?.adUnits ?? {}) as AdUnitConfig;
   const platformUnits = Platform.OS === 'ios' ? units.ios : units.android;

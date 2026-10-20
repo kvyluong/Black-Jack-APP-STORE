@@ -46,9 +46,9 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Game feel** (inspired by Balatro): cards land with a bounce and sway gently while idle; wins pop up as big tilted text with a burst of chips, and the bankroll counts up with ticking; blackjacks, big wins and busts shake the table; a streak badge grows with every correct play and the chime climbs in pitch. In the browser, cards also tilt toward your mouse and the felt slowly swirls. Effects can be turned off in Settings ("Big effects") and respect Reduce Motion.
 - **Strategy chart**: generated from the same engine as the coach, so it always matches your table rules.
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
-- **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the banner and the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Optional bonus-chip videos stay, since players choose to watch those. Development builds without a store simulate the purchase.
+- **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Optional bonus-chip videos stay, since players choose to watch those. Development builds without a store simulate the purchase.
 - **English and Spanish**: everything, including the lessons, coach explanations, Academy stories and spoken counts, is in both languages. The app follows the phone's language, or players pick one in Settings.
-- **Ads**: an anchored adaptive banner, plus an interstitial shown only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
+- **Ads**: no banners, so nothing sits on screen while you play. A full-screen interstitial shows only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
 
 ## Test it in a browser (Windows, Mac, anything)
 
@@ -85,7 +85,7 @@ src/
   components/     Cards, hands, buttons and layout
   audio/          Sound effect playback (expo-audio)
   components/table/  Pieces of the table screen (felt, betting panel, turn controls, count quiz)
-  ads/            AdMob setup, banner, interstitial frequency cap (web stub for previews)
+  ads/            AdMob setup, interstitial frequency cap (web stub for previews)
   purchases/      The Remove ads in-app purchase (expo-iap; web stub)
   i18n/           Language setting and localized() text helper (English / Spanish)
   state/          Saved settings, bankroll and progress (AsyncStorage)
@@ -121,9 +121,9 @@ The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect,
 
 1. **Pick your app ID.** Replace `com.REPLACE_ME.shoesharp` in `app.json` (`ios.bundleIdentifier` and `android.package`).
 2. **Remove ads product.** In App Store Connect and the Google Play Console, create a non-consumable in-app product with the ID `remove_ads` (or change `extra.iap.removeAds` in `app.json`), and set its price ($2.99–$4.99 is typical). Test with a sandbox account (iOS) or a license tester (Android) on a development build.
-3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create a banner and an interstitial unit for each.
+3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create an interstitial and a rewarded unit for each (the app shows no banners).
    - Put the **app IDs** in `app.json` under the `react-native-google-mobile-ads` plugin (`androidAppId`, `iosAppId`). They are currently Google's sample IDs.
-   - Put the **ad unit IDs** (banner, interstitial and rewarded for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
+   - Put the **ad unit IDs** (interstitial and rewarded for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
    - In AdMob, set up a GDPR consent message (Privacy & messaging) and, for iOS, an IDFA explainer message so the ATT prompt shows.
    - Publish an `app-ads.txt` on your developer website.
 4. **Art.** Replace the placeholder icons and splash image in `assets/`.

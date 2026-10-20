@@ -127,7 +127,8 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
 
 const styles = StyleSheet.create({
   felt: { borderRadius: 18, paddingVertical: spacing(1), paddingHorizontal: 4 },
-  dealer: { minHeight: 100, alignItems: 'center', justifyContent: 'center' },
+  // Tall enough for the dealer's hand and its label, so the deal doesn't grow the table.
+  dealer: { minHeight: 108, alignItems: 'center', justifyContent: 'center' },
   placeholder: { color: colors.muted, textAlign: 'center' },
   seats: { flexDirection: 'row', gap: 2, minHeight: 150 },
   yours: { minHeight: 130, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) },

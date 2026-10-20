@@ -66,7 +66,7 @@ const T = localized({
     adsRemoved: '✓ Ads removed. Thanks for supporting ShoeSharp!',
     bringBack: 'Bring ads back (development only)',
     removeAdsInfo:
-      'A one-time purchase that removes the banner and the ads between hands, on every device signed in to your store account. The optional bonus-chip videos stay, since you choose when to watch those.',
+      'A one-time purchase that removes the ads between hands, on every device signed in to your store account. The optional bonus-chip videos stay, since you choose when to watch those.',
     opening: 'Opening the store…',
     removeAdsSimulated: 'Remove ads (simulated in development)',
     appsOnly: 'Available in the iPhone and Android apps.',
@@ -136,7 +136,7 @@ const T = localized({
     adsRemoved: '✓ Anuncios quitados. ¡Gracias por apoyar a ShoeSharp!',
     bringBack: 'Volver a mostrar anuncios (solo desarrollo)',
     removeAdsInfo:
-      'Una compra única que quita el banner y los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda. Los videos opcionales de fichas extra se quedan, ya que tú eliges cuándo verlos.',
+      'Una compra única que quita los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda. Los videos opcionales de fichas extra se quedan, ya que tú eliges cuándo verlos.',
     opening: 'Abriendo la tienda…',
     removeAdsSimulated: 'Quitar anuncios (simulado en desarrollo)',
     appsOnly: 'Disponible en las apps de iPhone y Android.',

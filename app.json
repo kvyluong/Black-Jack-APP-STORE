@@ -69,12 +69,10 @@
     "extra": {
       "adUnits": {
         "ios": {
-          "banner": "ca-app-pub-2452034460168771/1354725442",
           "interstitial": "ca-app-pub-2452034460168771/3392811404",
           "rewarded": "ca-app-pub-2452034460168771/3309970797"
         },
         "android": {
-          "banner": "ca-app-pub-2452034460168771/7038296963",
           "interstitial": "ca-app-pub-2452034460168771/1557905422",
           "rewarded": "ca-app-pub-2452034460168771/5189108804"
         }

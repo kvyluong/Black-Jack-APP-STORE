@@ -108,8 +108,8 @@ Localizations:
 
 | | Display name | Description |
 |---|---|---|
-| English (U.S.) | `Remove ads` | `No banner or between-hand ads. Bonus-chip videos stay.` (54/55) |
-| Spanish (Mexico) | `Quitar anuncios` | `Sin banners ni anuncios entre manos.` (36/55) |
+| English (U.S.) | `Remove ads` | `No ads between hands. Bonus-chip videos stay.` (45/55) |
+| Spanish (Mexico) | `Quitar anuncios` | `Sin anuncios entre manos.` (25/55) |
 
 **Review screenshot:** the Settings screen showing the Remove ads and Restore purchase
 buttons. Take it on the phone from the TestFlight build (step 7): the web build has no store,
