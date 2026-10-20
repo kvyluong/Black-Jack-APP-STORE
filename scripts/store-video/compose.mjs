@@ -8,8 +8,8 @@ import fs from 'node:fs'; import path from 'node:path';
 const OUT = process.argv[2]; const FADE = 0.35; const FPS = 30;
 const CUTS = JSON.parse(fs.readFileSync('cuts.json', 'utf8'));
 const CAP = {
-  en: { level: 'Start at your level', table: 'A coach at every decision', count: 'Count cards like a pro', exam: 'Pass the casino test', ready: "Know when you're ready" },
-  es: { level: 'Empieza a tu nivel', table: 'Un coach en cada decisión', count: 'Cuenta cartas como un pro', exam: 'Aprueba el examen de casino', ready: 'Sabe cuándo estás listo' },
+  en: { level: 'Start at your level', table: 'A coach at every decision', count: 'Count cards like a pro', exam: 'Pass the casino test', ready: "Know when you're ready", free: '100% free. No paywall.' },
+  es: { level: 'Empieza a tu nivel', table: 'Un coach en cada decisión', count: 'Cuenta cartas como un pro', exam: 'Aprueba el examen de casino', ready: 'Sabe cuándo estás listo', free: '100% gratis. Sin muro de pago.' },
 };
 // The recording sits under the caption band (`top` px), `winW` px wide; its height follows its shape.
 const FORMATS = {

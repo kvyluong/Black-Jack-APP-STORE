@@ -26,13 +26,15 @@ Paste these into App Store Connect. Character counts are checked against Apple's
 | **Name** | `ShoeSharp: Blackjack Trainer` | 28/30 |
 | **Subtitle** | `Learn Card Counting & Strategy` | 30/30 |
 | **Keywords** | `21,hi-lo,count,basic,chart,casino,practice,coach,odds,deck,shoe,vegas,dealer,drill,simulator,hand` | 97/100 |
-| **Promotional text** | `New: tell ShoeSharp your level and start where you belong — from your first hand to counting a six-deck shoe under casino conditions.` | 133/170 |
+| **Promotional text** | `Every lesson, drill and casino test is free. No paywall, no subscription, no account: learn perfect blackjack and card counting at your own pace.` | 145/170 |
 
-Promotional text can be changed anytime without review; use it for updates.
+Promotional text can be changed anytime without review; use it for updates. It leads with "no paywall": most trainers lock the counting drills behind a subscription, and ShoeSharp doesn't.
 
 ### Description
 ```
 Learn to play perfect blackjack and count cards like a pro, with a coach at your side.
+
+Everything is free: no paywall, no subscription, no account.
 
 ShoeSharp takes you from your first hand to counting a six-deck shoe under real casino conditions. Start at your level: brand new, already know how to play, or already counting.
 
@@ -60,7 +62,7 @@ MADE FOR YOU
 • English and Spanish
 • iPhone and iPad
 • No account needed: your progress stays on your device
-• Free with ads; one optional purchase removes them
+• Every feature free: ads keep it that way, and one optional purchase removes them
 
 For entertainment and education only. No real-money gambling: chips are virtual and have no cash value. Card counting is legal, but casinos may ask counters to stop playing.
 ```
@@ -84,11 +86,13 @@ Sizes: iPhone 6.9" 1320×2868, and iPad 13" 2064×2752 (required because the app
 | **Name** | `ShoeSharp: Blackjack y Conteo` | 29/30 |
 | **Subtitle** | `Aprende a contar cartas al 21` | 29/30 |
 | **Keywords** | `entrenador,estrategia,naipes,simulador,casino,veintiuno,crupier,apuestas,baraja,practica,hi-lo,juego` | 100/100 |
-| **Promotional text** | `Nuevo: dile a ShoeSharp tu nivel y empieza donde te corresponde, desde tu primera mano hasta contar un zapato de seis barajas en condiciones de casino.` | 151/170 |
+| **Promotional text** | `Todas las lecciones, ejercicios y el examen de casino son gratis. Sin muro de pago, sin suscripción y sin cuenta: aprende blackjack y a contar cartas a tu ritmo.` | 161/170 |
 
 ### Descripción
 ```
 Aprende a jugar blackjack perfecto y a contar cartas como un profesional, con un coach a tu lado.
+
+Todo es gratis: sin muro de pago, sin suscripción y sin cuenta.
 
 ShoeSharp te lleva desde tu primera mano hasta contar un zapato de seis barajas en condiciones reales de casino. Empieza a tu nivel: si eres nuevo, si ya sabes jugar o si ya cuentas cartas.
 
@@ -116,7 +120,7 @@ HECHO PARA TI
 • Español e inglés
 • iPhone y iPad
 • Sin cuenta: tu progreso se guarda en tu dispositivo
-• Gratis con anuncios; una compra opcional los quita
+• Todas las funciones gratis: los anuncios lo mantienen así y una compra opcional los quita
 
 Solo para entretenimiento y aprendizaje. Sin apuestas con dinero real: las fichas son virtuales y no tienen valor. Contar cartas es legal, pero los casinos pueden pedir a quien cuenta que deje de jugar.
 ```

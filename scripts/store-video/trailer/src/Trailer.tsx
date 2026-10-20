@@ -14,7 +14,7 @@ const FONT = "-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif";
 /** Frames: the opening line, the end card, and the crossfade between clips on the phone. */
 const HOOK = 64; const END = 100; const XF = 8;
 
-const TEXT: Record<Lang, { hook: string; scenes: Record<Scene, [string, string]>; end: [string, string, string] }> = {
+const TEXT: Record<Lang, { hook: string; scenes: Record<Scene, [string, string]>; end: [string, string, string, string] }> = {
   en: {
     hook: 'Blackjack, the way the pros learn it.',
     scenes: {
@@ -24,7 +24,7 @@ const TEXT: Record<Lang, { hook: string; scenes: Record<Scene, [string, string]>
       exam: ['Casino conditions', 'Pass the casino test'],
       ready: ['Casino-ready score', "Know when you're ready"],
     },
-    end: ['ShoeSharp', 'Blackjack Trainer', 'Free on iPhone, iPad and Android'],
+    end: ['ShoeSharp', 'Blackjack Trainer', 'Every feature free · No paywall', 'iPhone · iPad · Android'],
   },
   es: {
     hook: 'Blackjack, como lo aprenden los pros.',
@@ -35,7 +35,7 @@ const TEXT: Record<Lang, { hook: string; scenes: Record<Scene, [string, string]>
       exam: ['Condiciones de casino', 'Aprueba el examen de casino'],
       ready: ['Puntaje para el casino', 'Sabe cuándo estás listo'],
     },
-    end: ['ShoeSharp', 'Entrenador de blackjack', 'Gratis en iPhone, iPad y Android'],
+    end: ['ShoeSharp', 'Entrenador de blackjack', 'Todo gratis · Sin muro de pago', 'iPhone · iPad · Android'],
   },
 };
 
@@ -184,7 +184,7 @@ const FadeIn = ({ first, children }: { first: boolean; children: React.ReactNode
   return <AbsoluteFill style={{ opacity: first ? 1 : interpolate(f, [0, XF], [0, 1], { extrapolateRight: 'clamp' }) }}>{children}</AbsoluteFill>;
 };
 
-const EndCard = ({ lines, from }: { lines: [string, string, string]; from: number }) => {
+const EndCard = ({ lines, from }: { lines: [string, string, string, string]; from: number }) => {
   const f = useCurrentFrame() - from; if (f < 0) return null;
   const icon = spring({ frame: f - 8, fps: FPS, config: { damping: 14, stiffness: 120 } });
   const t = (d: number) => spring({ frame: f - d, fps: FPS, config: { damping: 20 } });
@@ -195,7 +195,10 @@ const EndCard = ({ lines, from }: { lines: [string, string, string]; from: numbe
         boxShadow: '0 30px 80px rgba(0,0,0,.5), 0 0 0 4px rgba(232,197,71,.6)' }} />
       <div style={{ fontSize: 120, fontWeight: 800, letterSpacing: -3, color: C.cream, opacity: t(16), transform: `translateY(${(1 - t(16)) * 30}px)` }}>{lines[0]}</div>
       <div style={{ fontSize: 44, fontWeight: 700, color: C.gold, marginTop: 6, opacity: t(22), transform: `translateY(${(1 - t(22)) * 24}px)` }}>{lines[1]}</div>
-      <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: 4, textTransform: 'uppercase', color: C.cream, marginTop: 46, opacity: 0.8 * t(32) }}>{lines[2]}</div>
+      {/* The selling point: a gold pill, so it reads as a promise rather than small print. */}
+      <div style={{ fontSize: 40, fontWeight: 800, color: C.feltDark, background: C.gold, borderRadius: 999, padding: '14px 40px',
+        marginTop: 44, opacity: t(30), transform: `scale(${0.85 + 0.15 * t(30)})` }}>{lines[2]}</div>
+      <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase', color: C.cream, marginTop: 30, opacity: 0.75 * t(38) }}>{lines[3]}</div>
     </AbsoluteFill>
   );
 };

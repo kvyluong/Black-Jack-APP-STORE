@@ -8,21 +8,15 @@
         "caption": "level"
       },
       {
-        "file": "iphone-en-table2.mov",
-        "start": 13.0,
-        "dur": 3.8,
+        "file": "iphone-en-table4.mov",
+        "start": 9.0,
+        "dur": 5.0,
         "caption": "table"
       },
       {
-        "file": "iphone-en-table2.mov",
-        "start": 25.7,
-        "dur": 1.6,
-        "caption": "table"
-      },
-      {
-        "file": "iphone-en-table2.mov",
-        "start": 35.8,
-        "dur": 2.6,
+        "file": "iphone-en-table4.mov",
+        "start": 78.8,
+        "dur": 1.8,
         "caption": "table"
       },
       {
@@ -51,9 +45,16 @@
       },
       {
         "file": "iphone-en-ready.mov",
-        "start": 1.0,
-        "dur": 4.4,
+        "start": 2.6,
+        "dur": 2.8,
         "caption": "ready",
+        "reverse": true
+      },
+      {
+        "file": "iphone-en-ready.mov",
+        "start": 0.3,
+        "dur": 2.65,
+        "caption": "free",
         "reverse": true
       }
     ],
@@ -65,21 +66,15 @@
         "caption": "level"
       },
       {
-        "file": "iphone-es-table.mov",
-        "start": 29.2,
-        "dur": 3.6,
+        "file": "iphone-es-table4.mov",
+        "start": 13.3,
+        "dur": 2.4,
         "caption": "table"
       },
       {
-        "file": "iphone-es-table.mov",
-        "start": 34.6,
-        "dur": 1.4,
-        "caption": "table"
-      },
-      {
-        "file": "iphone-es-table.mov",
-        "start": 42.1,
-        "dur": 1.3,
+        "file": "iphone-es-table4.mov",
+        "start": 41.0,
+        "dur": 1.8,
         "caption": "table"
       },
       {
@@ -114,9 +109,16 @@
       },
       {
         "file": "iphone-es-ready.mov",
-        "start": 1.0,
-        "dur": 4.4,
+        "start": 2.6,
+        "dur": 2.8,
         "caption": "ready",
+        "reverse": true
+      },
+      {
+        "file": "iphone-es-ready.mov",
+        "start": 0.3,
+        "dur": 2.65,
+        "caption": "free",
         "reverse": true
       }
     ]
@@ -130,21 +132,21 @@
         "caption": "level"
       },
       {
-        "file": "ipad-en-table.mov",
-        "start": 58.9,
-        "dur": 2.9,
+        "file": "ipad-en-table4.mov",
+        "start": 72.3,
+        "dur": 3.2,
         "caption": "table"
       },
       {
-        "file": "ipad-en-table.mov",
-        "start": 71.3,
+        "file": "ipad-en-table4.mov",
+        "start": 90.0,
         "dur": 1.8,
         "caption": "table"
       },
       {
-        "file": "ipad-en-table.mov",
-        "start": 81.8,
-        "dur": 2.8,
+        "file": "ipad-en-table4.mov",
+        "start": 102.8,
+        "dur": 2.6,
         "caption": "table"
       },
       {
@@ -179,9 +181,16 @@
       },
       {
         "file": "ipad-en-ready.mov",
-        "start": 1.0,
-        "dur": 4.4,
+        "start": 2.6,
+        "dur": 2.8,
         "caption": "ready",
+        "reverse": true
+      },
+      {
+        "file": "ipad-en-ready.mov",
+        "start": 0.3,
+        "dur": 2.65,
+        "caption": "free",
         "reverse": true
       }
     ],
@@ -193,14 +202,14 @@
         "caption": "level"
       },
       {
-        "file": "ipad-es-table.mov",
-        "start": 11.700000000000001,
-        "dur": 2.9,
+        "file": "ipad-es-table4.mov",
+        "start": 30.1,
+        "dur": 3.4,
         "caption": "table"
       },
       {
-        "file": "ipad-es-table.mov",
-        "start": 23.3,
+        "file": "ipad-es-table4.mov",
+        "start": 42.0,
         "dur": 1.8,
         "caption": "table"
       },
@@ -242,9 +251,16 @@
       },
       {
         "file": "ipad-es-ready.mov",
-        "start": 1.0,
-        "dur": 4.4,
+        "start": 2.6,
+        "dur": 2.8,
         "caption": "ready",
+        "reverse": true
+      },
+      {
+        "file": "ipad-es-ready.mov",
+        "start": 0.3,
+        "dur": 2.65,
+        "caption": "free",
         "reverse": true
       }
     ]
