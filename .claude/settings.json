@@ -1,5 +1,27 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx expo lint)",
+      "Bash(npx expo-doctor)",
+      "Bash(npm test)",
+      "Bash(npm test --silent)",
+      "Bash(ffprobe *)",
+      "Bash(xcrun simctl list *)",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__terminal__read_terminal",
+      "mcp__412cc9e3-0a0b-44e9-8916-a37bfd60c83f__get_message",
+      "mcp__412cc9e3-0a0b-44e9-8916-a37bfd60c83f__search_threads"
+    ]
   }
 }
