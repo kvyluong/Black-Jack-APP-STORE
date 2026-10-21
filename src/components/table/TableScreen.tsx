@@ -441,8 +441,27 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     : T.countRc(rc);
   const signals = settings.handSignals && settled && yourTurn;
 
+  // Pinned below the table so it's in reach on small phones. The buttons stay in place while a card
+  // lands (they just don't take taps yet) instead of vanishing and reappearing on every hit.
+  // Keyed by the decision, so the coach hint resets.
+  const actionBar = yourTurn && (
+    <View pointerEvents={settled ? 'auto' : 'none'} style={{ gap: spacing(1.5) }} key={`${game.active}-${activeHand!.cards.length}`}>
+      <ActionBar
+        seat={activeHand!.seat}
+        legal={legal}
+        advice={advice}
+        showHints={showHints}
+        surrenderAllowed={rules.lateSurrender}
+        handSignals={settings.handSignals}
+        shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
+        onAction={(a) => settled && onAction(a)}
+      />
+    </View>
+  );
+
   return (
-    <Screen>
+    // On a short phone, bring your hand into view when it's your move.
+    <Screen footer={actionBar} scrollToEndOn={settled && yourTurn && `${game.active}`}>
       {!testing && <Stack.Screen options={{ title: casino.name }} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
@@ -530,23 +549,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       )}
 
       {settled && waitingOn && <Text style={styles.waiting}>{T.playing(waitingOn.name)}</Text>}
-
-      {/* The buttons stay in place while a card lands (they just don't take taps yet), instead of
-          vanishing and reappearing on every hit. Keyed by the decision, so the coach hint resets. */}
-      {yourTurn && (
-        <View pointerEvents={settled ? 'auto' : 'none'} style={{ gap: spacing(1.5) }} key={`${game.active}-${activeHand!.cards.length}`}>
-          <ActionBar
-            seat={activeHand!.seat}
-            legal={legal}
-            advice={advice}
-            showHints={showHints}
-            surrenderAllowed={rules.lateSurrender}
-            handSignals={settings.handSignals}
-            shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
-            onAction={(a) => settled && onAction(a)}
-          />
-        </View>
-      )}
 
       {settled && game.phase === 'insurance' && (
         <InsurancePanel

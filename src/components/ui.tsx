@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,15 +11,36 @@ export const STEP_LABEL = localized({
   es: { down: 'Bajar tu respuesta', up: 'Subir tu respuesta' },
 });
 
-/** A screen's scrolling body. The app has no banner ads; its ads are all full-screen. */
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+/**
+ * A screen's scrolling body. `footer` stays pinned below it (the table's action buttons), so
+ * it's always in reach on small phones. When `scrollToEndOn` changes to a truthy value, the body
+ * scrolls to its end (on phones too short to show it all). The app has no banner ads; its ads are all full-screen.
+ */
+export function Screen({
+  children,
+  scroll = true,
+  footer,
+  scrollToEndOn,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  footer?: ReactNode;
+  scrollToEndOn?: string | false;
+}) {
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (scrollToEndOn) scrollRef.current?.scrollToEnd({ animated: true });
+  }, [scrollToEndOn]);
   return (
     <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+          {children}
+        </ScrollView>
       ) : (
         <View style={[styles.content, { flex: 1 }]}>{children}</View>
       )}
+      {footer && <View style={styles.footer}>{footer}</View>}
     </SafeAreaView>
   );
 }
@@ -134,6 +155,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.felt },
   // On tablets and wide browser windows, keep a readable column centered.
   content: { padding: spacing(2), gap: spacing(1.5), width: '100%', maxWidth: 760, alignSelf: 'center' },
+  footer: { paddingHorizontal: spacing(2), paddingVertical: spacing(1), gap: spacing(1), width: '100%', maxWidth: 760, alignSelf: 'center' },
   button: {
     paddingVertical: spacing(1.5),
     paddingHorizontal: spacing(2),

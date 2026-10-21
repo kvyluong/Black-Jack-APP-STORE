@@ -62,10 +62,13 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
   // Your hands, shown large, in the same left-to-right order as the seats.
   const yourHands = game.hands.map((h, i) => ({ h, i })).filter(({ h }) => isYours(h)).reverse();
   const small = yourHands.length > 2 || (yourHands.length > 1 && yourHands.some(({ h }) => h.cards.length >= 4));
+  // Before the deal the table is compact, so the Deal button fits on small phones. The room
+  // for cards opens up as the hand starts, before any card is in the air.
+  const dealt = game.dealer.length > 0;
 
   return (
     <Animated.View style={[shakeStyle, styles.felt, { backgroundColor: casino.felt }]}>
-      <View style={styles.dealer}>
+      <View style={[styles.dealer, dealt && styles.dealerDealt]}>
         {game.dealer.length > 0 ? (
           <HandView
             cards={game.dealer}
@@ -86,7 +89,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
       </View>
 
       {/* The seats, on an arc; seat 1 is on the right and is dealt first. */}
-      <View style={styles.seats}>
+      <View style={[styles.seats, dealt && styles.seatsDealt]}>
         {SEAT_ORDER.map((seat, pos) => {
           const occupant = table.seats[seat];
           return (
@@ -105,7 +108,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
         })}
       </View>
 
-      <View style={styles.yours}>
+      <View style={[styles.yours, dealt && styles.yoursDealt]}>
         {yourHands.map(({ h, i }) => (
           <HandView
             key={h.id}
@@ -127,9 +130,12 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
 
 const styles = StyleSheet.create({
   felt: { borderRadius: 18, paddingVertical: spacing(1), paddingHorizontal: 4 },
-  // Tall enough for the dealer's hand and its label, so the deal doesn't grow the table.
-  dealer: { minHeight: 108, alignItems: 'center', justifyContent: 'center' },
+  dealer: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing(1) },
+  // Tall enough for the dealer's hand and its label, so drawing cards doesn't grow the table.
+  dealerDealt: { minHeight: 108, paddingVertical: 0 },
   placeholder: { color: colors.muted, textAlign: 'center' },
-  seats: { flexDirection: 'row', gap: 2, minHeight: 150 },
-  yours: { minHeight: 130, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) },
+  seats: { flexDirection: 'row', gap: 2 },
+  seatsDealt: { minHeight: 150 },
+  yours: { alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) },
+  yoursDealt: { minHeight: 130 },
 });
