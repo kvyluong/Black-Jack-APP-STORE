@@ -36,6 +36,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withSceneLifecycle",
       [
         "react-native-google-mobile-ads",
         {

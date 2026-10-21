@@ -135,6 +135,14 @@ The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect,
    npx eas-cli@latest submit --platform all
    ```
    You need an Apple Developer account ($99/year) and a Google Play developer account ($25 one-time).
+
+   **Building on this Mac instead** (doesn't use the Expo free plan's 15 builds a month per platform). Needs Xcode, CocoaPods and fastlane (`brew install cocoapods fastlane`); signing credentials still come from EAS, so nothing is set up in Xcode. Keep the Mac awake while it runs (10–20 min).
+   ```bash
+   export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+   npx eas-cli@latest build --platform ios --profile production --local --output build/ShoeSharp.ipa
+   npx eas-cli@latest submit --platform ios --path build/ShoeSharp.ipa
+   ```
+   For a simulator app to test on the Mac, use `--profile simulator --local --output build/ShoeSharp-sim.tar.gz`. Build numbers are kept on EAS (`appVersionSource: remote`), so local and cloud builds share one count.
 7. **Spanish store listings.** Add a Spanish description and screenshots in both stores so Spanish-speaking players find the app.
 
 ## App store policy notes
