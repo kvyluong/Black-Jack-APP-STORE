@@ -132,7 +132,7 @@ both go into the same submission. Created 2026-10-19: Apple ID 6824753924, USD 2
 | Version | `1.0.0` |
 | Copyright | `2026 Kevin Luong` |
 | Build | Pick the TestFlight build (runbook step 7) |
-| Screenshots | `store-assets/screenshots/` (6.9" iPhone and 13" iPad, English and Spanish), in caption order 01–06 |
+| Screenshots | `store-assets/screenshots/`, in caption order 01–06, English and Spanish. App Store Connect now requires the **6.3" iPhone** size (1206×2622, `iphone-6.3/`, scaled from the 6.9" set) plus the 13" iPad. Uploaded 2026-10-20 in Media Manager |
 | App Previews | `store-assets/video/iphone-6.9-en.mp4` and `ipad-13-en.mp4` (English); `iphone-6.9-es.mp4` and `ipad-13-es.mp4` (Spanish). 24 s each, silent. Poster frame: leave the default or pick the coach shot |
 | App icon | Comes from the build |
 
