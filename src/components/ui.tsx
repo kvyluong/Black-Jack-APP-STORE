@@ -14,18 +14,21 @@ export const STEP_LABEL = localized({
 /**
  * A screen's scrolling body. `footer` stays pinned below it (the table's action buttons), so
  * it's always in reach on small phones. When `scrollToEndOn` changes to a truthy value, the body
- * scrolls to its end (on phones too short to show it all). The app has no banner ads; its ads are all full-screen.
+ * scrolls to its end (on phones too short to show it all). `wide` lets the content use more of a
+ * tablet's width (the table). The app has no banner ads; its ads are all full-screen.
  */
 export function Screen({
   children,
   scroll = true,
   footer,
   scrollToEndOn,
+  wide = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
   footer?: ReactNode;
   scrollToEndOn?: string | false;
+  wide?: boolean;
 }) {
   const scrollRef = useRef<ScrollView>(null);
   useEffect(() => {
@@ -34,13 +37,13 @@ export function Screen({
   return (
     <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}>
       {scroll ? (
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+        <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, wide && styles.wide]}>
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.content, { flex: 1 }]}>{children}</View>
+        <View style={[styles.content, wide && styles.wide, { flex: 1 }]}>{children}</View>
       )}
-      {footer && <View style={styles.footer}>{footer}</View>}
+      {footer && <View style={[styles.footer, wide && styles.wide]}>{footer}</View>}
     </SafeAreaView>
   );
 }
@@ -155,6 +158,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.felt },
   // On tablets and wide browser windows, keep a readable column centered.
   content: { padding: spacing(2), gap: spacing(1.5), width: '100%', maxWidth: 760, alignSelf: 'center' },
+  wide: { maxWidth: 980 },
   footer: { paddingHorizontal: spacing(2), paddingVertical: spacing(1), gap: spacing(1), width: '100%', maxWidth: 760, alignSelf: 'center' },
   button: {
     paddingVertical: spacing(1.5),

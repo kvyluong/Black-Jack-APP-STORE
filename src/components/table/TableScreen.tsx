@@ -88,8 +88,8 @@ const T = localized({
   en: {
     level: (n: number, title: string) => `Level ${n}: ${title}`,
     unlocked: (name: string) => `New table unlocked: ${name}`,
-    countPlay: ' · count play',
-    book: (a: string) => ` ✗ book: ${a}`,
+    countPlay: '\ncount play',
+    book: (a: string) => ` ✗\nbook: ${a}`,
     correct: 'Correct!',
     inARow: (n: number) => `Correct! ${n} in a row`,
     best: (a: string, reason: string) => `Best play: ${a}. ${reason}`,
@@ -119,8 +119,8 @@ const T = localized({
   es: {
     level: (n: number, title: string) => `Nivel ${n}: ${title}`,
     unlocked: (name: string) => `Nueva mesa desbloqueada: ${name}`,
-    countPlay: ' · jugada por conteo',
-    book: (a: string) => ` ✗ manual: ${a}`,
+    countPlay: '\njugada por conteo',
+    book: (a: string) => ` ✗\nmanual: ${a}`,
     correct: '¡Correcto!',
     inARow: (n: number) => `¡Correcto! ${n} seguidas`,
     best: (a: string, reason: string) => `Mejor jugada: ${a}. ${reason}`,
@@ -462,7 +462,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
 
   return (
     // On a short phone, bring your hand into view when it's your move.
-    <Screen footer={pinActions && actionBar} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
+    <Screen wide footer={pinActions && actionBar} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
       {!testing && <Stack.Screen options={{ title: casino.name }} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>

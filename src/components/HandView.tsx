@@ -13,7 +13,7 @@ interface Props {
   hideHole?: boolean;
   active?: boolean;
   result?: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   /** Deal delay per card index, used when that card first appears. */
   dealDelay?: (index: number) => number;
   flipDelay?: number;
@@ -39,7 +39,7 @@ export function HandView({
       <View style={styles.row}>
         {cards.map((c, i) => (
           // Keyed by the card itself so a replaced card (e.g. after a split) deals in fresh.
-          <View key={`${i}-${c.rank}${c.suit}`} style={{ marginLeft: i === 0 ? 0 : size === 'sm' ? -12 : -16 }}>
+          <View key={`${i}-${c.rank}${c.suit}`} style={{ marginLeft: i === 0 ? 0 : OVERLAP[size] }}>
             <AnimatedCard
               card={c}
               faceDown={!!hideHole && i === 1}
@@ -61,6 +61,9 @@ export function HandView({
     </Animated.View>
   );
 }
+
+/** How far each card tucks under the one before it. */
+const OVERLAP = { sm: -12, md: -16, lg: -26 };
 
 /** When a card joins the hand, the cards already down slide over to make room instead of jumping. */
 const MAKE_ROOM = LinearTransition.duration(240).easing(Easing.out(Easing.quad));

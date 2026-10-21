@@ -27,6 +27,9 @@ const T = localized({
     quickPlay: 'Play a hand',
     newFor: (names: string, more: number) => `New for you: ${names}${more ? ` and ${more} more` : ''}`,
     level: (n: number, title: string) => `Lv ${n} · ${title}`,
+    hands: 'Hands played',
+    rightCalls: 'Right calls',
+    biggestWin: 'Biggest win',
   },
   es: {
     tagline: 'Aprende a jugar perfecto y a contar cartas',
@@ -40,6 +43,9 @@ const T = localized({
     quickPlay: 'Jugar una mano',
     newFor: (names: string, more: number) => `Nuevo para ti: ${names}${more ? ` y ${more} más` : ''}`,
     level: (n: number, title: string) => `Nv ${n} · ${title}`,
+    hands: 'Manos jugadas',
+    rightCalls: 'Decisiones correctas',
+    biggestWin: 'Mayor ganancia',
   },
 });
 
@@ -109,6 +115,18 @@ export default function Home() {
 
       <DailyGoalsCard collapsible />
 
+      {/* Your play so far, at a glance. */}
+      {stats.handsPlayed > 0 && (
+        <View style={styles.stats}>
+          <Stat value={formatChips(stats.handsPlayed)} label={T.hands} />
+          <Stat
+            value={stats.decisions > 0 ? `${Math.round((100 * stats.correctDecisions) / stats.decisions)}%` : '–'}
+            label={T.rightCalls}
+          />
+          <Stat value={`$${formatChips(stats.biggestWin)}`} label={T.biggestWin} />
+        </View>
+      )}
+
       {fresh.length > 0 && (
         <Pressable
           accessibilityRole="button"
@@ -122,6 +140,19 @@ export default function Home() {
 
       <Button title={T.quickPlay} variant="secondary" onPress={() => router.push('/play')} />
     </Screen>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      <Text style={styles.statLabel} numberOfLines={2}>
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -139,4 +170,8 @@ const styles = StyleSheet.create({
   newBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(232,197,71,0.12)', borderRadius: radius.md, padding: spacing(1.5) },
   newText: { color: colors.gold, fontWeight: '700', flex: 1 },
   chev: { color: colors.gold, fontSize: 22 },
+  stats: { flexDirection: 'row', gap: spacing(1) },
+  stat: { flex: 1, backgroundColor: colors.feltDark, borderRadius: radius.md, paddingVertical: spacing(1.5), paddingHorizontal: spacing(1), alignItems: 'center', gap: 2 },
+  statValue: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  statLabel: { color: colors.muted, fontSize: 12, textAlign: 'center' },
 });
