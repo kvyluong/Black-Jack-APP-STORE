@@ -136,7 +136,13 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
               </View>
             ))}
           </View>
-          <Text style={[st('total'), h.outcome && { color: h.payout! > h.bet ? good : h.payout === h.bet ? colors.text : bad }]}>
+          <Text
+            style={[st('total'), h.outcome && { color: h.payout! > h.bet ? good : h.payout === h.bet ? colors.text : bad }]}
+            // One line, shrinking a long total ("17 blando", "Pasado (22)") instead of wrapping it.
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
             {!settled ? ' ' : h.outcome ? OUTCOME_SHORT[h.outcome] : describeHand(h.cards)}
           </Text>
         </View>
