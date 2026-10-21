@@ -112,7 +112,7 @@ Localizations:
 | Spanish (Mexico) | `Quitar anuncios` | `Sin anuncios entre manos.` (25/55) |
 
 **Review screenshot:** the Settings screen showing the Remove ads and Restore purchase
-buttons. Take it on the phone from the TestFlight build (step 7): the web build has no store,
+buttons (`store-assets/review/remove-ads-iap-review.png`, from the simulator; uploaded 2026-10-20). Take it on the phone from the TestFlight build (step 7): the web build has no store,
 so it shows a note instead of the buttons.
 **Review notes:** "Tap the Me tab → Settings → Remove ads. Restore purchase is on the same screen."
 
