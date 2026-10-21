@@ -47,6 +47,7 @@ site-dist/
 scripts/store-screenshots/raw/
 scripts/store-screenshots/node_modules/
 scripts/store-video/raw/
+scripts/store-video/raw2/
 scripts/store-video/work/
 
 # Local EAS builds
