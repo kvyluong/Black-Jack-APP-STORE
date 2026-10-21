@@ -72,5 +72,17 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', padding: 6, borderRadius: 10, borderWidth: 2, borderColor: 'transparent' },
   active: { borderColor: colors.gold },
   row: { flexDirection: 'row' },
-  label: { color: colors.text, marginTop: 6, fontWeight: '600', textAlign: 'center', maxWidth: 230 },
+  // The total sits in a small dark badge under the cards, readable on any felt color.
+  label: {
+    color: colors.text,
+    marginTop: 6,
+    fontWeight: '700',
+    textAlign: 'center',
+    maxWidth: 230,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
 });

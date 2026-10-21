@@ -6,7 +6,7 @@ import { formatChips } from '../../engine/progression';
 import { ACTION_LABEL, Action, Recommendation } from '../../engine/strategy';
 import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
-import { Icon } from '../Icon';
+import { Icon, IconName } from '../Icon';
 import { Button, Panel } from '../ui';
 
 const T = localized({
@@ -37,6 +37,15 @@ const T = localized({
 });
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double', 'split', 'surrender'];
+
+/** Each play's icon and tint, so the buttons read at a glance (green to take a card, red to stop). */
+const PLAY_ICON: Record<Action, { icon: IconName; color: string }> = {
+  hit: { icon: 'hit', color: colors.good },
+  stand: { icon: 'stand', color: '#FF8A8A' },
+  double: { icon: 'double', color: colors.gold },
+  split: { icon: 'split', color: '#8CC8FF' },
+  surrender: { icon: 'surrender', color: colors.muted },
+};
 
 /** Hit and Stand have casino hand signals; the other plays still use the buttons. */
 const SIGNALED: Action[] = ['hit', 'stand'];
@@ -91,6 +100,8 @@ export function ActionBar({
               variant="secondary"
               disabled={!legal[a]}
               highlighted={coach && advice?.action === a}
+              icon={PLAY_ICON[a].icon}
+              iconColor={PLAY_ICON[a].color}
               onPress={() => onAction(a)}
               style={handSignals && SIGNALED.includes(a) ? { ...styles.actionButton, ...styles.dimmed } : styles.actionButton}
             />

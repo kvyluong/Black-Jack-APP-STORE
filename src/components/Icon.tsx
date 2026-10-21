@@ -33,6 +33,12 @@ const SYMBOLS = {
   newPlayer: { ios: 'suit.club.fill', android: 'playing_cards' },
   knowsPlay: { ios: 'suit.spade.fill', android: 'style' },
   counter: { ios: 'brain.head.profile', android: 'psychology' },
+  // Table plays
+  hit: { ios: 'plus.circle.fill', android: 'add_circle' },
+  stand: { ios: 'hand.raised.fill', android: 'back_hand' },
+  double: { ios: 'dollarsign.circle.fill', android: 'paid' },
+  split: { ios: 'arrow.left.and.right.circle.fill', android: 'call_split' },
+  surrender: { ios: 'flag.fill', android: 'flag' },
 } as const;
 
 export type IconName = keyof typeof SYMBOLS;

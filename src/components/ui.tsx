@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View, ViewStyle } from 'react-native';
+import { ColorValue, Pressable, ScrollView, StyleSheet, Switch, Text, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { localized } from '../i18n/lang';
+import { Icon, IconName } from './Icon';
 import { colors, radius, spacing } from '../theme';
 
 /** Screen-reader names for the −/+ buttons used to enter a count. */
@@ -58,6 +59,8 @@ export function Button({
   highlighted,
   style,
   accessibilityLabel,
+  icon,
+  iconColor,
 }: {
   title: string;
   onPress: () => void;
@@ -68,6 +71,9 @@ export function Button({
   style?: ViewStyle;
   /** What screen readers say, when the title alone (e.g. "−") isn't enough. */
   accessibilityLabel?: string;
+  /** A small icon before the title, tinted `iconColor`. */
+  icon?: IconName;
+  iconColor?: ColorValue;
 }) {
   return (
     <Pressable
@@ -85,7 +91,10 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.buttonText, variant === 'primary' && { color: colors.black }]}>{title}</Text>
+      <View style={styles.buttonRow}>
+        {icon && <Icon name={icon} size={17} color={iconColor ?? colors.text} />}
+        <Text style={[styles.buttonText, variant === 'primary' && { color: colors.black }]}>{title}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -175,6 +184,7 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: '#7A1F2B' },
   highlighted: { borderColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.9, shadowRadius: 8, elevation: 8 },
   disabled: { opacity: 0.35 },
+  buttonRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   buttonText: { color: colors.text, fontWeight: '700', fontSize: 16 },
   h1: { color: colors.text, fontSize: 28, fontWeight: '800' },
   h2: { color: colors.gold, fontSize: 20, fontWeight: '700', marginTop: spacing(1) },
