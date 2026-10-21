@@ -8,20 +8,20 @@
         "caption": "level"
       },
       {
-        "file": "iphone-en-table5.mov",
-        "start": 46.3,
+        "file": "iphone-en-table7.mov",
+        "start": 14.4,
         "dur": 2.5,
         "caption": "table"
       },
       {
-        "file": "iphone-en-table5.mov",
-        "start": 60.4,
+        "file": "iphone-en-table7.mov",
+        "start": 27.5,
         "dur": 2.8,
         "caption": "table"
       },
       {
-        "file": "iphone-en-table5.mov",
-        "start": 63.7,
+        "file": "iphone-en-table7.mov",
+        "start": 30.8,
         "dur": 1.5,
         "caption": "table"
       },
@@ -38,14 +38,14 @@
         "caption": "count"
       },
       {
-        "file": "iphone-en-exam2.mov",
-        "start": 14.4,
+        "file": "iphone-en-exam3.mov",
+        "start": 10.9,
         "dur": 1.6,
         "caption": "exam"
       },
       {
-        "file": "iphone-en-exam2.mov",
-        "start": 30.6,
+        "file": "iphone-en-exam3.mov",
+        "start": 23.6,
         "dur": 3.2,
         "caption": "exam"
       },
@@ -72,20 +72,20 @@
         "caption": "level"
       },
       {
-        "file": "iphone-es-table5.mov",
-        "start": 73.8,
+        "file": "iphone-es-table7.mov",
+        "start": 122.0,
         "dur": 2.5,
         "caption": "table"
       },
       {
-        "file": "iphone-es-table5.mov",
-        "start": 86.9,
+        "file": "iphone-es-table7.mov",
+        "start": 136.6,
         "dur": 2.7,
         "caption": "table"
       },
       {
-        "file": "iphone-es-table5.mov",
-        "start": 90.4,
+        "file": "iphone-es-table7.mov",
+        "start": 140.4,
         "dur": 1.5,
         "caption": "table"
       },
@@ -102,14 +102,14 @@
         "caption": "count"
       },
       {
-        "file": "iphone-es-exam2.mov",
-        "start": 20.6,
+        "file": "iphone-es-exam3.mov",
+        "start": 10.8,
         "dur": 1.6,
         "caption": "exam"
       },
       {
-        "file": "iphone-es-exam2.mov",
-        "start": 33.0,
+        "file": "iphone-es-exam3.mov",
+        "start": 23.9,
         "dur": 3.2,
         "caption": "exam"
       },
@@ -138,20 +138,20 @@
         "caption": "level"
       },
       {
-        "file": "ipad-en-table5.mov",
-        "start": 122.5,
+        "file": "ipad-en-table7.mov",
+        "start": 15.9,
         "dur": 3.2,
         "caption": "table"
       },
       {
-        "file": "ipad-en-table5.mov",
-        "start": 137.9,
+        "file": "ipad-en-table7.mov",
+        "start": 30.8,
         "dur": 2.6,
         "caption": "table"
       },
       {
-        "file": "ipad-en-table5.mov",
-        "start": 140.9,
+        "file": "ipad-en-table7.mov",
+        "start": 34.5,
         "dur": 1.8,
         "caption": "table"
       },
@@ -174,14 +174,14 @@
         "caption": "count"
       },
       {
-        "file": "ipad-en-exam2.mov",
-        "start": 14.8,
+        "file": "ipad-en-exam3.mov",
+        "start": 13.9,
         "dur": 1.6,
         "caption": "exam"
       },
       {
-        "file": "ipad-en-exam2.mov",
-        "start": 31.9,
+        "file": "ipad-en-exam3.mov",
+        "start": 32.0,
         "dur": 3.6,
         "caption": "exam"
       },
@@ -208,20 +208,20 @@
         "caption": "level"
       },
       {
-        "file": "ipad-es-table5.mov",
-        "start": 57.5,
+        "file": "ipad-es-table7.mov",
+        "start": 15.3,
         "dur": 3.4,
         "caption": "table"
       },
       {
-        "file": "ipad-es-table5.mov",
-        "start": 72.3,
+        "file": "ipad-es-table7.mov",
+        "start": 30.3,
         "dur": 2.5,
         "caption": "table"
       },
       {
-        "file": "ipad-es-table5.mov",
-        "start": 76.0,
+        "file": "ipad-es-table7.mov",
+        "start": 34.3,
         "dur": 1.8,
         "caption": "table"
       },
@@ -244,14 +244,14 @@
         "caption": "count"
       },
       {
-        "file": "ipad-es-exam2.mov",
-        "start": 14.4,
+        "file": "ipad-es-exam3.mov",
+        "start": 6.4,
         "dur": 1.6,
         "caption": "exam"
       },
       {
-        "file": "ipad-es-exam2.mov",
-        "start": 30.95,
+        "file": "ipad-es-exam3.mov",
+        "start": 24.65,
         "dur": 3.6,
         "caption": "exam"
       },

@@ -9,18 +9,18 @@
     ],
     "table": [
       {
-        "file": "iphone-en-table5",
-        "start": 46.3,
+        "file": "iphone-en-table7",
+        "start": 14.4,
         "dur": 2.5
       },
       {
-        "file": "iphone-en-table5",
-        "start": 60.4,
+        "file": "iphone-en-table7",
+        "start": 27.5,
         "dur": 2.8
       },
       {
-        "file": "iphone-en-table5",
-        "start": 63.7,
+        "file": "iphone-en-table7",
+        "start": 30.8,
         "dur": 1.5
       }
     ],
@@ -38,13 +38,13 @@
     ],
     "exam": [
       {
-        "file": "iphone-en-exam2",
-        "start": 14.4,
+        "file": "iphone-en-exam3",
+        "start": 10.9,
         "dur": 1.6
       },
       {
-        "file": "iphone-en-exam2",
-        "start": 30.6,
+        "file": "iphone-en-exam3",
+        "start": 23.6,
         "dur": 3.2
       }
     ],
@@ -67,18 +67,18 @@
     ],
     "table": [
       {
-        "file": "iphone-es-table5",
-        "start": 73.8,
+        "file": "iphone-es-table7",
+        "start": 122.0,
         "dur": 2.5
       },
       {
-        "file": "iphone-es-table5",
-        "start": 86.9,
+        "file": "iphone-es-table7",
+        "start": 136.6,
         "dur": 2.7
       },
       {
-        "file": "iphone-es-table5",
-        "start": 90.4,
+        "file": "iphone-es-table7",
+        "start": 140.4,
         "dur": 1.5
       }
     ],
@@ -96,13 +96,13 @@
     ],
     "exam": [
       {
-        "file": "iphone-es-exam2",
-        "start": 20.6,
+        "file": "iphone-es-exam3",
+        "start": 10.8,
         "dur": 1.6
       },
       {
-        "file": "iphone-es-exam2",
-        "start": 33.0,
+        "file": "iphone-es-exam3",
+        "start": 23.9,
         "dur": 3.2
       }
     ],
