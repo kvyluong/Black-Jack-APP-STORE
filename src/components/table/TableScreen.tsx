@@ -6,7 +6,7 @@
 // through `exam` callbacks.
 import { Stack } from 'expo-router';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { useInterstitial } from '../../ads/useInterstitial';
 import { haptic } from '../../audio/haptics';
@@ -441,9 +441,10 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     : T.countRc(rc);
   const signals = settings.handSignals && settled && yourTurn;
 
-  // Pinned below the table so it's in reach on small phones. The buttons stay in place while a card
-  // lands (they just don't take taps yet) instead of vanishing and reappearing on every hit.
-  // Keyed by the decision, so the coach hint resets.
+  // Your moves. On phones they're pinned below the table so they're always in reach; a tablet has
+  // room for them right under it. They stay in place while a card lands (they just don't take taps
+  // yet) instead of vanishing and reappearing on every hit. Keyed by the decision, so the coach hint resets.
+  const pinActions = useWindowDimensions().height < 1000;
   const actionBar = yourTurn && (
     <View pointerEvents={settled ? 'auto' : 'none'} style={{ gap: spacing(1.5) }} key={`${game.active}-${activeHand!.cards.length}`}>
       <ActionBar
@@ -461,7 +462,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
 
   return (
     // On a short phone, bring your hand into view when it's your move.
-    <Screen footer={actionBar} scrollToEndOn={settled && yourTurn && `${game.active}`}>
+    <Screen footer={pinActions && actionBar} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
       {!testing && <Stack.Screen options={{ title: casino.name }} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
@@ -549,6 +550,8 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       )}
 
       {settled && waitingOn && <Text style={styles.waiting}>{T.playing(waitingOn.name)}</Text>}
+
+      {!pinActions && actionBar}
 
       {settled && game.phase === 'insurance' && (
         <InsurancePanel
