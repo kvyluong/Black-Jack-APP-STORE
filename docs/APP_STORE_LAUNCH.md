@@ -123,7 +123,7 @@ gets test ads.
   - The first time, EAS asks to log in to Apple and creates the certificates and profiles. **🛑 OWNER:** approve the Apple two-factor prompt.
 - [ ] `npx eas-cli@latest submit --platform ios --latest`, which uploads to App Store Connect / TestFlight.
 - [ ] App Store Connect → TestFlight: add the owner as an internal tester, then install from the **TestFlight** app.
-- [x] **Friends (external group, public link):** https://testflight.apple.com/join/dyKdJ4zA, open to anyone, no tester limit. Set up 2026-10-20; build 8 (all fixes through the small-phone and iPad layouts) is in Beta App Review, replacing build 6. The link works once Apple approves it. Later builds: add them to the Friends group (TestFlight → Friends → Builds → +). Test information (description, feedback email, review contact and notes) is filled in under TestFlight → Test Information.
+- [x] **Friends (external group, public link):** https://testflight.apple.com/join/dyKdJ4zA, open to anyone, no tester limit. Set up 2026-10-20; build 8 (all fixes through the small-phone and iPad layouts) is in Beta App Review, replacing build 6. The link works once Apple approves it. Build 9 (the table and home polish), built on this Mac, is uploaded too: add it to Friends once build 8 is approved, then pick it for the App Store version. Later builds: add them to the Friends group (TestFlight → Friends → Builds → +). Test information (description, feedback email, review contact and notes) is filled in under TestFlight → Test Information.
 - [ ] **🛑 OWNER on the phone**, checking each of these:
   - [ ] first launch shows the tracking prompt (and the consent form in the EU/UK);
   - [ ] the level picker works (new / know how to play / count cards);
