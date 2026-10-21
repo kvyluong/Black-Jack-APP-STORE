@@ -408,7 +408,7 @@ export default function SettingsScreen() {
         accessibilityHint={CONTACT_EMAIL}
         onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}?subject=ShoeSharp`)}
       >
-        {T.contact} · Kevin Luong
+        {T.contact} · 9in1shampoo
       </Text>
     </Screen>
   );
