@@ -487,7 +487,12 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
 
   return (
     // On a short phone, bring your hand into view when it's your move.
-    <Screen wide footer={pinActions && nextStep} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
+    <Screen
+      wide
+      footer={pinActions && nextStep}
+      // Also at the end of the round, so your hands' results aren't left under the pinned panel.
+      scrollToEndOn={pinActions && settled && (yourTurn ? `${game.active}` : game.phase === 'roundOver' && 'over')}
+    >
       {!testing && <Stack.Screen options={headerOptions} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
