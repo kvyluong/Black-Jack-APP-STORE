@@ -137,6 +137,7 @@ gets test ads.
 ## 8. Submit
 - [x] In the version page, select the TestFlight build, then fill in what's missing (copyright: "2026 <owner name>"). Done 2026-10-21: build 11 and the `remove_ads` purchase are in the draft submission (Ready for Review); the Spanish (Mexico) privacy policy URL is `es/privacidad.html`.
 - [x] **🛑 OWNER:** press **Submit for Review**. Review usually takes 1–3 days. Submitted 2026-10-21 (build 11 + `remove_ads`, owner-approved); status Waiting for Review. Release is manual: press **Release This Version** after approval.
+- [ ] **1.0.1, after 1.0 is approved** (decided 2026-10-21; build 11 stays in review): ships commit 9e060d4, the one-goal daily streak with earned freezes, the daily reminder (expo-notifications, a new native module, so it needs a build, not an OTA update) and ads only at a reshuffle, never on day one. Steps: bump `version` to 1.0.1 in app.json, local production build, upload, test on the phone (reminder prompt after the first claimed goal, a reminder arriving, the Settings switch, an ad at a reshuffle), then add 1.0.1 for review.
 - [ ] If it's rejected: read the note, fix, resubmit. The most common casino-app issue is real-money confusion; the review notes and in-app disclaimer cover that.
 
 ## 9. After launch
