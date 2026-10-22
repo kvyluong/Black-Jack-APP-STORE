@@ -15,11 +15,17 @@ export interface GoalsState {
   start: Record<string, number> | null;
   /** Goal ids already claimed today. */
   claimed: string[];
-  /** Days in a row with all of the day's goals done. */
+  /** Days in a row with at least one of the day's goals claimed. */
   streak: number;
   lastCompleteDay: string | null;
   /** The goals picked for `day` (fixed at the snapshot so they don't change mid-day). */
   today?: string[];
+  /** Streak freezes banked: each covers one missed day. Earned by claiming all of a day's goals. */
+  freezes?: number;
+  /** Last day every goal was claimed (a freeze is earned at most once a day). */
+  lastPerfectDay?: string | null;
+  /** Freezes spent at the last rollover, so the home screen can say so that day. */
+  frozen?: { day: string; count: number } | null;
 }
 
 export const emptyGoals = (): GoalsState => ({ day: null, start: null, claimed: [], streak: 0, lastCompleteDay: null });
@@ -282,16 +288,39 @@ export function goalReward(g: GoalDef, peakChips: number): { chips: number; xp: 
   return { chips: best.minBet * g.bets, xp: g.xp };
 }
 
-/** Claims one goal; finishing all of the day's goals extends the streak (or restarts it after a missed day). */
+/** Most streak freezes you can bank. */
+export const MAX_FREEZES = 2;
+
+/**
+ * Claims one goal. The day's first claim extends the streak (or restarts it after a
+ * missed day); claiming all of the day's goals also banks a streak freeze.
+ */
 export function claimGoal(goals: GoalsState, id: string, today: string, dayGoalIds: string[]): GoalsState {
   if (goals.claimed.includes(id)) return goals;
   const claimed = [...goals.claimed, id];
   const next = { ...goals, claimed };
-  if (goals.lastCompleteDay !== today && dayGoalIds.every((g) => claimed.includes(g))) {
+  if (goals.lastCompleteDay !== today) {
     next.streak = goals.lastCompleteDay === previousDay(today) ? goals.streak + 1 : 1;
     next.lastCompleteDay = today;
   }
+  if (goals.lastPerfectDay !== today && dayGoalIds.every((g) => claimed.includes(g))) {
+    next.freezes = Math.min(MAX_FREEZES, (goals.freezes ?? 0) + 1);
+    next.lastPerfectDay = today;
+  }
   return next;
+}
+
+/**
+ * Spends banked freezes on the days missed since the last claimed day, if there are
+ * enough to cover all of them; otherwise the streak lapses as usual.
+ */
+export function applyFreezes(goals: GoalsState, today: string): GoalsState {
+  const last = goals.lastCompleteDay;
+  const have = goals.freezes ?? 0;
+  if (!last || goals.streak === 0 || !have) return goals;
+  const missed = daysBetween(last, today) - 1;
+  if (missed < 1 || missed > have) return goals;
+  return { ...goals, freezes: have - missed, lastCompleteDay: previousDay(today), frozen: { day: today, count: missed } };
 }
 
 /** The streak as of today: it survives until the end of the day after the last complete day. */
@@ -318,7 +347,13 @@ export function rolloverDay(s: ProgressStats, today: string): { goals: GoalsStat
   }
   return {
     history,
-    goals: { ...goals, day: today, start: counters(s, today), claimed: [], today: pickGoals(s, today).map((g) => g.id) },
+    goals: {
+      ...applyFreezes({ ...goals, frozen: null }, today),
+      day: today,
+      start: counters(s, today),
+      claimed: [],
+      today: pickGoals(s, today).map((g) => g.id),
+    },
   };
 }
 

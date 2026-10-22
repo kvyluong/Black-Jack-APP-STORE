@@ -127,7 +127,7 @@ gets test ads.
 - [ ] **🛑 OWNER on the phone**, checking each of these:
   - [ ] first launch shows the tracking prompt (and the consent form in the EU/UK);
   - [ ] the level picker works (new / know how to play / count cards);
-  - [ ] no banner anywhere (removed 2026-10-20), an interstitial appears between some hands, and the rewarded bonus-chips button pays out;
+  - [ ] no banner anywhere (removed 2026-10-20), an interstitial appears at a reshuffle (not on the first day of use), and the rewarded bonus-chips button pays out;
   - [ ] Remove ads buys (sandbox account) and ads disappear;
   - [ ] Restore purchase works after reinstalling;
   - [ ] sound, vibration and hand signals (tap = hit, swipe = stand) work;

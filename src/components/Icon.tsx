@@ -28,6 +28,7 @@ const SYMBOLS = {
   progress: { ios: 'chart.line.uptrend.xyaxis', android: 'trending_up' },
   lock: { ios: 'lock.fill', android: 'lock' },
   streak: { ios: 'flame.fill', android: 'local_fire_department' },
+  freeze: { ios: 'snowflake', android: 'ac_unit' },
   coach: { ios: 'lightbulb.fill', android: 'lightbulb' },
   hand: { ios: 'hand.raised.fill', android: 'back_hand' },
   newPlayer: { ios: 'suit.club.fill', android: 'playing_cards' },

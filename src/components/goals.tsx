@@ -1,12 +1,15 @@
 // Daily goals card for the home screen, and the once-a-day stats snapshot behind it.
 import { Href, router } from 'expo-router';
 import { useRef, useEffect, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
 import { formatChips, localDay } from '../engine/progression';
+import { DEFAULT_REMINDER_HOUR, formatHour, reminderText, reminderTimes } from '../engine/reminders';
+import { remindersSupported, requestReminderPermission, scheduleReminders } from '../notifications/reminders';
 import {
   GoalDef,
+  MAX_FREEZES,
   claimGoal,
   currentStreak,
   goalProgress,
@@ -22,13 +25,26 @@ import { Icon } from './Icon';
 import { Meter } from './progress/Meter';
 import { useOutcomeColors } from './useColors';
 
+/** Streak-freeze blue (matches the Split button tint). */
+const ICE = '#8CC8FF';
+
 const T = localized({
   en: {
     title: 'Today’s goals',
     streak: (n: number) => `${n}-day streak`,
-    noStreak: 'Finish all three to start a streak',
-    keepStreak: (n: number) => `Finish all three to make it ${n} days`,
+    noStreak: 'Claim one goal to start a streak',
+    keepStreak: (n: number) => `Claim one goal to make it ${n} days`,
+    earnFreeze: 'Streak kept for today. Claim all three to earn a streak freeze',
+    freezeFull: 'Streak kept for today. Your freezes are full',
     allDone: 'All done for today. Come back tomorrow!',
+    freezes: (n: number) => `${n}`,
+    freezesA11y: (n: number) => `${n} streak ${n === 1 ? 'freeze' : 'freezes'}: each covers one missed day`,
+    frozeNote: (n: number) => `A streak freeze covered ${n === 1 ? 'the day you missed' : `the ${n} days you missed`}. Your streak is safe`,
+    askTitle: 'Streak started!',
+    askBody: (time: string) =>
+      `Want one reminder a day at ${time} to keep it going? Only when you haven't practiced yet. Change it anytime in Settings.`,
+    remindMe: 'Remind me',
+    notNow: 'Not now',
     claim: 'Claim',
     claimed: '✓ Claimed',
     reward: (chips: string, xp: number) => `+$${chips} · +${xp} XP`,
@@ -42,9 +58,20 @@ const T = localized({
   es: {
     title: 'Metas de hoy',
     streak: (n: number) => `Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
-    noStreak: 'Completa las tres para empezar una racha',
-    keepStreak: (n: number) => `Completa las tres para llegar a ${n} días`,
+    noStreak: 'Cobra una meta para empezar una racha',
+    keepStreak: (n: number) => `Cobra una meta para llegar a ${n} días`,
+    earnFreeze: 'Racha asegurada por hoy. Cobra las tres para ganar un congelador de racha',
+    freezeFull: 'Racha asegurada por hoy. Tus congeladores están llenos',
     allDone: '¡Todo listo por hoy! Vuelve mañana.',
+    freezes: (n: number) => `${n}`,
+    freezesA11y: (n: number) => `${n} ${n === 1 ? 'congelador' : 'congeladores'} de racha: cada uno cubre un día perdido`,
+    frozeNote: (n: number) =>
+      `Un congelador cubrió ${n === 1 ? 'el día que faltaste' : `los ${n} días que faltaste`}. Tu racha sigue`,
+    askTitle: '¡Racha iniciada!',
+    askBody: (time: string) =>
+      `¿Quieres un recordatorio al día a las ${time} para mantenerla? Solo si aún no has practicado. Puedes cambiarlo en Ajustes.`,
+    remindMe: 'Recuérdame',
+    notNow: 'Ahora no',
     claim: 'Cobrar',
     claimed: '✓ Cobrado',
     reward: (chips: string, xp: number) => `+$${chips} · +${xp} XP`,
@@ -95,10 +122,30 @@ export function useDailySnapshot() {
   }, [ready, today, snapshotDay, updateStats]);
 }
 
+/** Keeps the queued practice reminders in step with today's goals and the Settings switch. */
+export function useReminders() {
+  const { lang, settings, stats } = useSettings();
+  const today = useToday();
+  const on = settings.reminders;
+  const hour = settings.reminderHour;
+  const kept = stats.goals.lastCompleteDay === today;
+  const streak = currentStreak(stats.goals, today);
+  useEffect(() => {
+    void scheduleReminders(on ? reminderTimes(new Date(), hour, kept) : [], reminderText(streak));
+    // lang: the queued text is rewritten in the new language.
+  }, [on, hour, kept, streak, today, lang]);
+}
+
+/** The local hour you're practicing at, as the reminder time (evening if it's very early or late). */
+const practiceHour = () => {
+  const h = new Date().getHours();
+  return h >= 8 && h <= 21 ? h : DEFAULT_REMINDER_HOUR;
+};
+
 /** Today's goals, shown on the home screen. `collapsible`: starts as one line that opens on tap. */
 export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean }) {
   const [open, setOpen] = useState(!collapsible);
-  const { stats, settings, addChips, updateStats } = useSettings();
+  const { stats, settings, addChips, updateStats, updateSettings } = useSettings();
   const today = useToday();
   const goals = todaysGoals(stats, today);
   const ids = goals.map((g) => g.id);
@@ -123,6 +170,22 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
     addChips(r.chips);
     updateStats((s) => ({ ...s, xp: s.xp + r.xp, goals: claimGoal(s.goals, g.id, today, ids) }));
     if (settings.soundEffects) playSound('chips');
+    // The first claimed goal starts a streak: the moment to offer a daily reminder (once).
+    if (!stats.remindersAsked && !settings.reminders && remindersSupported()) {
+      updateStats((s) => ({ ...s, remindersAsked: true }));
+      const hour = practiceHour();
+      setTimeout(() => {
+        Alert.alert(T.askTitle, T.askBody(formatHour(hour)), [
+          { text: T.notNow, style: 'cancel' },
+          {
+            text: T.remindMe,
+            onPress: async () => {
+              if (await requestReminderPermission()) updateSettings({ reminders: true, reminderHour: hour });
+            },
+          },
+        ]);
+      }, 700);
+    }
   };
 
   if (!open) {
@@ -151,7 +214,18 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
     );
   }
 
-  const streakNote = allClaimed ? T.allDone : streak > 0 && stats.goals.lastCompleteDay !== today ? T.keepStreak(streak + 1) : T.noStreak;
+  const freezes = stats.goals.freezes ?? 0;
+  const frozen = stats.goals.frozen?.day === today ? stats.goals.frozen.count : 0;
+  const keptToday = stats.goals.lastCompleteDay === today && claimed.length > 0;
+  const streakNote = allClaimed
+    ? T.allDone
+    : keptToday
+      ? freezes >= MAX_FREEZES
+        ? T.freezeFull
+        : T.earnFreeze
+      : streak > 0
+        ? T.keepStreak(streak + 1)
+        : T.noStreak;
 
   return (
     <View style={styles.card}>
@@ -159,11 +233,20 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
         <Text style={styles.title} accessibilityRole="header">
           {T.title}
         </Text>
-        <View style={[styles.flame, streak === 0 && styles.flameOff]} accessible accessibilityLabel={T.streakA11y(streak)}>
-          <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
-          <Text style={[styles.flameText, streak === 0 && { color: colors.muted }]}>{T.streak(streak)}</Text>
+        <View style={styles.pills}>
+          {freezes > 0 && (
+            <View style={styles.freeze} accessible accessibilityLabel={T.freezesA11y(freezes)}>
+              <Icon name="freeze" size={14} color={ICE} />
+              <Text style={styles.freezeText}>{T.freezes(freezes)}</Text>
+            </View>
+          )}
+          <View style={[styles.flame, streak === 0 && styles.flameOff]} accessible accessibilityLabel={T.streakA11y(streak)}>
+            <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
+            <Text style={[styles.flameText, streak === 0 && { color: colors.muted }]}>{T.streak(streak)}</Text>
+          </View>
         </View>
       </View>
+      {frozen > 0 && <Text style={styles.frozeNote}>{T.frozeNote(frozen)}</Text>}
       {goals.map((g) => (
         <GoalRow
           key={g.id}
@@ -270,6 +353,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   flameOff: { backgroundColor: colors.feltDark, opacity: 0.85 },
+  pills: { flexDirection: 'row', alignItems: 'center', gap: spacing(0.75) },
+  freeze: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(140,200,255,0.16)',
+    paddingHorizontal: spacing(1),
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  freezeText: { color: ICE, fontWeight: '800', fontSize: 14 },
+  frozeNote: { color: ICE, fontSize: 13, fontWeight: '700' },
   flameText: { color: colors.text, fontWeight: '800', fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5) },
   rowMain: { flex: 1, gap: 4 },

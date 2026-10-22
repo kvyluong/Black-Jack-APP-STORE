@@ -10,7 +10,9 @@ import {
   ProgressStats,
   READY_WEIGHTS,
   accuracyByDay,
+  MAX_FREEZES,
   addDays,
+  applyFreezes,
   benchmarks,
   bestDeckTimeline,
   claimGoal,
@@ -209,24 +211,64 @@ describe('daily goals', () => {
     expect(goalReward(hands, 12000).chips).toBe(300); // The Strip, $100 minimum
   });
 
-  it('builds a streak when every goal is claimed, and resets after a missed day', () => {
+  it('builds a streak from one claim a day, and resets after a missed day', () => {
     const ids = ['a', 'b', 'c'];
     let g: GoalsState = { ...emptyGoals(), day };
     g = claimGoal(g, 'a', day, ids);
-    g = claimGoal(g, 'b', day, ids);
-    expect(g.streak).toBe(0);
-    g = claimGoal(g, 'c', day, ids);
     expect(g).toMatchObject({ streak: 1, lastCompleteDay: day });
-    expect(claimGoal(g, 'c', day, ids)).toBe(g); // claiming twice does nothing
+    g = claimGoal(g, 'b', day, ids);
+    expect(g.streak).toBe(1); // more claims the same day don't add to it
+    expect(claimGoal(g, 'b', day, ids)).toBe(g); // claiming twice does nothing
     const next = addDays(day, 1);
     expect(currentStreak(g, next)).toBe(1);
     let g2: GoalsState = { ...g, day: next, claimed: [] };
-    for (const id of ids) g2 = claimGoal(g2, id, next, ids);
+    g2 = claimGoal(g2, 'a', next, ids);
     expect(g2.streak).toBe(2);
     expect(currentStreak(g2, addDays(next, 2))).toBe(0);
     let g3: GoalsState = { ...g2, day: addDays(next, 2), claimed: [] };
-    for (const id of ids) g3 = claimGoal(g3, id, addDays(next, 2), ids);
+    g3 = claimGoal(g3, 'a', addDays(next, 2), ids);
     expect(g3.streak).toBe(1);
+  });
+
+  it('banks a freeze for a perfect day, at most once a day and up to the cap', () => {
+    const ids = ['a', 'b'];
+    let g: GoalsState = { ...emptyGoals(), day };
+    g = claimGoal(g, 'a', day, ids);
+    expect(g.freezes ?? 0).toBe(0);
+    g = claimGoal(g, 'b', day, ids);
+    expect(g).toMatchObject({ freezes: 1, lastPerfectDay: day });
+    for (let i = 1; i <= 3; i++) {
+      const d = addDays(day, i);
+      g = { ...g, day: d, claimed: [] };
+      for (const id of ids) g = claimGoal(g, id, d, ids);
+    }
+    expect(g.freezes).toBe(MAX_FREEZES);
+  });
+
+  it('spends freezes to cover missed days, or lets the streak lapse when short', () => {
+    const base: GoalsState = { ...emptyGoals(), day, streak: 5, lastCompleteDay: day, freezes: 2 };
+    // One missed day: one freeze spent, the streak carries on.
+    const one = applyFreezes(base, addDays(day, 2));
+    expect(one).toMatchObject({ freezes: 1, lastCompleteDay: addDays(day, 1), frozen: { day: addDays(day, 2), count: 1 } });
+    expect(currentStreak(one, addDays(day, 2))).toBe(5);
+    // Two missed days with two freezes: both spent.
+    expect(applyFreezes(base, addDays(day, 3))).toMatchObject({ freezes: 0, frozen: { count: 2 } });
+    // Three missed days is more than the bank covers: nothing spent, the streak lapses.
+    const short = applyFreezes(base, addDays(day, 4));
+    expect(short).toBe(base);
+    expect(currentStreak(short, addDays(day, 4))).toBe(0);
+    // No missed day: nothing to do.
+    expect(applyFreezes(base, addDays(day, 1))).toBe(base);
+  });
+
+  it('applies freezes at rollover and clears the note the next day', () => {
+    let s = stats();
+    s = { ...s, goals: { ...emptyGoals(), day, streak: 3, lastCompleteDay: day, freezes: 1 } };
+    s = { ...s, ...rolloverDay(s, addDays(day, 2))! };
+    expect(s.goals).toMatchObject({ freezes: 0, frozen: { day: addDays(day, 2), count: 1 } });
+    expect(currentStreak(s.goals, addDays(day, 2))).toBe(3);
+    s = { ...s, ...rolloverDay(s, addDays(day, 3))! };
+    expect(s.goals.frozen).toBeNull();
   });
 });
 

@@ -22,6 +22,7 @@ import {
 } from '../engine/records';
 import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
+import { DEFAULT_REMINDER_HOUR } from '../engine/reminders';
 import { ReviewState } from '../engine/review';
 import { Lang, LanguageSetting, resolveLang, setLang } from '../i18n/lang';
 
@@ -71,6 +72,8 @@ export interface Stats {
   seenFeatures: string[];
   /** Store rating prompt: how often it was asked (see engine/review). */
   review?: ReviewState;
+  /** Offered the daily reminder (asked once, after the first claimed goal). */
+  remindersAsked?: boolean;
 }
 
 export interface Settings {
@@ -113,6 +116,10 @@ export interface Settings {
   experienced: boolean;
   /** How fast the practice table deals and the other players act (the casino test keeps its own pace). */
   gameSpeed: GameSpeed;
+  /** One practice reminder a day while today's goals are open (needs notification permission). */
+  reminders: boolean;
+  /** Local hour the daily reminder is sent. */
+  reminderHour: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -136,6 +143,8 @@ const DEFAULT_SETTINGS: Settings = {
   experienced: false,
   gameSpeed: 'normal',
   tableId: 'floor',
+  reminders: false,
+  reminderHour: DEFAULT_REMINDER_HOUR,
 };
 
 const DEFAULT_STATS: Stats = {

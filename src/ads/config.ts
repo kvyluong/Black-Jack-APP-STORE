@@ -48,6 +48,6 @@ export function adUnitId(placement: Placement): string | null {
   return id && !id.includes('REPLACE') ? id : null;
 }
 
-/** Interstitial frequency caps: only between hands, never more than this often. */
+/** Interstitial frequency caps. Ads show only at a reshuffle (see useInterstitial), never more than this often. */
 export const INTERSTITIAL_EVERY_N_ROUNDS = 10;
 export const INTERSTITIAL_MIN_INTERVAL_MS = 3 * 60 * 1000;

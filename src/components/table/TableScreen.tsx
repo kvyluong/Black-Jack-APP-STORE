@@ -208,7 +208,8 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   const [milestones, setMilestones] = useState<{ text: string; table?: CasinoTable }[]>([]);
   // Correct decisions this round, for XP.
   const [roundCorrect, setRoundCorrect] = useState(0);
-  const roundBreak = useInterstitial();
+  // No ads on the player's first day (nothing filed into history yet).
+  const roundBreak = useInterstitial(!stats.history?.length);
   const askForReview = useReviewPrompt();
   // Settings → Game speed scales the practice table; the casino test keeps its own pace.
   const speed = testing ? 1 : SPEED_FACTOR[settings.gameSpeed ?? 'normal'];
@@ -403,7 +404,8 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       exam?.onShoeEnd(game);
       return;
     }
-    if (!testing) roundBreak();
+    // Ads wait for the reshuffle, a natural pause, rather than interrupting mid-shoe.
+    if (!testing) roundBreak(needsShuffle(cleared, handsNext));
     setFeedback(null);
     setQuiz(null);
     setBubbles({});

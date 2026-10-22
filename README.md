@@ -48,7 +48,7 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
 - **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Optional bonus-chip videos stay, since players choose to watch those. Development builds without a store simulate the purchase.
 - **English and Spanish**: everything, including the lessons, coach explanations, Academy stories and spoken counts, is in both languages. The app follows the phone's language, or players pick one in Settings.
-- **Ads**: no banners, so nothing sits on screen while you play. A full-screen interstitial shows only between hands (at most every 10 hands and every 3 minutes). GDPR/UMP consent and a privacy-options entry in Settings.
+- **Ads**: no banners, so nothing sits on screen while you play. A full-screen interstitial shows only when the shoe is reshuffled (at most every 10 hands and every 3 minutes), and never on a player's first day. GDPR/UMP consent and a privacy-options entry in Settings.
 
 ## Test it in a browser (Windows, Mac, anything)
 

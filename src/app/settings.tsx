@@ -8,7 +8,9 @@ import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../component
 import { useRemoveAds } from '../purchases/RemoveAds';
 import { COUNTING_SYSTEMS, CountingSystem, SYSTEM_NAME } from '../engine/counting';
 import type { GameSpeed } from '../engine/dealSchedule';
+import { formatHour } from '../engine/reminders';
 import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
+import { remindersSupported, requestReminderPermission } from '../notifications/reminders';
 import { usePrefs } from '../state/settings';
 import { colors } from '../theme';
 
@@ -39,6 +41,10 @@ const T = localized({
     hapticsHint: 'A light tap as your cards land, a buzz when you win',
     effects: 'Big effects',
     effectsHint: 'Screen shake, chip bursts and score pop-ups',
+    reminders: 'Daily reminder',
+    remindersHint: (time: string) => `One nudge at ${time}, only on days you haven't claimed a goal yet`,
+    remindersOffTitle: 'Notifications are off',
+    remindersOff: 'Allow notifications for ShoeSharp in your phone’s Settings to get the daily reminder.',
     accessibility: 'Accessibility',
     colorblind: 'Color-blind mode',
     colorblindHint: 'Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too.',
@@ -109,6 +115,10 @@ const T = localized({
     hapticsHint: 'Un toque suave al caer tus cartas y una vibración cuando ganas',
     effects: 'Efectos grandes',
     effectsHint: 'Sacudidas de pantalla, explosiones de fichas y puntos emergentes',
+    reminders: 'Recordatorio diario',
+    remindersHint: (time: string) => `Un aviso a las ${time}, solo los días que aún no hayas cobrado una meta`,
+    remindersOffTitle: 'Las notificaciones están desactivadas',
+    remindersOff: 'Permite las notificaciones de ShoeSharp en los Ajustes del teléfono para recibir el recordatorio diario.',
     accessibility: 'Accesibilidad',
     colorblind: 'Modo daltónico',
     colorblindHint: 'Azul y naranja en lugar de verde y rojo. Las etiquetas del conteo siempre muestran ▲ ● ▼ también.',
@@ -247,6 +257,18 @@ export default function SettingsScreen() {
           value={settings.bigEffects}
           onChange={(v) => updateSettings({ bigEffects: v })}
         />
+        {remindersSupported() && (
+          <ToggleRow
+            label={T.reminders}
+            hint={T.remindersHint(formatHour(settings.reminderHour))}
+            value={settings.reminders}
+            onChange={async (v) => {
+              if (!v) return updateSettings({ reminders: false });
+              if (await requestReminderPermission()) updateSettings({ reminders: true });
+              else Alert.alert(T.remindersOffTitle, T.remindersOff);
+            }}
+          />
+        )}
       </Panel>
 
       <H2>{T.accessibility}</H2>

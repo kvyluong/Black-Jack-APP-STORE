@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { initAds } from '../ads/init';
 import { RemoveAdsProvider } from '../purchases/RemoveAds';
-import { useDailySnapshot } from '../components/goals';
+import { useDailySnapshot, useReminders } from '../components/goals';
 import { localized } from '../i18n/lang';
 import { SettingsProvider, usePrefs } from '../state/settings';
 import { colors } from '../theme';
@@ -80,6 +80,7 @@ export default function RootLayout() {
 function AppStack() {
   const { lang } = usePrefs();
   useDailySnapshot();
+  useReminders();
   // Rebuilt only when the language changes, not on every chip or stats update.
   return useMemo(
     () => (

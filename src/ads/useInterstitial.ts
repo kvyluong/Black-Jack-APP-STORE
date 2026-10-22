@@ -5,10 +5,12 @@ import { usePrefs } from '../state/settings';
 import { INTERSTITIAL_EVERY_N_ROUNDS, INTERSTITIAL_MIN_INTERVAL_MS, adUnitId, getAds } from './config';
 
 /**
- * Preloads an interstitial and exposes `onRoundBreak()`, called at natural pauses
- * (between hands). It shows an ad at most every N rounds and every few minutes.
+ * Preloads an interstitial and exposes `onRoundBreak(shuffled)`, called between hands.
+ * Every hand counts toward the cap (at most every N rounds and every few minutes), but
+ * the ad only shows at a natural break: when the shoe is reshuffled. `quiet` (the
+ * player's first day) shows none at all.
  */
-export function useInterstitial() {
+export function useInterstitial(quiet = false) {
   const { settings } = usePrefs();
   const adsRemoved = settings.adsRemoved;
   const adRef = useRef<InterstitialAd | null>(null);
@@ -43,14 +45,17 @@ export function useInterstitial() {
     };
   }, [adsRemoved]);
 
-  return useCallback(() => {
-    rounds.current += 1;
-    const due =
-      rounds.current >= INTERSTITIAL_EVERY_N_ROUNDS && Date.now() - lastShown.current >= INTERSTITIAL_MIN_INTERVAL_MS;
-    if (!due || !loaded.current || !adRef.current) return;
-    rounds.current = 0;
-    lastShown.current = Date.now();
-    loaded.current = false;
-    adRef.current.show().catch(() => adRef.current?.load());
-  }, []);
+  return useCallback(
+    (shuffled: boolean) => {
+      rounds.current += 1;
+      const due =
+        rounds.current >= INTERSTITIAL_EVERY_N_ROUNDS && Date.now() - lastShown.current >= INTERSTITIAL_MIN_INTERVAL_MS;
+      if (quiet || !shuffled || !due || !loaded.current || !adRef.current) return;
+      rounds.current = 0;
+      lastShown.current = Date.now();
+      loaded.current = false;
+      adRef.current.show().catch(() => adRef.current?.load());
+    },
+    [quiet],
+  );
 }
