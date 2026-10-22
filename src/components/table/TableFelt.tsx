@@ -63,7 +63,11 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
   const yourHands = game.hands.map((h, i) => ({ h, i })).filter(({ h }) => isYours(h)).reverse();
   const small = yourHands.length > 2 || (yourHands.length > 1 && yourHands.some(({ h }) => h.cards.length >= 4));
   // A tablet gets everything a size up, so the table fills the screen instead of floating in it.
-  const tablet = useWindowDimensions().width >= 700;
+  const { width, height } = useWindowDimensions();
+  const tablet = width >= 700;
+  // A short screen (iPhone Duo, SE, landscape-sized windows): tighter seats and smaller cards,
+  // so the dealer and your hand both stay in view while you decide.
+  const short = !tablet && height < 760;
   // Before the deal the table is compact, so the Deal button fits on small phones. The room
   // for cards opens up as the hand starts, before any card is in the air.
   const dealt = game.dealer.length > 0;
@@ -95,7 +99,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
       </View>
 
       {/* The seats, on an arc; seat 1 is on the right and is dealt first. */}
-      <View style={[styles.seats, dealt && (tablet ? styles.seatsDealtTablet : styles.seatsDealt)]}>
+      <View style={[styles.seats, dealt && (tablet ? styles.seatsDealtTablet : short ? styles.seatsDealtShort : styles.seatsDealt)]}>
         {SEAT_ORDER.map((seat, pos) => {
           const occupant = table.seats[seat];
           return (
@@ -109,18 +113,19 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
                 instant={instant}
                 bubble={isNpc(occupant) ? bubbles[occupant.id] : undefined}
                 big={tablet}
+                compact={short}
               />
             </View>
           );
         })}
       </View>
 
-      <View style={[styles.yours, dealt && (tablet ? styles.yoursDealtTablet : styles.yoursDealt)]}>
+      <View style={[styles.yours, dealt && (tablet ? styles.yoursDealtTablet : short ? styles.yoursDealtShort : styles.yoursDealt)]}>
         {yourHands.map(({ h, i }) => (
           <HandView
             key={h.id}
             cards={h.cards}
-            size={tablet ? (small ? 'md' : 'lg') : small ? 'sm' : 'md'}
+            size={tablet ? (small ? 'md' : 'lg') : small || short ? 'sm' : 'md'}
             active={game.phase === 'playing' && i === game.active}
             label={T.seat(h.seat + 1)}
             fromSplit={h.fromSplit}
@@ -149,8 +154,10 @@ const styles = StyleSheet.create({
   placeholderTablet: { fontSize: 15 },
   seats: { flexDirection: 'row', gap: 2 },
   seatsDealt: { minHeight: 150 },
+  seatsDealtShort: { minHeight: 126 },
   seatsDealtTablet: { minHeight: 230 },
   yours: { alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) },
   yoursDealt: { minHeight: 130 },
+  yoursDealtShort: { minHeight: 104 },
   yoursDealtTablet: { minHeight: 186 },
 });

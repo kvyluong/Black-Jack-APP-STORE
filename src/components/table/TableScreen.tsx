@@ -448,7 +448,10 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // Your moves. On phones they're pinned below the table so they're always in reach; a tablet has
   // room for them right under it. They stay in place while a card lands (they just don't take taps
   // yet) instead of vanishing and reappearing on every hit. Keyed by the decision, so the coach hint resets.
-  const pinActions = useWindowDimensions().height < 1000;
+  const { height } = useWindowDimensions();
+  const pinActions = height < 1000;
+  // A short screen (iPhone Duo, SE) drops the level bar so the whole table fits.
+  const short = height < 760;
   const actionBar = yourTurn && (
     <View pointerEvents={settled ? 'auto' : 'none'} style={{ gap: spacing(1.5) }} key={`${game.active}-${activeHand!.cards.length}`}>
       <ActionBar
@@ -464,9 +467,27 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     </View>
   );
 
+  // Insurance and the round result are pinned too, so the next step is always on screen.
+  const insurancePanel = settled && game.phase === 'insurance' && (
+    <InsurancePanel
+      hint={showHints ? (countPlays && shouldTakeInsurance(tc) ? T.hintTake : T.hintDecline) : null}
+      onChoose={onInsurance}
+    />
+  );
+  const resultPanel = settled && game.phase === 'roundOver' && (
+    <Panel>
+      <Text style={[styles.prompt, { color: game.lastNet > 0 ? good : game.lastNet < 0 ? bad : colors.text }]}>
+        {game.lastNet > 0 ? T.won(game.lastNet) : game.lastNet < 0 ? T.lost(-game.lastNet) : T.push}
+      </Text>
+      {quiz && <CountQuiz quiz={quiz} setQuiz={setQuiz} actual={game.runningCount} />}
+      <Button title={T.nextHand} onPress={nextHand} />
+    </Panel>
+  );
+  const nextStep = actionBar || insurancePanel || resultPanel;
+
   return (
     // On a short phone, bring your hand into view when it's your move.
-    <Screen wide footer={pinActions && actionBar} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
+    <Screen wide footer={pinActions && nextStep} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
       {!testing && <Stack.Screen options={headerOptions} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
@@ -487,7 +508,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
           </Text>
         ) : null}
       </View>
-      {!testing && counting && <LevelBar xp={stats.xp} compact />}
+      {!testing && counting && !short && <LevelBar xp={stats.xp} compact />}
       {/* One fixed-height line for the shuffle notice or your streak, so neither pushes the table down when it appears. */}
       {!testing && (
         <View style={styles.notice}>
@@ -555,24 +576,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
 
       {settled && waitingOn && <Text style={styles.waiting}>{T.playing(waitingOn.name)}</Text>}
 
-      {!pinActions && actionBar}
-
-      {settled && game.phase === 'insurance' && (
-        <InsurancePanel
-          hint={showHints ? (countPlays && shouldTakeInsurance(tc) ? T.hintTake : T.hintDecline) : null}
-          onChoose={onInsurance}
-        />
-      )}
-
-      {settled && game.phase === 'roundOver' && (
-        <Panel>
-          <Text style={[styles.prompt, { color: game.lastNet > 0 ? good : game.lastNet < 0 ? bad : colors.text }]}>
-            {game.lastNet > 0 ? T.won(game.lastNet) : game.lastNet < 0 ? T.lost(-game.lastNet) : T.push}
-          </Text>
-          {quiz && <CountQuiz quiz={quiz} setQuiz={setQuiz} actual={game.runningCount} />}
-          <Button title={T.nextHand} onPress={nextHand} />
-        </Panel>
-      )}
+      {!pinActions && nextStep}
 
       {gate}
 

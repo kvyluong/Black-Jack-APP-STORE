@@ -48,6 +48,8 @@ interface Props {
   bubble?: string;
   /** Tablet size: bigger cards and text. */
   big?: boolean;
+  /** A short screen: drop the playing-style line to save height. */
+  compact?: boolean;
 }
 
 /**
@@ -64,7 +66,7 @@ const STACK = {
 } as const;
 
 /** One seat at the table: a computer player's avatar, bet and small cards, your spot, or an open seat. */
-export function SeatView({ seat, occupant, game, schedule, settled, instant, bubble, big = false }: Props) {
+export function SeatView({ seat, occupant, game, schedule, settled, instant, bubble, big = false, compact = false }: Props) {
   const { good, bad } = useOutcomeColors();
   // Each style, with its tablet-size override on a tablet.
   const st = (k: keyof typeof styles) =>
@@ -120,9 +122,11 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
       <Text style={st('name')} numberOfLines={1}>
         {occupant.name}
       </Text>
-      <Text style={st('style')} numberOfLines={2}>
-        {STYLE_LABEL[occupant.style]}
-      </Text>
+      {!compact && (
+        <Text style={st('style')} numberOfLines={2}>
+          {STYLE_LABEL[occupant.style]}
+        </Text>
+      )}
       {hands.map(({ h, i }) => (
         <View key={h.id} style={styles.hand}>
           <Text style={st('bet')}>${h.bet}</Text>
