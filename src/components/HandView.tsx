@@ -20,6 +20,8 @@ interface Props {
   /** While cards are still landing, hide the total so it doesn't give the result away. */
   settling?: boolean;
   instant?: boolean;
+  /** A split hand: a two-card 21 is shown as 21, not Blackjack. */
+  fromSplit?: boolean;
 }
 
 export function HandView({
@@ -33,6 +35,7 @@ export function HandView({
   flipDelay = 0,
   settling,
   instant = false,
+  fromSplit = false,
 }: Props) {
   return (
     <Animated.View layout={instant ? undefined : MAKE_ROOM} style={[styles.wrap, active && styles.active]}>
@@ -54,7 +57,7 @@ export function HandView({
       {cards.length > 0 && (
         <Text style={styles.label}>
           {label ? `${label}: ` : ''}
-          {settling ? '…' : hideHole ? tr(`showing ${cards[0].rank}`, `muestra ${cards[0].rank}`) : describeHand(cards)}
+          {settling ? '…' : hideHole ? tr(`showing ${cards[0].rank}`, `muestra ${cards[0].rank}`) : describeHand(cards, fromSplit)}
           {result && !settling ? ` · ${result}` : ''}
         </Text>
       )}

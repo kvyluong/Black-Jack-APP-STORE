@@ -37,9 +37,9 @@ const T = localized({
  */
 export function BonusAdButton({ onGranted }: { onGranted: (amount: number) => void }) {
   const { stats, addChips, updateStats } = useSettings();
-  const rewarded = useRewarded();
   const [testAd, setTestAd] = useState<number | null>(null);
   const left = bonusAdsLeft(stats.bonusClaims, new Date());
+  const rewarded = useRewarded(left > 0);
   const amount = bonusChips(stats.peakChips);
 
   const grant = () => {

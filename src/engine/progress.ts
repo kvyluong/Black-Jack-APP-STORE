@@ -337,9 +337,15 @@ export const HISTORY_CAP = 400;
  * day you used the app into the history. Returns null when today is already set up.
  */
 export function rolloverDay(s: ProgressStats, today: string): { goals: GoalsState; history: HistoryPoint[] } | null {
-  const goals = s.goals ?? emptyGoals();
-  // Only roll forward: a clock or time zone moved back a day isn't a new day.
-  if (goals.day && goals.day >= today) return null;
+  let goals = s.goals ?? emptyGoals();
+  if (goals.day && goals.day >= today) {
+    // A time zone or clock moved back a day isn't a new day...
+    if (daysBetween(today, goals.day) <= 1) return null;
+    // ...but a clock that was set further ahead and put back would lock the goals until that
+    // date. Start today fresh, and pull dates from the future back so the streak carries on.
+    const clamp = (d: string | null | undefined) => (d && d > today ? previousDay(today) : (d ?? null));
+    goals = { ...goals, day: null, start: null, lastCompleteDay: clamp(goals.lastCompleteDay), lastPerfectDay: clamp(goals.lastPerfectDay) };
+  }
   let history = s.history ?? [];
   if (goals.day && goals.start) {
     const point: HistoryPoint = { day: goals.day, start: goals.start, values: counters(s, goals.day) };

@@ -36,8 +36,9 @@ export function isPair(cards: Card[]): boolean {
   return cards.length === 2 && pointValue(cards[0].rank) === pointValue(cards[1].rank);
 }
 
-export function describeHand(cards: Card[]): string {
-  if (isBlackjack(cards)) return T.blackjack;
+/** `fromSplit`: a split hand's ace and ten is 21, not a blackjack (it pays even money). */
+export function describeHand(cards: Card[], fromSplit = false): string {
+  if (!fromSplit && isBlackjack(cards)) return T.blackjack;
   const { total, soft } = handValue(cards);
   if (total > 21) return T.bust(total);
   return soft ? T.soft(total) : `${total}`;

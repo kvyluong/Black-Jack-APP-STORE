@@ -47,8 +47,19 @@ export async function requestReminderPermission(): Promise<boolean> {
   }
 }
 
+// Calls run one at a time and only the latest request is applied, so two quick updates
+// (a new day, then its streak) can't interleave their cancel and schedule steps and queue twice.
+let latest = 0;
+let queue: Promise<void> = Promise.resolve();
+
 /** Replaces any queued reminders with these. An empty list just clears them. */
-export async function scheduleReminders(times: Date[], text: { title: string; body: string }): Promise<void> {
+export function scheduleReminders(times: Date[], text: { title: string; body: string }): Promise<void> {
+  const mine = ++latest;
+  queue = queue.then(() => (mine === latest ? replaceReminders(times, text) : undefined));
+  return queue;
+}
+
+async function replaceReminders(times: Date[], text: { title: string; body: string }): Promise<void> {
   const N = getNotifications();
   if (!N) return;
   try {

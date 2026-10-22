@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import type { RewardedAd } from 'react-native-google-mobile-ads';
 
 import { adUnitId, getAds } from './config';
@@ -15,59 +15,73 @@ export interface Rewarded {
   show: (onReward: () => void) => void;
 }
 
-/** Preloads one rewarded ad and reloads after each one closes. */
-export function useRewarded(): Rewarded {
-  const adRef = useRef<RewardedAd | null>(null);
-  const rewardRef = useRef<(() => void) | null>(null);
-  const [ready, setReady] = useState(false);
+// One rewarded ad for the whole app, loaded once and reloaded after each one closes. The
+// bonus button is mounted and unmounted every hand (it lives in the betting panel), so a
+// per-component ad would be requested and thrown away each round.
+let ad: RewardedAd | null = null;
+let loaded = false;
+let onReward: (() => void) | null = null;
+const listeners = new Set<() => void>();
+
+function setLoaded(value: boolean) {
+  loaded = value;
+  listeners.forEach((l) => l());
+}
+
+function start() {
   const ads = getAds();
   const unitId = adUnitId('rewarded');
-  const simulated = !ads && __DEV__;
+  if (ad || !ads || !unitId) return;
+  const a = ads.RewardedAd.createForAdRequest(unitId);
+  ad = a;
+  // A failed load (e.g. offline for a moment) tries again later, waiting longer each time.
+  let retry: ReturnType<typeof setTimeout> | undefined;
+  let failures = 0;
+  a.addAdEventListener(ads.RewardedAdEventType.LOADED, () => {
+    failures = 0;
+    setLoaded(true);
+  });
+  a.addAdEventListener(ads.RewardedAdEventType.EARNED_REWARD, () => {
+    onReward?.();
+    onReward = null;
+  });
+  a.addAdEventListener(ads.AdEventType.CLOSED, () => {
+    onReward = null;
+    setLoaded(false);
+    a.load();
+  });
+  a.addAdEventListener(ads.AdEventType.ERROR, () => {
+    setLoaded(false);
+    failures++;
+    clearTimeout(retry);
+    retry = setTimeout(() => a.load(), Math.min(5 * 60_000, 15_000 * 2 ** (failures - 1)));
+  });
+  a.load();
+}
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const getLoaded = () => loaded;
+
+/** The shared rewarded ad. `enabled`: start loading it (skip while there are no bonuses left today). */
+export function useRewarded(enabled = true): Rewarded {
+  const ready = useSyncExternalStore(subscribe, getLoaded, getLoaded);
+  const simulated = !getAds() && __DEV__;
 
   useEffect(() => {
-    if (!ads || !unitId) return;
-    const ad = ads.RewardedAd.createForAdRequest(unitId);
-    adRef.current = ad;
-    // A failed load (e.g. offline for a moment) tries again later, waiting longer each time.
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    let failures = 0;
-    const subs = [
-      ad.addAdEventListener(ads.RewardedAdEventType.LOADED, () => {
-        failures = 0;
-        setReady(true);
-      }),
-      ad.addAdEventListener(ads.RewardedAdEventType.EARNED_REWARD, () => {
-        rewardRef.current?.();
-        rewardRef.current = null;
-      }),
-      ad.addAdEventListener(ads.AdEventType.CLOSED, () => {
-        rewardRef.current = null;
-        setReady(false);
-        ad.load();
-      }),
-      ad.addAdEventListener(ads.AdEventType.ERROR, () => {
-        setReady(false);
-        failures++;
-        clearTimeout(retry);
-        retry = setTimeout(() => ad.load(), Math.min(5 * 60_000, 15_000 * 2 ** (failures - 1)));
-      }),
-    ];
-    ad.load();
-    return () => {
-      clearTimeout(retry);
-      subs.forEach((unsubscribe) => unsubscribe());
-      adRef.current = null;
-    };
-  }, [ads, unitId]);
+    if (enabled) start();
+  }, [enabled]);
 
-  const show = useCallback((onReward: () => void) => {
-    const ad = adRef.current;
-    if (!ad) return;
-    rewardRef.current = onReward;
-    setReady(false);
-    ad.show().catch(() => {
-      rewardRef.current = null;
-      ad.load();
+  const show = useCallback((cb: () => void) => {
+    const a = ad;
+    if (!a || !loaded) return;
+    onReward = cb;
+    setLoaded(false);
+    a.show().catch(() => {
+      onReward = null;
+      a.load();
     });
   }, []);
 

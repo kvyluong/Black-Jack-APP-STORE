@@ -123,6 +123,8 @@ function draw(s: GameState, visible: boolean, rng: Rng): Card {
       const i = fresh.findIndex((x) => x.rank === c.rank && x.suit === c.suit);
       if (i >= 0) fresh.splice(i, 1);
     }
+    // Every card is already on the table (one deck, a full table splitting): open another deck.
+    if (fresh.length === 0) fresh.push(...createShoe(1, rng));
     const hole = s.dealer.length > 1 && !s.holeRevealed ? s.dealer[1] : null;
     s.shoe = fresh;
     s.shoeSize = fresh.length + inPlay.length;

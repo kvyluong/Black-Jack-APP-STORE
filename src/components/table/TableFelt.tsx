@@ -123,6 +123,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
             size={tablet ? (small ? 'md' : 'lg') : small ? 'sm' : 'md'}
             active={game.phase === 'playing' && i === game.active}
             label={T.seat(h.seat + 1)}
+            fromSplit={h.fromSplit}
             result={h.outcome ? OUTCOME_LABEL[h.outcome] : `$${h.bet}`}
             dealDelay={(c) => cardDelay(schedule, i, c)}
             settling={!settled}

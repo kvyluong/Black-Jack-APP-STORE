@@ -112,8 +112,8 @@ export function useDailySnapshot() {
   const today = useToday();
   const snapshotDay = stats.goals?.day;
   useEffect(() => {
-    // Only roll forward: a clock or time zone moved back a day isn't a new day.
-    if (!ready || (snapshotDay && snapshotDay >= today)) return;
+    // rolloverDay decides whether a later saved day (clock moved back) means a fresh start.
+    if (!ready || snapshotDay === today) return;
     // A write to the settings store (external to this component), not local state.
     updateStats((s) => {
       const next = rolloverDay(s, today);

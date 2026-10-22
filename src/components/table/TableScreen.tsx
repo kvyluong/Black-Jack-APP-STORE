@@ -211,6 +211,8 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // No ads on the player's first day (nothing filed into history yet).
   const roundBreak = useInterstitial(!stats.history?.length);
   const askForReview = useReviewPrompt();
+  // A stable object: a new one each render would make the navigator update the header on every render.
+  const headerOptions = useMemo(() => ({ title: casino.name }), [casino.name]);
   // Settings → Game speed scales the practice table; the casino test keeps its own pace.
   const speed = testing ? 1 : SPEED_FACTOR[settings.gameSpeed ?? 'normal'];
   const anim = useDealAnimation(Math.round(DEAL_STEP[mode] * speed));
@@ -465,7 +467,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   return (
     // On a short phone, bring your hand into view when it's your move.
     <Screen wide footer={pinActions && actionBar} scrollToEndOn={pinActions && settled && yourTurn && `${game.active}`}>
-      {!testing && <Stack.Screen options={{ title: casino.name }} />}
+      {!testing && <Stack.Screen options={headerOptions} />}
       {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
         <View style={{ gap: 2 }}>

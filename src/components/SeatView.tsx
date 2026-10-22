@@ -105,7 +105,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
   const summary = [
     T.seat(seat + 1, occupant.name, STYLE_LABEL[occupant.style]),
     ...hands.map(({ h }) =>
-      T.bet(h.bet, settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards)}`) : T.dealing),
+      T.bet(h.bet, settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards, h.fromSplit)}`) : T.dealing),
     ),
     theirTurn ? T.theirTurn : '',
     bubble ?? '',
@@ -143,7 +143,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
             adjustsFontSizeToFit
             minimumFontScale={0.7}
           >
-            {!settled ? ' ' : h.outcome ? OUTCOME_SHORT[h.outcome] : describeHand(h.cards)}
+            {!settled ? ' ' : h.outcome ? OUTCOME_SHORT[h.outcome] : describeHand(h.cards, h.fromSplit)}
           </Text>
         </View>
       ))}

@@ -214,4 +214,15 @@ describe('round 2 fixes: practice records', () => {
     expect(rolloverDay(stats as never, '2026-10-08')).toBeNull();
     expect(rolloverDay(stats as never, '2026-10-10')).not.toBeNull();
   });
+
+  it('a clock set weeks ahead and put back does not lock the goals until that date', () => {
+    const stats = {
+      handsPlayed: 0, decisions: 0, correctDecisions: 0, lessonsCompleted: [], peakChips: 1000, leaks: { byCategory: {}, spots: {} }, academy: {},
+      goals: { ...emptyGoals(), day: '2027-01-01', start: {}, claimed: ['a'], streak: 5, lastCompleteDay: '2027-01-01' },
+      history: [],
+    };
+    const next = rolloverDay(stats as never, '2026-10-21')!;
+    expect(next.goals).toMatchObject({ day: '2026-10-21', claimed: [], streak: 5, lastCompleteDay: '2026-10-20' });
+    expect(next.history).toEqual([]); // the future day isn't filed
+  });
 });

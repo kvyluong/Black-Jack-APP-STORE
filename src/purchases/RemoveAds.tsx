@@ -16,6 +16,7 @@ const T = localized({
     restored: 'Purchase restored. Ads are off.',
     notFound: 'No purchase found for this account.',
     offlineLater: 'Can’t reach the store right now. Try again later.',
+    pending: 'Purchase pending. Ads turn off as soon as it’s approved.',
   },
   es: {
     thanks: '¡Gracias! Los anuncios se fueron para siempre.',
@@ -24,6 +25,7 @@ const T = localized({
     restored: 'Compra restaurada. Los anuncios están desactivados.',
     notFound: 'No se encontró ninguna compra para esta cuenta.',
     offlineLater: 'No se puede conectar con la tienda ahora. Inténtalo más tarde.',
+    pending: 'Compra pendiente. Los anuncios se quitan en cuanto se apruebe.',
   },
 });
 
@@ -51,6 +53,16 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState<MessageKey | null>(null);
   const [connected, setConnected] = useState(false);
   const owned = useRef(settings.adsRemoved);
+  // Connects to the store and loads the price; kept so Buy and Restore can retry after starting offline.
+  const connectRef = useRef<(() => Promise<boolean>) | null>(null);
+  const ensureConnected = async () => {
+    if (connected) return true;
+    try {
+      return (await connectRef.current?.()) ?? false;
+    } catch {
+      return false;
+    }
+  };
   useEffect(() => {
     owned.current = settings.adsRemoved;
   });
@@ -64,7 +76,15 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
     };
     const subs = [
       iap.purchaseUpdatedListener(async (purchase) => {
-        if (purchase.productId !== REMOVE_ADS_SKU || purchase.purchaseState !== 'purchased') return;
+        if (purchase.productId !== REMOVE_ADS_SKU) return;
+        if (purchase.purchaseState !== 'purchased') {
+          // Waiting on a parent (Ask to Buy) or a slow payment method: free the buttons and say so.
+          if (alive) {
+            setStatus('idle');
+            setMessage('pending');
+          }
+          return;
+        }
         unlock();
         // Non-consumable: finishing it tells the store it was delivered (Google refunds unfinished ones after 3 days).
         await iap.finishTransaction({ purchase, isConsumable: false }).catch(() => {});
@@ -79,30 +99,35 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
         setMessage(iap.isUserCancelledError(error) ? null : 'failed');
       }),
     ];
+    connectRef.current = async () => {
+      await iap.initConnection();
+      if (!alive) return false;
+      setConnected(true);
+      const products = await iap.fetchProducts({ skus: [REMOVE_ADS_SKU], type: 'in-app' });
+      const product = (products ?? []).find((p) => p.id === REMOVE_ADS_SKU);
+      if (alive && product) setPrice(product.displayPrice);
+      return true;
+    };
     (async () => {
       try {
-        await iap.initConnection();
-        if (!alive) return;
-        setConnected(true);
-        const products = await iap.fetchProducts({ skus: [REMOVE_ADS_SKU], type: 'in-app' });
-        const product = (products ?? []).find((p) => p.id === REMOVE_ADS_SKU);
-        if (alive && product) setPrice(product.displayPrice);
+        if (!(await connectRef.current!())) return;
         // Already bought on this account (new phone, reinstall)? Turn ads off quietly.
         const purchases = await iap.getAvailablePurchases();
         if (purchases.some((p) => p.productId === REMOVE_ADS_SKU)) unlock();
       } catch {
-        // No store connection (offline, no Play account): the button explains when tapped.
+        // No store connection (offline, no Play account): Buy and Restore try again when tapped.
       }
     })();
     return () => {
       alive = false;
+      connectRef.current = null;
       subs.forEach((s) => s.remove());
       iap.endConnection().catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
-  const buy = () => {
+  const buy = async () => {
     const iap = getIap();
     setMessage(null);
     if (!iap) {
@@ -110,11 +135,12 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
       if (__DEV__) updateSettings({ adsRemoved: true });
       return;
     }
-    if (!connected) {
+    setStatus('buying');
+    if (!(await ensureConnected())) {
+      setStatus('idle');
       setMessage('offline');
       return;
     }
-    setStatus('buying');
     iap
       .requestPurchase({ type: 'in-app', request: { apple: { sku: REMOVE_ADS_SKU }, google: { skus: [REMOVE_ADS_SKU] } } })
       .catch(() => setStatus('idle'));
@@ -126,6 +152,7 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
     if (!iap) return;
     setStatus('restoring');
     try {
+      if (!(await ensureConnected())) throw new Error('offline');
       await iap.restorePurchases();
       const purchases = await iap.getAvailablePurchases();
       const found = purchases.some((p) => p.productId === REMOVE_ADS_SKU);
@@ -139,7 +166,7 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ available: iapSupported, price, status, message: message && T[message], buy, restore: () => void restore() }}>
+    <Ctx.Provider value={{ available: iapSupported, price, status, message: message && T[message], buy: () => void buy(), restore: () => void restore() }}>
       {children}
     </Ctx.Provider>
   );
