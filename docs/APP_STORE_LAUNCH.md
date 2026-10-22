@@ -136,7 +136,7 @@ gets test ads.
 
 ## 8. Submit
 - [x] In the version page, select the TestFlight build, then fill in what's missing (copyright: "2026 <owner name>"). Done 2026-10-21: build 11 and the `remove_ads` purchase are in the draft submission (Ready for Review); the Spanish (Mexico) privacy policy URL is `es/privacidad.html`.
-- [ ] **🛑 OWNER:** press **Submit for Review**. Review usually takes 1–3 days.
+- [x] **🛑 OWNER:** press **Submit for Review**. Review usually takes 1–3 days. Submitted 2026-10-21 (build 11 + `remove_ads`, owner-approved); status Waiting for Review. Release is manual: press **Release This Version** after approval.
 - [ ] If it's rejected: read the note, fix, resubmit. The most common casino-app issue is real-money confusion; the review notes and in-app disclaimer cover that.
 
 ## 9. After launch
