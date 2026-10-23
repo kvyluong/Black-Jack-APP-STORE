@@ -79,7 +79,7 @@ const Painting = ({ blur }: { blur: number }) => (
 );
 
 /** macOS-style window chrome. Slides and settles in at `at`. */
-const Win = ({ x, y, w, h, title, at, f, z = 0, blur = 0, children }: {
+export const Win = ({ x, y, w, h, title, at, f, z = 0, blur = 0, children }: {
   x: number; y: number; w: number; h: number; title: string; at: number; f: number; z?: number; blur?: number; children: React.ReactNode;
 }) => {
   const p = spring({ frame: f - at, fps: FPS, config: { damping: 18, stiffness: 110 } });
@@ -193,7 +193,7 @@ const ReviewWindow = ({ f }: { f: number }) => {
 };
 
 /** Animated film grain. */
-const Grain = ({ f }: { f: number }) => (
+export const Grain = ({ f }: { f: number }) => (
   <AbsoluteFill style={{ mixBlendMode: 'overlay', opacity: 0.35, pointerEvents: 'none' }}>
     <svg width={W} height={H}>
       <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves={2} seed={f % 30} /></filter>

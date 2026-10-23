@@ -2,6 +2,7 @@ import { Composition } from 'remotion';
 import { FPS, Trailer, totalFrames } from './Trailer';
 import * as Short from './short/HouseEdge';
 import * as Screenlife from './screenlife/Test';
+import * as Logh from './screenlife/Logh';
 
 export const Root = () => (
   <>
@@ -13,5 +14,7 @@ export const Root = () => (
       durationInFrames={Short.DURATION} fps={Short.FPS} width={Short.W} height={Short.H} />
     <Composition id="screenlife-test" component={Screenlife.ScreenlifeTest}
       durationInFrames={Screenlife.DURATION} fps={Screenlife.FPS} width={Screenlife.W} height={Screenlife.H} />
+    <Composition id="logh-edit" component={Logh.LoghEdit}
+      durationInFrames={Logh.DURATION} fps={Logh.FPS} width={Logh.W} height={Logh.H} />
   </>
 );
