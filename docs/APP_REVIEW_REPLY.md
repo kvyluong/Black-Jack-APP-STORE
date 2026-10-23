@@ -1,4 +1,4 @@
-# Reply to App Review: Guideline 2.1, Information Needed (1.0.0)
+# Reply to App Review: Guideline 2.1, Information Needed (1.0.0, build 11)
 
 Apple asked (2026-10-22) for a screen recording on a physical device plus the answers below,
 in a reply **and** in App Review Information → Notes. Paste the text under "Reply" into the
@@ -42,9 +42,8 @@ player picks a starting level. Main features: Home tab (daily goals and the next
 tab (practice tables), Practice tab (lessons and drills), Me tab (progress, stats, Settings).
 
 **4. External services:** Google AdMob (Google Mobile Ads SDK) for ads, with Google's User
-Messaging Platform for consent in the EEA, UK and Switzerland; Apple In-App Purchase (StoreKit)
-for the one purchase; Apple's local notifications for an optional daily practice reminder. No
-backend server, analytics account, payment processor or AI service. Progress is stored only on
+Messaging Platform for consent in the EEA, UK and Switzerland; and Apple In-App Purchase
+(StoreKit) for the one purchase. No backend server, analytics account, payment processor or AI service. Progress is stored only on
 the device.
 
 **5. Regional differences:** the app works the same everywhere it is offered, in English and
