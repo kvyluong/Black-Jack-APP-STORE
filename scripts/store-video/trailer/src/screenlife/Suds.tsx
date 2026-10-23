@@ -95,7 +95,7 @@ const Face = ({ x, y, f, gap = 54, mood = 'smug' as 'smug' | 'shock' | 'flat', s
 // ---------- Characters ----------
 
 /** Suddy: the 9in1shampoo bottle mascot. Foam spills out of the cap. */
-export const Suddy = ({ f, x = 0, y = 0, mood = 'smug' as 'smug' | 'shock' | 'flat' }) => (
+export const Suddy = ({ f, x = 0, y = 0, mood = 'smug' }: { f: number; x?: number; y?: number; mood?: 'smug' | 'shock' | 'flat' }) => (
   <g transform={`translate(${x} ${y + Math.sin(f / 14) * 3})`}>
     <Sticker f={f} shapes={[
       { pts: [[100, 40], [150, 40], [152, 86], [98, 86]], fill: SUDS.pink, seed: 1 },
@@ -112,7 +112,7 @@ export const Suddy = ({ f, x = 0, y = 0, mood = 'smug' as 'smug' | 'shock' | 'fl
 );
 
 /** A generic person: round head, pill body, foam hair (everyone in the world has suds). */
-export const Person = ({ f, x = 0, y = 0, shirt = SUDS.yellow, mood = 'flat' as 'smug' | 'shock' | 'flat', seed = 0 }) => (
+export const Person = ({ f, x = 0, y = 0, shirt = SUDS.yellow, mood = 'flat', seed = 0 }: { f: number; x?: number; y?: number; shirt?: string; mood?: 'smug' | 'shock' | 'flat'; seed?: number }) => (
   <g transform={`translate(${x} ${y + Math.sin(f / 16 + seed) * 3})`}>
     <Sticker f={f} shapes={[
       { pts: [[60, 200], [190, 200], [210, 340], [40, 340]], fill: shirt, seed: 4 + seed },
@@ -127,7 +127,7 @@ export const Person = ({ f, x = 0, y = 0, shirt = SUDS.yellow, mood = 'flat' as 
 );
 
 /** The dealer: green visor, bow tie, foam peeking out of the visor. */
-export const Dealer = ({ f, x = 0, y = 0, mood = 'smug' as 'smug' | 'shock' | 'flat' }) => (
+export const Dealer = ({ f, x = 0, y = 0, mood = 'smug' }: { f: number; x?: number; y?: number; mood?: 'smug' | 'shock' | 'flat' }) => (
   <g transform={`translate(${x} ${y + Math.sin(f / 15 + 2) * 3})`}>
     <Sticker f={f} shapes={[
       { pts: [[56, 200], [194, 200], [214, 340], [36, 340]], fill: SUDS.paper, seed: 7 },

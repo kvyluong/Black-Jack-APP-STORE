@@ -5,6 +5,7 @@ import * as Screenlife from './screenlife/Test';
 import * as Logh from './screenlife/Logh';
 import * as Styles from './screenlife/StyleSheet';
 import * as Suds from './screenlife/Suds';
+import * as Stick from './screenlife/Stick';
 
 export const Root = () => (
   <>
@@ -22,5 +23,7 @@ export const Root = () => (
       durationInFrames={1} fps={30} width={Styles.W} height={Styles.H} />
     <Composition id="suds-style" component={Suds.SudsSheet}
       durationInFrames={Suds.LOOP} fps={30} width={Suds.W} height={Suds.H} />
+    <Composition id="suds-stickmen" component={Stick.StickSheet}
+      durationInFrames={Stick.LOOP} fps={30} width={Stick.W} height={Stick.H} />
   </>
 );
