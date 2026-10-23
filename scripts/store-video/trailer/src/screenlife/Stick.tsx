@@ -20,6 +20,7 @@ const line = (pts: Pt[], f: number, seed: number, amt = 2.2) =>
 const blob = (cx: number, cy: number, r: number, f: number, seed: number, n = 22) =>
   line(Array.from({ length: n }, (_, i) => [cx + r * Math.cos((i / n) * Math.PI * 2), cy + r * Math.sin((i / n) * Math.PI * 2)] as Pt), f, seed, 2.4) + ' Z';
 
+export type Hair = 'spiky' | 'swoop' | 'buzz' | 'beanie' | 'messy' | 'bald' | 'bun' | 'cap';
 export type Mood = 'smug' | 'shock' | 'rage' | 'cry' | 'scheme' | 'downbad' | 'galaxy' | 'dead' | 'happy';
 
 const Stroke = ({ d, w = 6, c = INK }: { d: string; w?: number; c?: string }) => (
@@ -132,8 +133,8 @@ const POSES: Record<Mood, { arms: [Pt[], Pt[]]; legs: [Pt[], Pt[]] }> = {
  * A Suds stickman. Body is a single boiling line; the head is a big circle with a sticker border and
  * a misprinted skin fill; the shirt is a misprinted color block; foam hair on top.
  */
-export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0, foam = true, scale = 1 }: {
-  mood: Mood; f: number; x?: number; y?: number; shirt?: string; seed?: number; foam?: boolean; scale?: number;
+export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0, hair = 'spiky', scale = 1 }: {
+  mood: Mood; f: number; x?: number; y?: number; shirt?: string; seed?: number; hair?: Hair; scale?: number;
 }) => {
   const p = POSES[mood];
   const bob = mood === 'dead' ? 0 : Math.sin(f / 12 + seed) * (mood === 'rage' ? 5 : 3);
@@ -156,19 +157,35 @@ export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0,
       <path d={blob(0, 0, 70, f, seed + 40)} fill={SUDS.skin} transform="translate(8 7)" />
       <path d={blob(0, 0, 70, f, seed + 41)} fill="none" stroke={INK} strokeWidth={6} />
       <Face mood={mood} f={f} seed={seed} />
-      {foam && (
-        <g>
-          {Array.from({ length: 9 }, (_, i) => {
-            const cx = -54 + i * 13.5 + Math.sin(seed + i) * 3;
-            const cy = -66 - ((i % 2) * 14) - Math.sin(i * 1.3) * 6 + Math.sin(f / 10 + i) * 2;
-            const r = 15 + ((i * 7 + seed) % 6);
-            return <g key={i}><circle cx={cx} cy={cy} r={r + 6} fill="#fff" /><circle cx={cx} cy={cy} r={r} fill="#fff" stroke={INK} strokeWidth={4} /><circle cx={cx - r * 0.35} cy={cy - r * 0.35} r={r * 0.2} fill={SUDS.blue} opacity={0.35} /></g>;
-          })}
-        </g>
-      )}
+      <HairShape hair={hair} f={f} seed={seed} />
     </g>
   );
 };
+
+/** Hair drawn on a head centred at (0,0), radius 70: ink shapes with the same boiling line. */
+const HairShape = ({ hair, f, seed }: { hair: Hair; f: number; seed: number }) => {
+  const fill = (pts: Pt[], c = INK, amt = 1.8) => <path d={line(pts, f, seed + 50, amt) + ' Z'} fill={c} stroke={INK} strokeWidth={5} strokeLinejoin="round" />;
+  switch (hair) {
+    case 'spiky':
+      return fill([[-68, -14], [-74, -46], [-54, -40], [-58, -78], [-30, -58], [-20, -96], [2, -66], [20, -98], [32, -62], [60, -84], [56, -46], [76, -50], [68, -14], [40, -40], [0, -34], [-40, -40]]);
+    case 'swoop':
+      return fill([[-70, -6], [-66, -50], [-30, -76], [20, -80], [62, -60], [80, -30], [56, -36], [10, -30], [-30, -26], [-56, -10]]);
+    case 'buzz':
+      return fill([[-66, -24], [-56, -52], [-24, -70], [24, -70], [56, -52], [66, -24], [40, -40], [0, -46], [-40, -40]], '#4A4A5E');
+    case 'beanie':
+      return <g>{fill([[-72, -34], [-64, -70], [-30, -94], [30, -94], [64, -70], [72, -34]], SUDS.pink)}{fill([[-76, -42], [76, -42], [74, -24], [-74, -24]], SUDS.pink)}<circle cx={0} cy={-102} r={14} fill="#fff" stroke={INK} strokeWidth={5} /></g>;
+    case 'messy':
+      return fill([[-72, -4], [-80, -34], [-60, -30], [-70, -64], [-40, -58], [-36, -88], [-10, -66], [8, -94], [24, -64], [52, -86], [50, -54], [80, -60], [70, -30], [84, -14], [56, -24], [20, -40], [-20, -40], [-50, -24]]);
+    case 'bun':
+      return <g><circle cx={0} cy={-84} r={22} fill={INK} />{fill([[-70, -4], [-64, -50], [-30, -70], [30, -70], [64, -50], [70, -4], [44, -34], [0, -42], [-44, -34]])}</g>;
+    case 'cap':
+      return <g>{fill([[-70, -18], [-62, -56], [-26, -78], [26, -78], [62, -56], [70, -18]], SUDS.blue)}{fill([[-70, -22], [-118, -14], [-112, -2], [-66, -6]], SUDS.blue)}</g>;
+    case 'bald':
+      return <path d={line([[-30, -52], [-18, -60]], f, seed + 60)} stroke="#fff" strokeWidth={6} strokeLinecap="round" fill="none" opacity={0.8} />;
+  }
+};
+
+const HAIRS: Hair[] = ['swoop', 'spiky', 'messy', 'beanie', 'cap', 'buzz', 'bun', 'bald'];
 
 const LABELS: [Mood, string, string][] = [
   ['smug', 'smug', SUDS.yellow],
@@ -196,7 +213,7 @@ export const StickSheet = () => {
           const cx = 330 + col * 420, cy = 250 + row * 440;
           return (
             <g key={mood}>
-              <Stickman mood={mood} f={f} x={cx} y={cy} shirt={shirt} seed={i * 5} scale={0.92} />
+              <Stickman mood={mood} f={f} x={cx} y={cy} shirt={shirt} seed={i * 5} hair={HAIRS[i]} scale={0.92} />
               <text x={cx + 4} y={cy + 300} textAnchor="middle" fontFamily="'Comic Sans MS','Chalkboard SE',cursive" fontWeight={700} fontSize={36} fill={INK} transform={`rotate(${(i % 2 ? 2 : -2)} ${cx} ${cy + 300})`}>{label}</text>
             </g>
           );
