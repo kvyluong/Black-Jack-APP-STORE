@@ -2,7 +2,7 @@
 // as the reference. Original visuals only (no footage from the show): faction dossiers, a poll and a
 // script window over a painted-space wallpaper.
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame } from 'remotion';
-import { Character } from './Characters';
+import { Stickman } from './Stick';
 import { Grain, Win } from './Test';
 
 export const FPS = 30;
@@ -106,7 +106,13 @@ const Dossier = ({ f, at, x, side, blur }: { f: number; at: number; x: number; s
       <div style={{ height: '100%', display: 'flex', background: 'linear-gradient(160deg,#16161c,#0d0d12)', color: '#e8e6f0' }}>
         {/* Portrait: the faction's leader, talking while the camera is on this dossier. */}
         <div style={{ width: 250, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: `radial-gradient(circle at 50% 40%, ${s.color}55, ${s.color}11 70%)`, borderRight: `2px solid ${s.color}44` }}>
-          <Character kind={side === 'empire' ? 'emperor' : 'admiral'} f={f} talking={side === 'empire' ? f > 150 && f < 245 : f > 270 && f < 365} size={230} />
+          <svg width={250} height={440} viewBox="-130 -130 260 420">
+            {side === 'empire' ? (
+              <Stickman f={f} mood={f > 150 && f < 245 ? 'scheme' : 'smug'} hair="long" hairColor="#F2C94C" shirt="#2A2A35" seed={3} />
+            ) : (
+              <Stickman f={f} mood={f > 270 && f < 365 ? 'happy' : 'downbad'} hair="beret" shirt="#6B7A4E" seed={8} />
+            )}
+          </svg>
         </div>
         <div style={{ flex: 1, padding: '28px 30px' }}>
           <div style={{ fontFamily: SERIF, fontSize: 40, letterSpacing: 2, color: s.color, fontWeight: 700, lineHeight: 1.1 }}>{s.title}</div>
@@ -179,10 +185,10 @@ const EndCard = ({ f }: { f: number }) => {
   return (
     <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ position: 'absolute', left: 90, bottom: 40, opacity: p, transform: `translateX(${(1 - p) * -120}px)` }}>
-        <Character kind="emperor" f={f} size={420} talking={f > 730 && f < 770} />
+        <svg width={250} height={404} viewBox="-130 -130 260 420"><Stickman f={f} mood="shock" hair="long" hairColor="#F2C94C" shirt="#2A2A35" seed={3} /></svg>
       </div>
       <div style={{ position: 'absolute', right: 90, bottom: 40, opacity: p, transform: `translateX(${(1 - p) * 120}px)` }}>
-        <Character kind="admiral" f={f} size={420} flip talking={f > 775 && f < 815} />
+        <svg width={250} height={404} viewBox="-130 -130 260 420"><Stickman f={f} mood="smug" hair="beret" shirt="#6B7A4E" seed={8} /></svg>
       </div>
       <div style={{ fontFamily: SERIF, fontSize: 84, color: '#fff', letterSpacing: 2, opacity: p, transform: `scale(${0.92 + 0.08 * p})` }}>
         Corrupt Democracy <span style={{ color: '#888' }}>vs</span> Benevolent Dictator

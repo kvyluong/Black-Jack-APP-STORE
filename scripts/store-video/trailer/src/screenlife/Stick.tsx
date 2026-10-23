@@ -20,7 +20,7 @@ const line = (pts: Pt[], f: number, seed: number, amt = 2.2) =>
 const blob = (cx: number, cy: number, r: number, f: number, seed: number, n = 22) =>
   line(Array.from({ length: n }, (_, i) => [cx + r * Math.cos((i / n) * Math.PI * 2), cy + r * Math.sin((i / n) * Math.PI * 2)] as Pt), f, seed, 2.4) + ' Z';
 
-export type Hair = 'spiky' | 'swoop' | 'buzz' | 'beanie' | 'messy' | 'bald' | 'bun' | 'cap';
+export type Hair = 'spiky' | 'swoop' | 'buzz' | 'beanie' | 'messy' | 'bald' | 'bun' | 'cap' | 'beret' | 'long';
 export type Mood = 'smug' | 'shock' | 'rage' | 'cry' | 'scheme' | 'downbad' | 'galaxy' | 'dead' | 'happy';
 
 const Stroke = ({ d, w = 6, c = INK }: { d: string; w?: number; c?: string }) => (
@@ -131,10 +131,10 @@ const POSES: Record<Mood, { arms: [Pt[], Pt[]]; legs: [Pt[], Pt[]] }> = {
 
 /**
  * A Suds stickman. Body is a single boiling line; the head is a big circle with a sticker border and
- * a misprinted skin fill; the shirt is a misprinted color block; foam hair on top.
+ * a misprinted skin fill; the shirt is a misprinted color block; drawn hair on top.
  */
-export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0, hair = 'spiky', scale = 1 }: {
-  mood: Mood; f: number; x?: number; y?: number; shirt?: string; seed?: number; hair?: Hair; scale?: number;
+export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0, hair = 'spiky', hairColor = INK, scale = 1 }: {
+  mood: Mood; f: number; x?: number; y?: number; shirt?: string; seed?: number; hair?: Hair; hairColor?: string; scale?: number;
 }) => {
   const p = POSES[mood];
   const bob = mood === 'dead' ? 0 : Math.sin(f / 12 + seed) * (mood === 'rage' ? 5 : 3);
@@ -157,14 +157,14 @@ export const Stickman = ({ mood, f, x = 0, y = 0, shirt = SUDS.yellow, seed = 0,
       <path d={blob(0, 0, 70, f, seed + 40)} fill={SUDS.skin} transform="translate(8 7)" />
       <path d={blob(0, 0, 70, f, seed + 41)} fill="none" stroke={INK} strokeWidth={6} />
       <Face mood={mood} f={f} seed={seed} />
-      <HairShape hair={hair} f={f} seed={seed} />
+      <HairShape hair={hair} f={f} seed={seed} color={hairColor} />
     </g>
   );
 };
 
 /** Hair drawn on a head centred at (0,0), radius 70: ink shapes with the same boiling line. */
-const HairShape = ({ hair, f, seed }: { hair: Hair; f: number; seed: number }) => {
-  const fill = (pts: Pt[], c = INK, amt = 1.8) => <path d={line(pts, f, seed + 50, amt) + ' Z'} fill={c} stroke={INK} strokeWidth={5} strokeLinejoin="round" />;
+const HairShape = ({ hair, f, seed, color = INK }: { hair: Hair; f: number; seed: number; color?: string }) => {
+  const fill = (pts: Pt[], c = color, amt = 1.8) => <path d={line(pts, f, seed + 50, amt) + ' Z'} fill={c} stroke={INK} strokeWidth={5} strokeLinejoin="round" />;
   switch (hair) {
     case 'spiky':
       return fill([[-68, -14], [-74, -46], [-54, -40], [-58, -78], [-30, -58], [-20, -96], [2, -66], [20, -98], [32, -62], [60, -84], [56, -46], [76, -50], [68, -14], [40, -40], [0, -34], [-40, -40]]);
@@ -180,6 +180,10 @@ const HairShape = ({ hair, f, seed }: { hair: Hair; f: number; seed: number }) =
       return <g><circle cx={0} cy={-84} r={22} fill={INK} />{fill([[-70, -4], [-64, -50], [-30, -70], [30, -70], [64, -50], [70, -4], [44, -34], [0, -42], [-44, -34]])}</g>;
     case 'cap':
       return <g>{fill([[-70, -18], [-62, -56], [-26, -78], [26, -78], [62, -56], [70, -18]], SUDS.blue)}{fill([[-70, -22], [-118, -14], [-112, -2], [-66, -6]], SUDS.blue)}</g>;
+    case 'beret':
+      return <g>{fill([[-66, -18], [-60, -48], [-20, -64], [30, -60], [60, -44], [62, -20], [30, -30], [-30, -30]])}{fill([[-74, -34], [-56, -82], [0, -96], [62, -80], [84, -50], [40, -56], [-20, -58]], '#1B1A2E')}<circle cx={46} cy={-74} r={8} fill="#fff" stroke={INK} strokeWidth={3} /></g>;
+    case 'long':
+      return fill([[-74, 40], [-80, -10], [-70, -60], [-36, -86], [20, -88], [62, -68], [80, -20], [76, 44], [56, 30], [58, -18], [30, -44], [-10, -50], [-44, -40], [-56, -10], [-54, 34]]);
     case 'bald':
       return <path d={line([[-30, -52], [-18, -60]], f, seed + 60)} stroke="#fff" strokeWidth={6} strokeLinecap="round" fill="none" opacity={0.8} />;
   }

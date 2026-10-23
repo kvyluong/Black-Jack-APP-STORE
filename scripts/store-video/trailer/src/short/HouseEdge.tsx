@@ -1,5 +1,7 @@
 // 9:16 Short: "Why the house always wins at blackjack". See BRIEF.md for the story and rules.
 import { AbsoluteFill, Easing, Img, Loop, OffthreadVideo, interpolate, spring, staticFile, useCurrentFrame } from 'remotion';
+import { Mood, Stickman } from '../screenlife/Stick';
+import { SUDS } from '../screenlife/Suds';
 
 export const FPS = 30;
 export const W = 1080;
@@ -31,6 +33,7 @@ export const HouseEdge = () => {
         <Odds />
         <EdgeMeter />
         <Grid />
+        <Cast />
       </AbsoluteFill>
       <EndCard />
       <Disclaimer />
@@ -299,6 +302,37 @@ const Grid = () => {
         <Words text="H hit · S stand · D double" from={S.grid + 60} to={S.end} size={46} color="rgba(244,241,232,.75)" />
       </Caption>
     </AbsoluteFill>
+  );
+};
+
+// ---------- The cast: Suds stickmen reacting through the story ----------
+
+/** One stickman that pops in at `from` and out at `to`. */
+const Actor = ({ f, from, to, x, y, scale, mood, hair, shirt, seed, hairColor }: {
+  f: number; from: number; to: number; x: number; y: number; scale: number; mood: Mood; hair: 'swoop' | 'cap' | 'spiky'; shirt: string; seed: number; hairColor?: string;
+}) => {
+  if (f < from || f > to) return null;
+  const pin = sp(f - from, 12, 160);
+  const out = interpolate(f, [to - 8, to], [1, 0], clamp);
+  const s = scale * pin * out;
+  return <Stickman f={f} mood={mood} x={x} y={y + (1 - pin) * 40} scale={s} hair={hair} shirt={shirt} seed={seed} hairColor={hairColor} />;
+};
+
+const Cast = () => {
+  const f = useCurrentFrame();
+  const you = { hair: 'swoop' as const, shirt: SUDS.yellow, seed: 2 };
+  const dealer = { hair: 'cap' as const, shirt: SUDS.paper, seed: 9, hairColor: SUDS.mint };
+  const edgeMood: Mood = f < S.edge + 150 ? 'downbad' : f < S.sixFive + 40 ? 'happy' : 'rage';
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
+      {/* Hook: you, already worried */}
+      <Actor f={f} from={20} to={S.first} x={540} y={1330} scale={0.8} mood="shock" {...you} />
+      {/* Who plays first: the dealer stays smug; you go from smug to rinsed when the King lands */}
+      <Actor f={f} from={S.first + 24} to={S.odds - 4} x={165} y={700} scale={0.75} mood={f > S.bust + 100 ? 'scheme' : 'smug'} {...dealer} />
+      <Actor f={f} from={S.first + 20} to={S.odds - 4} x={165} y={1300} scale={0.75} mood={f > S.first + 124 ? 'cry' : 'smug'} {...you} />
+      {/* House edge: down bad at 2%, happy at 0.5%, tilted at the 6:5 table */}
+      <Actor f={f} from={S.edge + 20} to={S.grid - 4} x={880} y={1350} scale={0.72} mood={edgeMood} {...you} />
+    </svg>
   );
 };
 
