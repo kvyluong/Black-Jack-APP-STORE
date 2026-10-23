@@ -2,6 +2,7 @@
 // as the reference. Original visuals only (no footage from the show): faction dossiers, a poll and a
 // script window over a painted-space wallpaper.
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame } from 'remotion';
+import { Character } from './Characters';
 import { Grain, Win } from './Test';
 
 export const FPS = 30;
@@ -102,19 +103,25 @@ const Dossier = ({ f, at, x, side, blur }: { f: number; at: number; x: number; s
   const s = SIDES[side];
   return (
     <Win x={x} y={150} w={740} h={520} title={s.file} at={at} f={f} z={side === 'empire' ? -1.5 : 1.5} blur={blur}>
-      <div style={{ height: '100%', padding: '30px 38px', background: 'linear-gradient(160deg,#16161c,#0d0d12)', color: '#e8e6f0' }}>
-        <div style={{ fontFamily: SERIF, fontSize: 52, letterSpacing: 3, color: s.color, fontWeight: 700 }}>{s.title}</div>
-        <div style={{ marginTop: 6, fontSize: 22, color: '#a9a6b8' }}>{s.leader}</div>
-        <div style={{ marginTop: 26, borderTop: `2px solid ${s.color}55` }}>
-          {s.rows.map(([k, v], i) => {
-            const p = spring({ frame: f - at - 20 - i * 8, fps: FPS, config: { damping: 18 } });
-            return (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 4px', borderBottom: '1px solid rgba(255,255,255,.08)', fontSize: 30, opacity: p, transform: `translateX(${(1 - p) * 30}px)` }}>
-                <span style={{ color: '#a9a6b8' }}>{k}</span>
-                <span style={{ fontWeight: 800, color: v === '???' ? '#FF6B6B' : '#fff' }}>{v}</span>
-              </div>
-            );
-          })}
+      <div style={{ height: '100%', display: 'flex', background: 'linear-gradient(160deg,#16161c,#0d0d12)', color: '#e8e6f0' }}>
+        {/* Portrait: the faction's leader, talking while the camera is on this dossier. */}
+        <div style={{ width: 250, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: `radial-gradient(circle at 50% 40%, ${s.color}55, ${s.color}11 70%)`, borderRight: `2px solid ${s.color}44` }}>
+          <Character kind={side === 'empire' ? 'emperor' : 'admiral'} f={f} talking={side === 'empire' ? f > 150 && f < 245 : f > 270 && f < 365} size={230} />
+        </div>
+        <div style={{ flex: 1, padding: '28px 30px' }}>
+          <div style={{ fontFamily: SERIF, fontSize: 40, letterSpacing: 2, color: s.color, fontWeight: 700, lineHeight: 1.1 }}>{s.title}</div>
+          <div style={{ marginTop: 8, fontSize: 19, color: '#a9a6b8' }}>{s.leader}</div>
+          <div style={{ marginTop: 20, borderTop: `2px solid ${s.color}55` }}>
+            {s.rows.map(([k, v], i) => {
+              const p = spring({ frame: f - at - 20 - i * 8, fps: FPS, config: { damping: 18 } });
+              return (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 2px', borderBottom: '1px solid rgba(255,255,255,.08)', fontSize: 26, opacity: p, transform: `translateX(${(1 - p) * 30}px)` }}>
+                  <span style={{ color: '#a9a6b8' }}>{k}</span>
+                  <span style={{ fontWeight: 800, color: v === '???' ? '#FF6B6B' : '#fff' }}>{v}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </Win>
@@ -171,6 +178,12 @@ const EndCard = ({ f }: { f: number }) => {
   const p = spring({ frame: f - 715, fps: FPS, config: { damping: 18 } });
   return (
     <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+      <div style={{ position: 'absolute', left: 90, bottom: 40, opacity: p, transform: `translateX(${(1 - p) * -120}px)` }}>
+        <Character kind="emperor" f={f} size={420} talking={f > 730 && f < 770} />
+      </div>
+      <div style={{ position: 'absolute', right: 90, bottom: 40, opacity: p, transform: `translateX(${(1 - p) * 120}px)` }}>
+        <Character kind="admiral" f={f} size={420} flip talking={f > 775 && f < 815} />
+      </div>
       <div style={{ fontFamily: SERIF, fontSize: 84, color: '#fff', letterSpacing: 2, opacity: p, transform: `scale(${0.92 + 0.08 * p})` }}>
         Corrupt Democracy <span style={{ color: '#888' }}>vs</span> Benevolent Dictator
       </div>
