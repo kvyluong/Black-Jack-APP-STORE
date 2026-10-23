@@ -3,6 +3,7 @@ import { FPS, Trailer, totalFrames } from './Trailer';
 import * as Short from './short/HouseEdge';
 import * as Screenlife from './screenlife/Test';
 import * as Logh from './screenlife/Logh';
+import * as Styles from './screenlife/StyleSheet';
 
 export const Root = () => (
   <>
@@ -16,5 +17,7 @@ export const Root = () => (
       durationInFrames={Screenlife.DURATION} fps={Screenlife.FPS} width={Screenlife.W} height={Screenlife.H} />
     <Composition id="logh-edit" component={Logh.LoghEdit}
       durationInFrames={Logh.DURATION} fps={Logh.FPS} width={Logh.W} height={Logh.H} />
+    <Composition id="character-styles" component={Styles.StyleSheet}
+      durationInFrames={1} fps={30} width={Styles.W} height={Styles.H} />
   </>
 );
