@@ -1,6 +1,7 @@
 import { Composition } from 'remotion';
 import { FPS, Trailer, totalFrames } from './Trailer';
 import * as Short from './short/HouseEdge';
+import * as Screenlife from './screenlife/Test';
 
 export const Root = () => (
   <>
@@ -10,5 +11,7 @@ export const Root = () => (
     ))}
     <Composition id="short-house-edge" component={Short.HouseEdge}
       durationInFrames={Short.DURATION} fps={Short.FPS} width={Short.W} height={Short.H} />
+    <Composition id="screenlife-test" component={Screenlife.ScreenlifeTest}
+      durationInFrames={Screenlife.DURATION} fps={Screenlife.FPS} width={Screenlife.W} height={Screenlife.H} />
   </>
 );
