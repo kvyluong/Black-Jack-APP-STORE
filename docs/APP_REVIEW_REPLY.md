@@ -24,10 +24,12 @@ Aim for 2–3 minutes. Keep the phone's notifications quiet (Focus) so nothing p
 Hello App Review team, thank you for the review. Here is the information you asked for. A screen
 recording from a physical iPhone is attached.
 
-**1. Screen recording:** attached. It starts with launching the app and shows the first-run
-screens, a lesson, a hand at the practice table with the coach's feedback, a drill, and the
-Remove ads purchase and Restore purchase on the Settings screen. The app has no accounts, no
-login and no user-generated content.
+**1. Screen recording:** attached. It starts with launching the app from the Home Screen and
+shows the first-run screens (our tracking explainer, the App Tracking Transparency prompt and the
+level picker), lessons with their quizzes, hands at the practice table with the coach's feedback,
+and the "Remove ads" In-App Purchase completed in the sandbox on the Settings screen (after the
+purchase the screen confirms ads are removed; "Restore purchase" sits next to the buy button
+before purchase). The app has no accounts, no login and no user-generated content.
 
 **2. Purpose and audience:** ShoeSharp teaches adults (18+) to play blackjack correctly and to
 count cards, as a skill and for fun. Players learn basic strategy through short lessons, practice
