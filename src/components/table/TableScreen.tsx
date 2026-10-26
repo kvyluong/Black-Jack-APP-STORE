@@ -108,7 +108,8 @@ const T = localized({
     lost: 'Dealer wins',
     surrendered: 'You surrendered',
     push: 'Push',
-    split: (w: number, l: number, p: number) => [w && `Won ${w}`, l && `Lost ${l}`, p && `Push ${p}`].filter(Boolean).join(' · '),
+    both: { win: 'All your hands win', lose: 'All your hands lose', push: 'All your hands push' },
+    split: (w: number, l: number, p: number) => [w && `${w} won`, l && `${l} lost`, p && `${p} pushed`].filter(Boolean).join(' · '),
     nextHand: 'Next hand',
     hand: (n: number) => `Round ${n}`,
   },
@@ -139,7 +140,11 @@ const T = localized({
     lost: 'Gana el crupier',
     surrendered: 'Te rendiste',
     push: 'Empate',
-    split: (w: number, l: number, p: number) => [w && `Ganadas ${w}`, l && `Perdidas ${l}`, p && `Empates ${p}`].filter(Boolean).join(' · '),
+    both: { win: 'Ganan todas tus manos', lose: 'Pierden todas tus manos', push: 'Empatan todas tus manos' },
+    split: (w: number, l: number, p: number) =>
+      [w && `${w} ${w === 1 ? 'ganada' : 'ganadas'}`, l && `${l} ${l === 1 ? 'perdida' : 'perdidas'}`, p && `${p} ${p === 1 ? 'empate' : 'empates'}`]
+        .filter(Boolean)
+        .join(' · '),
     nextHand: 'Siguiente mano',
     hand: (n: number) => `Ronda ${n}`,
   },
@@ -551,7 +556,10 @@ function roundResult(g: GameState): { text: string; tone: number } {
   const lost = yours.filter((h) => h.outcome === 'lose' || h.outcome === 'surrender').length;
   const pushed = yours.length - won - lost;
   const tone = won - lost;
-  if (yours.length !== 1) return { text: T.split(won, lost, pushed) || T.push, tone };
+  if (yours.length !== 1) {
+    const all = won === yours.length ? 'win' : lost === yours.length ? 'lose' : pushed === yours.length ? 'push' : null;
+    return { text: all ? T.both[all] : T.split(won, lost, pushed), tone };
+  }
   const o = yours[0].outcome;
   const text = o === 'blackjack' ? T.blackjack : o === 'win' ? T.won : o === 'surrender' ? T.surrendered : o === 'lose' ? T.lost : T.push;
   return { text, tone };
