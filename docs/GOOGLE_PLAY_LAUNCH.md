@@ -25,7 +25,7 @@ inside those two weeks.
 
 ## 2. AdMob (Android)
 - [x] AdMob → Apps → Add app → **Android**, "not listed yet" (app ID `ca-app-pub-2452034460168771~8351378637`).
-- [x] Ad units **Android Banner**, **Android Interstitial**, **Android Rewarded**, with IDs in `app.json` (`androidAppId` and `extra.adUnits.android`).
+- [x] Ad units **Android Banner**, **Android Interstitial**, **Android Rewarded**, with IDs in `app.json` (`androidAppId` and `extra.adUnits.android`). Since the no-betting rebuild only the interstitial is used (banner and rewarded removed).
 - [ ] AdMob → Privacy & messaging: add the **Android** ShoeSharp app to the "ShoeSharp GDPR consent" message (Your apps → edit → tick it, with the same privacy policy URL) and publish. The IDFA explainer is iOS-only.
 - [x] `app-ads.txt` already covers Android: it lists the publisher ID, not an app.
 
@@ -46,7 +46,7 @@ To run it again: `$ANDROID_HOME/emulator/emulator -avd ShoeSharp_Pixel`, with `A
 ## 5. Closed test (start early: 12 testers × 14 days)
 - [ ] Play Console → Testing → **Closed testing** → create a track, add the build, and a tester list (Google Group or email list) with **at least 12** people. Tell them to accept the opt-in link **and keep the app installed**; anyone who opts out resets their 14 days.
 - [ ] Note the start date here: ____ . Earliest production application: start + 14 days.
-- [ ] Testers check what the iPhone checklist checks (APP_STORE_LAUNCH.md step 7): consent form (EU/UK), level picker, interstitial and rewarded ads (no banners), Remove ads purchase (licence testers buy for free) and restore, sound, vibration, Spanish.
+- [ ] Testers check what the iPhone checklist checks (APP_STORE_LAUNCH.md step 7): consent form (EU/UK), level picker, interstitial ads only (no banners, no reward videos, no chips or bets anywhere), Remove ads purchase (licence testers buy for free) and restore, sound, vibration, Spanish.
 - [ ] Add the testers' Gmail addresses under Settings → **License testing**, so their test purchases aren't charged.
 
 ## 6. Store listing (Grow → Store presence → Main store listing)
@@ -69,8 +69,8 @@ Full description: use the one in [APP_STORE_LISTING.md](APP_STORE_LISTING.md), w
 - [ ] **Data deletion** (Data safety form, if asked for a URL): `https://kvyluong.github.io/Black-Jack-APP-STORE/privacy.html#delete`. Terms of use and refunds: `terms.html`.
 - [ ] **Ads:** Yes, the app contains ads.
 - [ ] **App access:** All functionality is available without special access (no login).
-- [ ] **Content rating (IARC questionnaire):** category Game. Answer honestly: **simulated gambling: Yes**; real-money gambling: No; no violence, sex, drugs or user-to-user chat; purchases of digital goods: Yes. The rating comes out from the answers.
-- [ ] **Target audience:** **18 and over** only (simulated gambling). Not designed for children; that keeps it out of the Families program.
+- [ ] **Content rating (IARC questionnaire):** category Game. Answer honestly: **simulated gambling: No** (the app has no chips, bets, bankroll or prizes since the no-betting rebuild; it teaches strategy and counting, and every hand is practice); real-money gambling: No; the app does reference/depict a casino card game, so answer any "gambling themes" or "references to gambling" question Yes if the questionnaire asks it separately; no violence, sex, drugs or user-to-user chat; purchases of digital goods: Yes. The rating comes out from the answers.
+- [ ] **Target audience:** **18 and over** only (the app teaches a casino game and card counting). Not designed for children; that keeps it out of the Families program. This is a choice, not forced by simulated gambling (there is none).
 - [ ] **Data safety** (everything below is collected by the Google Mobile Ads SDK; the app has no accounts and keeps progress on the device):
 
   | Data type | Collected | Shared | Purpose | Optional? |

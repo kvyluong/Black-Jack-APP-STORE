@@ -1,5 +1,8 @@
 # Reply to App Review: Guideline 2.1, Information Needed (1.0.0, build 11)
 
+_Reply 1 below is kept as history: it describes build 11, which still had virtual chips. For the
+2.3.6 rejection and build 12 (no betting), use Reply 2 at the end._
+
 Apple asked (2026-10-22) for a screen recording on a physical device plus the answers below,
 in a reply **and** in App Review Information → Notes. Paste the text under "Reply" into the
 reply box, attach the recording, and paste the same text (without the recording line) into Notes.
@@ -12,6 +15,8 @@ Start recording from Control Center, then:
 2. First run: the tracking explainer and Apple's prompt, then the level picker ("I'm new").
 3. Home: today's goals and the "Next step" card. Open a lesson and go through a page or two.
 4. Play tab → Main Floor: set a bet, Deal, play a hand (Hit/Stand), show the coach's feedback, Next hand.
+   (Outdated since build 12: there are no bets. For a new recording: Play tab → Practice Tables →
+   Main Floor, Deal, play a hand, show the coach's feedback, Next hand.)
 5. Practice tab: open the Strategy Drill and answer a few questions.
 6. Me tab → Settings → **Remove ads**: show the App Store purchase sheet (sandbox; you can cancel),
    then **Restore purchase**.
@@ -61,3 +66,44 @@ original; no protected third-party material is used.
 **7. In-App Purchase:** one non-consumable, "Remove ads" (USD 2.99), which removes the
 full-screen ads shown between hands. Optional reward videos for bonus virtual chips stay
 available. To reach it: Me tab → Settings → Remove ads. Restore purchase is on the same screen.
+
+## Reply 2: 2.3.6 (simulated gambling rating)
+
+Apple rejected 1.0.0 under guideline 2.3.6: the age rating declared Simulated Gambling (betting
+or wagering without real money), and apps with simulated gambling must come from an
+organization account. Build 12 removes all betting. Before replying: attach build 12 to the
+version, change the age rating to **Simulated Gambling: None** (APP_STORE_CONNECT.md §5),
+update the description, IAP description and review notes, then paste the text below into the
+reply and resubmit.
+
+### Reply
+
+Hello App Review team, thank you for explaining the issue. We have resolved it by removing all
+betting and wagering from the app rather than changing the account type.
+
+**What changed in build 12:** ShoeSharp no longer contains any form of betting or wagering, real
+or simulated. We removed:
+
+- the virtual chips, the bankroll and every bet (there is nothing to stake on any hand);
+- table minimums and maximums, and unlocking tables with chips (practice tables now unlock as
+  the player's skill level goes up);
+- the optional reward videos that granted bonus chips (the app no longer has rewarded ads);
+- the bankroll simulator and the lesson on bet sizing;
+- the bet-sizing score in the casino-conditions practice test.
+
+Hands now end with "You win", "Dealer wins" or "Push", with no amounts.
+
+**What the app is now:** a skill trainer for blackjack basic strategy and card counting. Players
+take short lessons, play practice hands where a coach grades every decision and explains the
+correct play, and train with strategy, running count, true count and deck estimation drills.
+There are no chips, no bets, no prizes and nothing of value to win or lose; progress is measured
+only in lessons completed, accuracy, experience points and levels.
+
+**Age rating:** we have updated the age rating questionnaire to Simulated Gambling: None and
+Gambling: No.
+
+**In-App Purchase:** the only purchase, "Remove ads" (non-consumable, USD 2.99), removes the
+full-screen ads shown between hands. It does not unlock content, currency or any advantage. It
+is in Me tab → Settings → Remove ads, with Restore purchase on the same screen.
+
+Thank you for your time. We are happy to provide anything else you need.

@@ -2,18 +2,17 @@
 
 **Blackjack & Card Counting Trainer.** (Formerly "Blackjack Coach": renamed because several apps already use "Blackjack Coach"-style names.)
 
-A mobile blackjack trainer for iOS and Android that teaches new players to play perfect basic strategy and count cards (Hi-Lo). Ad-supported with Google AdMob. Play money only.
+A mobile blackjack trainer for iOS and Android that teaches new players to play perfect basic strategy and count cards (Hi-Lo). Ad-supported with Google AdMob. No betting: no chips, bets or prizes, and every hand is practice.
 
 Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase ships to both app stores.
 
 ## Features
 
-- **Calm by design**: four tabs (Home, Play, Practice, Me). Home is one "Next step" card with a Continue button, today's goals in a single line and a quick-play button. New players start with just the lessons and the casino floor; drills, tools and the full table display (count bar, bet suggestion, level bar) unlock with the lessons that explain them, with "New" badges (rules in `src/engine/unlocks.ts`). Settings → Show every feature opens everything at once.
+- **Calm by design**: four tabs (Home, Play, Practice, Me). Home is one "Next step" card with a Continue button, today's goals in a single line and a quick-play button. New players start with just the lessons and the casino floor; drills, tools and the full table display (count bar, level bar) unlock with the lessons that explain them, with "New" badges (rules in `src/engine/unlocks.ts`). Settings → Show every feature opens everything at once.
 - **Road to the Casino**: a casino-ready score built from the benchmarks serious counters use (99%+ basic strategy over your last 200 decisions, a full deck counted exactly in under 30 seconds, true count conversion, every count play learned, deck estimation within half a deck, a passed casino-conditions test, all lessons), each with progress, why it matters and a practice button, plus the next step to work on.
-- **Daily goals and progress charts**: three goals a day with chip and XP rewards and a streak; charts of accuracy, hands, best deck time and test grades over time.
-- **Casino Conditions test**: one full shoe with no hints or count on screen, chatty players, a faster dealer and a discard tray; decks-left questions during the shoe, then the running and true count at the end, and a report card grading play, count, bets and deck estimates.
+- **Daily goals and progress charts**: three goals a day with XP rewards and a streak; charts of accuracy, hands, best deck time and test grades over time.
+- **Casino Conditions test**: one full shoe with no hints or count on screen, chatty players, a faster dealer and a discard tray; decks-left questions during the shoe, then the running and true count at the end, and a report card grading play, count and deck estimates.
 - **Count Plays trainer**: the Illustrious 18, Fab 4 and insurance as flash cards with spaced review ("play it" and "name the index"), answers straight from the coach's own logic (including H17 index changes).
-- **Bankroll simulator**: bet spread, rules and bankroll in; edge, average bet, win per hour, swings, N0, risk of ruin and the bankroll for 5% / 1% risk out. True-count frequencies come from simulated shoes; the advantage and variance figures were checked against the app's own engine.
 - **Counting systems**: Hi-Lo, KO, Hi-Opt I and Omega II across the table count, Academy, drills and card tags (lessons and count plays stay Hi-Lo). Computer card counters at the table always count Hi-Lo.
 - **Hand signals**: tap the felt to hit, swipe sideways to stand, like a real casino (Settings).
 - **Deck estimation drill**: read a discard tray and judge the decks left.
@@ -21,16 +20,15 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 - **Starts at your level**: the first screen asks "How well do you know blackjack?" *I'm new* starts the guided hands below; *I know how to play* skips the rules lessons (rules, soft vs hard, your options) and starts at basic strategy, at the table; *I already count cards* opens every feature and points straight at the casino-ready score.
 - **Guided first hands**: for new players, a coach walks new players through two scripted practice hands: standing on 17 against a weak dealer 6, then hitting 8 against a 9. Only the right button is enabled, and every step matches basic strategy (a unit test checks this). It ends with a first look at counting: the cards from both hands with their Hi-Lo tags and the running count. It can be skipped at any time and replayed from Settings.
 - **Your leaks**: every decision at the table and in the strategy drill is sorted into a type (hard 11 or less, stiff 12–16, hard 17+, soft hands, pairs, insurance). After 5 decisions of a type you see your accuracy for it, weakest first, plus the exact spots you miss most (e.g. "Soft 18 vs 9: best play Hit"). "Drill my weakest spot" opens a strategy drill that deals only that kind of hand.
-- **Accessibility**: count tags always pair a shape with the number (▲ +1, ● 0, ▼ −1), so they never rely on color alone. A color-blind mode in Settings swaps green/red for blue/orange throughout. Seats at the table read out as one sentence to screen readers (player, style, bet, cards, result).
-- **Lessons**: 10 short lessons from the rules to true count and index plays, each ending in a quiz.
-- **Chip progression**: you start with 1,000 chips, and your stack carries over between sessions. Five tables with rising limits (Main Floor $5–$100, Downtown $25–$500, The Strip $100–$2,000, High Limit Room $500–$10,000, Private Salon $2,500–$50,000) unlock permanently the first time your chips reach 2.5K, 10K, 50K and 250K. Bets are built from a casino chip tray. XP from hands played and correct decisions raises your level (Rookie → Regular → Card Sharp → Counter → Advantage Player → Legend). If you can't cover a table's minimum you're offered a cheaper table, and if you go broke you get a free refill to 1,000. Chips can't be bought or cashed out, which keeps the app clear of the stores' social-casino rules.
-- **Haptics**: a light tap as each of your cards lands (other players' cards stay quiet), a soft tap when the hole card flips, and patterns for wins, big wins, blackjacks and busts. Chip taps and bonus chips buzz too. Toggle in Settings; the HTML build vibrates on Android browsers.
-- **Bonus chips from rewarded ads**: an optional "Watch an ad: +500 chips" button at the table and in the Casino Floor lobby. Chips are granted only when the ad reports it was watched to the end, up to 5 times a day (resets at local midnight). The bonus is 20 minimum bets at your best unlocked table (500 at the start, up to 50,000 at the Private Salon). In development builds without the ad SDK (Expo Go, web) a labeled test ad stands in; the HTML build shows a 5-second preview.
-- **A real casino table**: seven seats with computer players who sit down and leave between rounds (broke, bored, or up and cashing out). Before each deal you choose to play one hand or two, right in the betting panel (also in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards (watch their bets rise with the count), plays hunches, never busts, copies the dealer, or high roller. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
+- **Accessibility**: count tags always pair a shape with the number (▲ +1, ● 0, ▼ −1), so they never rely on color alone. A color-blind mode in Settings swaps green/red for blue/orange throughout. Seats at the table read out as one sentence to screen readers (player, style, cards, result).
+- **Lessons**: 9 short lessons from the rules to true count and index plays, each ending in a quiz.
+- **Tables and levels**: XP from hands played, correct decisions, drills and daily goals raises your level (Rookie → Regular → Card Sharp → Counter → Advantage Player → Legend). Five practice tables unlock as you level up: Main Floor (level 1), Downtown (3), The Strip (5), Quiet Room (8) and Private Salon (12). There is no betting: no chips, bets, bankroll or table limits, and each hand ends with "You win", "Dealer wins" or "Push". This keeps the app out of the stores' simulated-gambling and social-casino rules.
+- **Haptics**: a light tap as each of your cards lands (other players' cards stay quiet), a soft tap when the hole card flips, and patterns for wins, big wins, blackjacks and busts. Toggle in Settings; the HTML build vibrates on Android browsers.
+- **A real casino table**: seven seats with computer players who sit down and leave between rounds. Before each deal you choose to play one hand or two, right at the table (also in Settings). Cards are dealt around the table in casino order, seat 1 ("first base") on the right, and every player's cards count toward the running count. Each player has a style shown under their name: plays by the book, counts cards, plays hunches, never busts, copies the dealer, or plays it bold. When someone plays against basic strategy, their speech bubble flags it ("Stand ✗ book: Hit").
 - **Practice table**: a full blackjack game (splits, doubles, surrender, insurance, multi-deck shoe with penetration) with a coach that:
   - shows the best play when you tap "Ask the coach" (optional)
   - explains mistakes in plain English after you act
-  - shows running count, decks remaining and true count, with a suggested bet
+  - shows running count, decks remaining and true count
   - can quiz you on the running count between hands
   - can switch to count-based advice (Hi-Lo index plays, insurance at +3)
 - **Counting Academy**: five ways to learn the Hi-Lo count, one per way people like to learn, each built on a technique with research behind it:
@@ -42,11 +40,11 @@ Built with [Expo](https://expo.dev) (React Native + TypeScript), so one codebase
 
   Players pick how they like to learn, which only sets the order: matching lessons to a "learning style" isn't supported by research, but mixing methods helps everyone. So a **daily workout** mixes three modes, favors the ones due for review (reviews spread out to 1, 2, 4, 7 and 14 days as you improve) and keeps a day streak. Scoring 90%+ levels a mode up; all rounds earn XP.
 - **Drills**: basic strategy flash cards, running count (adjustable speed, 1 or 2 cards at a time), true count conversion.
-- **Deal animations and sound effects**: cards slide out of the shoe one at a time in casino order, the hole card flips over, and chip, card, shuffle and win/lose sounds play in time. Totals, results and buttons wait until the cards land so nothing is spoiled. Sound can be turned off in Settings and follows the iPhone silent switch; animations turn off when the phone's Reduce Motion setting is on.
-- **Game feel** (inspired by Balatro): cards land with a bounce and sway gently while idle; wins pop up as big tilted text with a burst of chips, and the bankroll counts up with ticking; blackjacks, big wins and busts shake the table; a streak badge grows with every correct play and the chime climbs in pitch. In the browser, cards also tilt toward your mouse and the felt slowly swirls. Effects can be turned off in Settings ("Big effects") and respect Reduce Motion.
+- **Deal animations and sound effects**: cards slide out of the shoe one at a time in casino order, the hole card flips over, and card, shuffle and win/lose sounds play in time. Totals, results and buttons wait until the cards land so nothing is spoiled. Sound can be turned off in Settings and follows the iPhone silent switch; animations turn off when the phone's Reduce Motion setting is on.
+- **Game feel** (inspired by Balatro): cards land with a bounce and sway gently while idle; wins pop up as big tilted text; blackjacks, big wins and busts shake the table; a streak badge grows with every correct play and the chime climbs in pitch. In the browser, cards also tilt toward your mouse and the felt slowly swirls. Effects can be turned off in Settings ("Big effects") and respect Reduce Motion.
 - **Strategy chart**: generated from the same engine as the coach, so it always matches your table rules.
 - **Configurable rules**: 1/2/6/8 decks, S17/H17, DAS, late surrender, 3:2 or 6:5.
-- **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Optional bonus-chip videos stay, since players choose to watch those. Development builds without a store simulate the purchase.
+- **Remove ads**: a one-time in-app purchase (expo-iap, App Store and Google Play) that turns off the between-hand ads. The local price comes from the store; purchases restore automatically on a new phone, and there's a Restore button (Apple requires one). Development builds without a store simulate the purchase.
 - **English and Spanish**: everything, including the lessons, coach explanations, Academy stories and spoken counts, is in both languages. The app follows the phone's language, or players pick one in Settings.
 - **Ads**: no banners, so nothing sits on screen while you play. A full-screen interstitial shows only when the shoe is reshuffled (at most every 10 hands and every 3 minutes), and never on a player's first day. GDPR/UMP consent and a privacy-options entry in Settings.
 
@@ -84,11 +82,11 @@ src/
   content/        Lesson text and quizzes
   components/     Cards, hands, buttons and layout
   audio/          Sound effect playback (expo-audio)
-  components/table/  Pieces of the table screen (felt, betting panel, turn controls, count quiz)
+  components/table/  Pieces of the table screen (felt, deal panel, turn controls, count quiz)
   ads/            AdMob setup, interstitial frequency cap (web stub for previews)
   purchases/      The Remove ads in-app purchase (expo-iap; web stub)
   i18n/           Language setting and localized() text helper (English / Spanish)
-  state/          Saved settings, bankroll and progress (AsyncStorage)
+  state/          Saved settings and progress (AsyncStorage)
 locales/          Localized app name for the stores
 website/          Landing page, privacy policy (EN/ES) and app-ads.txt
 .github/workflows Checks (lint, types, tests, web build) and the website deploy
@@ -121,9 +119,9 @@ The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect,
 
 1. **Pick your app ID.** Replace `com.REPLACE_ME.shoesharp` in `app.json` (`ios.bundleIdentifier` and `android.package`).
 2. **Remove ads product.** In App Store Connect and the Google Play Console, create a non-consumable in-app product with the ID `remove_ads` (or change `extra.iap.removeAds` in `app.json`), and set its price ($2.99–$4.99 is typical). Test with a sandbox account (iOS) or a license tester (Android) on a development build.
-3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create an interstitial and a rewarded unit for each (the app shows no banners).
+3. **AdMob.** Create an AdMob account, add an iOS app and an Android app, and create an interstitial unit for each (the app shows no banners or rewarded ads).
    - Put the **app IDs** in `app.json` under the `react-native-google-mobile-ads` plugin (`androidAppId`, `iosAppId`). They are currently Google's sample IDs.
-   - Put the **ad unit IDs** (interstitial and rewarded for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
+   - Put the **ad unit IDs** (the interstitial for each platform) in `app.json` under `extra.adUnits`. Release builds show no ads until these are filled in.
    - In AdMob, set up a GDPR consent message (Privacy & messaging) and, for iOS, an IDFA explainer message so the ATT prompt shows.
    - Publish an `app-ads.txt` on your developer website.
 4. **Art.** Replace the placeholder icons and splash image in `assets/`.
@@ -147,8 +145,8 @@ The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect,
 
 ## App store policy notes
 
-- **Age rating.** Simulated gambling (including blackjack trainers with play money) gets a mature rating on both stores. Answer the Apple age-rating and Google Play IARC questionnaires honestly ("simulated gambling: frequent").
-- **Keep chips worthless.** Don't sell chips or let players cash out or win prizes. Selling virtual currency for a casino-style game puts it in a stricter category (Google Play "social casino" rules, region restrictions). A paid **Remove ads** purchase is fine.
+- **Age rating.** The app has no betting or wagering of any kind, so answer "Simulated Gambling: None" on Apple's age rating and "simulated gambling: No" on Google Play's IARC questionnaire. Apple treats any betting without real money as simulated gambling, and those apps must come from an organization account (guideline 2.3.6, why 1.0.0 was rejected). Don't add chips, bets or anything players can wager without revisiting this.
+- **No currency, no prizes.** Don't add virtual currency, sell anything that affects play, or offer prizes. That would put the app in a stricter category (Apple 2.3.6, Google Play "social casino" rules, region restrictions). A paid **Remove ads** purchase is fine.
 - **Don't target children.** Leave the app out of Google's Families program and Apple's Kids category.
 - **Ad placement.** Interstitials only appear between hands, never in the middle of a decision, which keeps them inside AdMob's placement policy.
 
@@ -156,4 +154,3 @@ The full step-by-step for the iOS App Store (accounts, AdMob, App Store Connect,
 
 - Daily practice streaks and achievements
 - More counting systems (KO, Hi-Opt I) and a full Illustrious 18 / Fab 4 trainer
-- Bet-spread and bankroll simulator

@@ -45,7 +45,7 @@ PLAY PERFECT BASIC STRATEGY
 • "Your Leaks" finds the decisions you miss most and drills them
 
 LEARN TO COUNT CARDS
-• Ten short lessons: from the rules to the Hi-Lo count, true count and betting
+• Nine short lessons: from the rules to the Hi-Lo count and the true count
 • Counting Academy: learn the count by seeing, hearing, tapping or chunking cards
 • Running count, true count and deck estimation drills
 • Four counting systems: Hi-Lo, KO, Hi-Opt I and Omega II
@@ -54,7 +54,6 @@ LEARN TO COUNT CARDS
 GET CASINO-READY
 • Casino Conditions test: a full shoe, faster dealer, chatty players, no help on screen
 • Casino-ready score that shows exactly what to practice next
-• Bankroll simulator: what your bet spread is worth and your risk of ruin
 • Progress charts, daily goals and streaks
 • Practice casino hand signals: tap to hit, swipe to stand
 
@@ -64,7 +63,7 @@ MADE FOR YOU
 • No account needed: your progress stays on your device
 • Every feature free: ads keep it that way, and one optional purchase removes them
 
-For entertainment and education only. No real-money gambling: chips are virtual and have no cash value. Card counting is legal, but casinos may ask counters to stop playing.
+For entertainment and education only. No betting, chips or prizes: every hand is practice. Card counting is legal, but casinos may ask counters to stop playing.
 ```
 
 ### Screenshot captions (the first 3 matter most; most people never scroll past them)
@@ -85,7 +84,7 @@ Sizes: iPhone 6.9" 1320×2868, and iPad 13" 2064×2752 (required because the app
 |---|---|---|
 | **Name** | `ShoeSharp: Blackjack y Conteo` | 29/30 |
 | **Subtitle** | `Aprende a contar cartas al 21` | 29/30 |
-| **Keywords** | `entrenador,estrategia,naipes,simulador,casino,veintiuno,crupier,apuestas,baraja,practica,hi-lo,juego` | 100/100 |
+| **Keywords** | `entrenador,estrategia,naipes,simulador,casino,veintiuno,crupier,consejos,baraja,practica,hi-lo,juego` | 100/100 |
 | **Promotional text** | `Todas las lecciones, ejercicios y el examen de casino son gratis. Sin muro de pago, sin suscripción y sin cuenta: aprende blackjack y a contar cartas a tu ritmo.` | 161/170 |
 
 ### Descripción
@@ -103,7 +102,7 @@ JUEGA CON ESTRATEGIA BÁSICA PERFECTA
 • "Tus fugas" encuentra las decisiones que más fallas y las entrena
 
 APRENDE A CONTAR CARTAS
-• Diez lecciones cortas: de las reglas al conteo Hi-Lo, el conteo real y las apuestas
+• Nueve lecciones cortas: de las reglas al conteo Hi-Lo y el conteo real
 • Academia de conteo: aprende viendo, escuchando, tocando o agrupando cartas
 • Ejercicios de conteo continuo, conteo real y estimación de barajas
 • Cuatro sistemas de conteo: Hi-Lo, KO, Hi-Opt I y Omega II
@@ -112,7 +111,6 @@ APRENDE A CONTAR CARTAS
 PREPÁRATE PARA EL CASINO
 • Examen en condiciones de casino: un zapato completo, crupier rápido y sin ayudas
 • Puntaje para el casino que te dice exactamente qué practicar
-• Simulador de banca: cuánto vale tu rango de apuestas y tu riesgo de quiebra
 • Gráficas de progreso, metas diarias y rachas
 • Practica las señas de mano del casino: toca para pedir, desliza para plantarte
 
@@ -122,7 +120,7 @@ HECHO PARA TI
 • Sin cuenta: tu progreso se guarda en tu dispositivo
 • Todas las funciones gratis: los anuncios lo mantienen así y una compra opcional los quita
 
-Solo para entretenimiento y aprendizaje. Sin apuestas con dinero real: las fichas son virtuales y no tienen valor. Contar cartas es legal, pero los casinos pueden pedir a quien cuenta que deje de jugar.
+Solo para entretenimiento y aprendizaje. Sin apuestas, fichas ni premios: cada mano es práctica. Contar cartas es legal, pero los casinos pueden pedir a quien cuenta que deje de jugar.
 ```
 
 Screenshot captions (ES): 1 **Cuenta cartas como un pro** · 2 **Un coach en cada decisión** ·
@@ -133,7 +131,11 @@ Screenshot captions (ES): 1 **Cuenta cartas como un pro** · 2 **Un coach en cad
 
 ## Other App Store Connect fields
 - **Primary category:** Games → Card (best fit for searchers; strong for "blackjack"). **Secondary:** Education.
-- **Age rating:** Simulated Gambling = Frequent/Intense → 17+.
+- **Age rating:** Simulated Gambling = **None**, Gambling (real money) = **No**. Apple counts
+  any betting or wagering without real money as simulated gambling, and apps with it must come
+  from an organization account (guideline 2.3.6, the reason 1.0.0 was rejected). Since build 12
+  the app has no chips, bets, bankroll or prizes: it is a skill trainer where every hand is
+  practice, so the honest answer is None. See APP_STORE_CONNECT.md §5.
 - **Support / marketing URL:** the website, ideally on the custom domain (see APP_STORE_LAUNCH.md §4).
 - **In-app purchase display name:** "Remove ads" / "Quitar anuncios". In-app purchases are also indexed by search and can show on the product page.
 

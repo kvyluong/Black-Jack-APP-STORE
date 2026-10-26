@@ -49,6 +49,7 @@ Android / Google Play has its own runbook: [GOOGLE_PLAY_LAUNCH.md](GOOGLE_PLAY_L
 - [x] Put the IDs in `app.json`:
   - the AdMob **app ID** (`ca-app-pub-…~…`) → `plugins` → `react-native-google-mobile-ads` → `iosAppId`, replacing Google's test ID;
   - the 3 **unit IDs** (`ca-app-pub-…/…`) → `extra.adUnits.ios.banner`, `.interstitial` and `.rewarded`.
+  - Since build 12 (no betting) only the **interstitial** is used: the bonus-chip rewarded ad was removed with the chips, and the banner was removed 2026-10-20.
 - [x] Leave the Android placeholders. Units still set to `REPLACE…` simply show no ads (see `src/ads/config.ts`). Development builds always use Google's test ads.
 - [x] **Publisher ID** (`pub-…`, from AdMob → Settings → Account): put it in `website/app-ads.txt`.
 - [x] Optional: **AdMob → Privacy & messaging**. Create the GDPR (EU/UK) message and the IDFA explainer for iOS. The app already shows Google's consent form (`src/ads/init.ts`) and the iOS tracking prompt.
@@ -82,7 +83,7 @@ Every value for steps 5 and 6, screen by screen, is in **docs/APP_STORE_CONNECT.
   - product ID **`remove_ads`**, which must match `extra.iap.removeAds`;
   - reference name "Remove ads";
   - price $2.99–$4.99;
-  - display name and description in English and Spanish: "Remove ads" / "Quitar anuncios", and "No more ads between hands. Rewarded bonus chips stay available." / "Sin anuncios entre manos. Las fichas extra con anuncio siguen disponibles.";
+  - display name and description in English and Spanish: "Remove ads" / "Quitar anuncios", and "No more ads between hands." / "Sin anuncios entre manos." (the bonus-chip wording was dropped with the chips in build 12);
   - review screenshot: the Settings screen showing the Remove ads button.
 
 
@@ -100,16 +101,16 @@ All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LI
   - capture them from the web build at those sizes, or from the simulator or TestFlight build.
 - [ ] **App Previews** (optional, autoplay above the screenshots): `store-assets/video/` has 24 s captioned previews for iPhone 6.9" (886×1920) and iPad 13" (1200×1600) in English and Spanish, recorded on the simulator. Rebuild with `scripts/store-video/` (see its README).
 - [x] **Support URL:** the website.
-- [x] **Age rating questionnaire:** "Simulated Gambling" = **Frequent/Intense**, which gives **17+**; everything else None.
+- [ ] **Age rating questionnaire:** "Simulated Gambling" = **None**, "Gambling" = **No**, everything else None (Advertising: Yes, if asked). 1.0.0 was submitted as Frequent/Intense (17+) and rejected under guideline 2.3.6 (simulated gambling requires an organization account); build 12 removes all betting, so update the answers before resubmitting. See APP_STORE_CONNECT.md §5.
 - [ ] **App Privacy (nutrition labels):**
   - Data used to track you: **Device ID** (advertising identifier, via AdMob).
   - Data linked to you: none (no accounts).
   - Data not linked to you: **Product interaction**, **Advertising data**, **Crash data**, **Performance data** (collected by the Google Mobile Ads SDK).
   - Re-check against Google's current AdMob guidance for Apple's privacy labels before submitting.
-- [x] **Review notes:** "ShoeSharp is a blackjack training app. No real-money gambling: chips are virtual, can't be bought or cashed out, and have no value. The only purchase removes ads."
+- [x] **Review notes:** "ShoeSharp is a blackjack skill trainer. There is no betting or wagering of any kind: no chips, bets, bankroll or prizes, and every hand is practice graded by a coach. The only purchase removes ads."
 
 ## 6b. Simulator check on the Mac (done 2026-10-18)
-EAS `simulator` profile build on the iOS 27.1 simulator (iPhone Duo): the splash, the IDFA explainer, Apple's tracking prompt (declining it still lets you use everything), the level picker, Casino Floor, a Google **test** banner, the bonus-chips button and the table (deal, other players) all work. Not covered: purchases and real ads (TestFlight, step 7).
+EAS `simulator` profile build on the iOS 27.1 simulator (iPhone Duo): the splash, the IDFA explainer, Apple's tracking prompt (declining it still lets you use everything), the level picker, Casino Floor, a Google **test** banner, the bonus-chips button (both since removed) and the table (deal, other players) all work. Not covered: purchases and real ads (TestFlight, step 7).
 
 To run it again: `npx eas-cli@latest build --platform ios --profile simulator`, unpack the `.tar.gz`, then `xcrun simctl install booted ShoeSharp.app` and `xcrun simctl launch booted com.kvyluong.shoesharp`.
 
@@ -127,7 +128,7 @@ gets test ads.
 - [ ] **🛑 OWNER on the phone**, checking each of these:
   - [ ] first launch shows the tracking prompt (and the consent form in the EU/UK);
   - [ ] the level picker works (new / know how to play / count cards);
-  - [ ] no banner anywhere (removed 2026-10-20), an interstitial appears at a reshuffle (not on the first day of use), and the rewarded bonus-chips button pays out;
+  - [ ] no banner anywhere (removed 2026-10-20), an interstitial appears at a reshuffle (not on the first day of use); no chips, bets or reward videos anywhere (removed in build 12);
   - [ ] Remove ads buys (sandbox account) and ads disappear;
   - [ ] Restore purchase works after reinstalling;
   - [ ] sound, vibration and hand signals (tap = hit, swipe = stand) work;
@@ -138,7 +139,7 @@ gets test ads.
 - [x] In the version page, select the TestFlight build, then fill in what's missing (copyright: "2026 <owner name>"). Done 2026-10-21: build 11 and the `remove_ads` purchase are in the draft submission (Ready for Review); the Spanish (Mexico) privacy policy URL is `es/privacidad.html`.
 - [x] **🛑 OWNER:** press **Submit for Review**. Review usually takes 1–3 days. Submitted 2026-10-21 (build 11 + `remove_ads`, owner-approved); status Waiting for Review. Release is manual: press **Release This Version** after approval.
 - [ ] **1.0.1, after 1.0 is approved** (decided 2026-10-21; build 11 stays in review): ships commit 9e060d4, the one-goal daily streak with earned freezes, the daily reminder (expo-notifications, a new native module, so it needs a build, not an OTA update) and ads only at a reshuffle, never on day one. Steps: bump `version` to 1.0.1 in app.json, local production build, upload, test on the phone (reminder prompt after the first claimed goal, a reminder arriving, the Settings switch, an ad at a reshuffle), then add 1.0.1 for review.
-- [ ] If it's rejected: read the note, fix, resubmit. The most common casino-app issue is real-money confusion; the review notes and in-app disclaimer cover that.
+- [ ] If it's rejected: read the note, fix, resubmit. The most common casino-app issues are real-money confusion and simulated gambling (1.0.0 was rejected under 2.3.6 for the Simulated Gambling rating); build 12 removes all betting and the review notes say so. The reply to App Review is in [APP_REVIEW_REPLY.md](APP_REVIEW_REPLY.md).
 
 ## 9. After launch
 - [ ] **Google Search Console** (search.google.com/search-console): add the website, verify it, and submit `sitemap.xml`. The build generates it, along with structured data for the app and FAQ.

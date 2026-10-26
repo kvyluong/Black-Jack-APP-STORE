@@ -83,15 +83,19 @@ Answer **None / No** to everything except:
 
 | Question | Answer |
 |---|---|
-| Simulated Gambling | **Frequent/Intense** |
+| Simulated Gambling | **None** |
 | Gambling (real money) | **No** |
 | Contests | No |
 | Unrestricted web access | No |
 | Advertising (if asked) | **Yes**, the app shows ads |
 | In-app controls / parental controls (if asked) | No |
 
-This puts the app in Apple's top age tier (17+, shown as 18+ under Apple's newer rating
-labels). That's expected for blackjack; anything lower is likely to be rejected.
+Simulated Gambling is **None** because, since build 12, the app has no betting or wagering of
+any kind: no chips, bets, bankroll, table limits or prizes. Every hand is practice, graded by
+the coach. Apple defines simulated gambling as betting or wagering without real money, and
+apps that offer it must come from an organization account (guideline 2.3.6, the reason 1.0.0
+was rejected while it was rated Frequent/Intense). If a future version adds anything players
+can wager, this answer, and the account type, must change.
 
 ## 6. In-App Purchase (Monetization → In-App Purchases → +)
 
@@ -108,7 +112,7 @@ Localizations:
 
 | | Display name | Description |
 |---|---|---|
-| English (U.S.) | `Remove ads` | `No ads between hands. Bonus-chip videos stay.` (45/55) |
+| English (U.S.) | `Remove ads` | `No more ads between hands.` (26/55) |
 | Spanish (Mexico) | `Quitar anuncios` | `Sin anuncios entre manos.` (25/55) |
 
 **Review screenshot:** the Settings screen showing the Remove ads and Restore purchase
@@ -145,7 +149,7 @@ both go into the same submission. Created 2026-10-19: Apple ID 6824753924, USD 2
 | Notes | See below |
 
 ```
-ShoeSharp is a blackjack training app. No real-money gambling: chips are virtual, can't be bought or cashed out, and have no value. The only purchase removes ads (Me → Settings → Remove ads; Restore purchase is on the same screen).
+ShoeSharp is a blackjack skill trainer. There is no betting or wagering of any kind: no chips, bets, bankroll or prizes, and every hand is practice graded by a coach. The only purchase removes ads (Me → Settings → Remove ads; Restore purchase is on the same screen).
 
 On first launch the app shows Google's consent message (EEA/UK/Switzerland only) and Apple's App Tracking Transparency prompt, preceded by a short explainer. Declining both still lets you use the whole app.
 ```
