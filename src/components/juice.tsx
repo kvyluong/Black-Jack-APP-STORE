@@ -29,7 +29,7 @@ const TIER_COLOR: Record<FanfareTier, string> = {
   bust: colors.bad,
   lose: colors.bad,
 };
-const CHIP_COLORS = [colors.gold, '#E5484D', '#F4F1E8', '#3E9BFF', '#4ADE80'];
+const CONFETTI_COLORS = [colors.gold, '#E5484D', '#F4F1E8', '#3E9BFF', '#4ADE80'];
 
 /**
  * Shakes whatever it wraps (a Reanimated `Animated.View`) when `shake(strength)` is called.
@@ -56,7 +56,7 @@ interface Particle {
   size: number;
 }
 
-/** Big pop-up text plus a burst of chips, played once per new `fanfare.key`. */
+/** Big pop-up text plus a burst of confetti, played once per new `fanfare.key`. */
 export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key: number }) | null; effects: boolean }) {
   const colorblind = usePrefs().settings.colorblind;
   const pop = useSharedValue(0);
@@ -73,7 +73,7 @@ export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key
         dx: Math.cos(angle) * speed,
         dy: Math.sin(angle) * speed,
         spin: (random() - 0.5) * 720,
-        color: CHIP_COLORS[Math.floor(random() * CHIP_COLORS.length)],
+        color: CONFETTI_COLORS[Math.floor(random() * CONFETTI_COLORS.length)],
         size: 8 + random() * 8,
       };
     });
@@ -111,7 +111,7 @@ export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <View style={styles.center}>
         {particles.map((p, i) => (
-          <Chip key={`${fanfare.key}-${i}`} p={p} burst={burst} />
+          <Confetti key={`${fanfare.key}-${i}`} p={p} burst={burst} />
         ))}
         <Animated.Text style={[styles.label, big && styles.big, { color: tierColor }, labelStyle]}>
           {fanfare.label}
@@ -121,8 +121,8 @@ export function FanfareOverlay({ fanfare, effects }: { fanfare: (Fanfare & { key
   );
 }
 
-/** One chip of the burst: flies out and falls under gravity, y(t) = dy·t + g·t². */
-function Chip({ p, burst }: { p: Particle; burst: SharedValue<number> }) {
+/** One piece of confetti: flies out and falls under gravity, y(t) = dy·t + g·t². */
+function Confetti({ p, burst }: { p: Particle; burst: SharedValue<number> }) {
   const style = useAnimatedStyle(() => {
     const t = burst.value;
     return {
@@ -132,7 +132,7 @@ function Chip({ p, burst }: { p: Particle; burst: SharedValue<number> }) {
   });
   return (
     <Animated.View
-      style={[styles.chip, { width: p.size, height: p.size, borderRadius: p.size / 2, backgroundColor: p.color }, style]}
+      style={[styles.chip, { width: p.size, height: p.size * 0.45, borderRadius: 2, backgroundColor: p.color }, style]}
     />
   );
 }

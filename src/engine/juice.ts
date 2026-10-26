@@ -9,30 +9,32 @@ export interface Fanfare {
   tier: FanfareTier;
   /** Big pop-up text over the table. */
   label: string;
-  /** Bankroll change for the round. */
+  /** Result of the round in practice units (internal: never shown as money). */
   net: number;
   /** Screen shake strength, 0 (none) to 1 (huge). */
   shake: number;
-  /** Number of chip particles to burst. */
+  /** Number of confetti particles to burst. */
   particles: number;
 }
-
-const money = (n: number) => `$${n % 1 ? n.toFixed(2) : n}`;
 
 const T = localized({
   en: {
     blackjack: 'BLACKJACK!',
-    bigWin: (m: string) => `BIG WIN +${m}`,
+    bigWin: 'BIG WIN!',
+    win: 'WIN',
     push: 'PUSH',
-    surrender: (m: string) => `SURRENDER −${m}`,
+    surrender: 'SURRENDER',
     bust: 'BUST',
+    lose: 'DEALER WINS',
   },
   es: {
     blackjack: '¡BLACKJACK!',
-    bigWin: (m: string) => `¡GRAN PREMIO! +${m}`,
+    bigWin: '¡GRAN MANO!',
+    win: 'GANAS',
     push: 'EMPATE',
-    surrender: (m: string) => `RENDIDO −${m}`,
+    surrender: 'RENDIDO',
     bust: '¡TE PASASTE!',
+    lose: 'GANA EL CRUPIER',
   },
 });
 
@@ -41,7 +43,7 @@ export function roundFanfare(g: GameState): Fanfare | null {
   const yours = g.hands.filter(isYours);
   if (g.phase !== 'roundOver' || yours.length === 0) return null;
   const net = g.lastNet;
-  // What you put out before doubling or splitting: the first hand at each of your seats.
+  // Your stake before doubling or splitting: the first hand at each of your seats (a big win beats it).
   const originalBet = yours
     .filter((h, i) => yours.findIndex((x) => x.seat === h.seat) === i)
     .reduce((sum, h) => sum + (h.doubled ? h.bet / 2 : h.bet), 0);
@@ -50,17 +52,17 @@ export function roundFanfare(g: GameState): Fanfare | null {
     return { tier: 'blackjack', label: T.blackjack, net, shake: 0.8, particles: 24 };
   }
   if (net > originalBet) {
-    return { tier: 'bigWin', label: T.bigWin(money(net)), net, shake: 0.5, particles: 18 };
+    return { tier: 'bigWin', label: T.bigWin, net, shake: 0.5, particles: 18 };
   }
-  if (net > 0) return { tier: 'win', label: `+${money(net)}`, net, shake: 0, particles: 10 };
+  if (net > 0) return { tier: 'win', label: T.win, net, shake: 0, particles: 10 };
   if (net === 0) return { tier: 'push', label: T.push, net, shake: 0, particles: 0 };
   if (yours.every((h) => h.surrendered)) {
-    return { tier: 'surrender', label: T.surrender(money(-net)), net, shake: 0, particles: 0 };
+    return { tier: 'surrender', label: T.surrender, net, shake: 0, particles: 0 };
   }
   if (yours.every((h) => isBust(h.cards))) {
     return { tier: 'bust', label: T.bust, net, shake: 0.35, particles: 0 };
   }
-  return { tier: 'lose', label: `−${money(-net)}`, net, shake: 0.1, particles: 0 };
+  return { tier: 'lose', label: T.lose, net, shake: 0.1, particles: 0 };
 }
 
 /**

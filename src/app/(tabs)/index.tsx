@@ -8,7 +8,7 @@ import { Meter } from '../../components/progress/Meter';
 import { Button, P, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
 import { getLessons } from '../../content/lessons';
-import { formatChips, levelInfo } from '../../engine/progression';
+import { levelInfo } from '../../engine/progression';
 import { BENCHMARK_TEXT, benchmarks, nextStep, readyScore } from '../../engine/progress';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -29,7 +29,7 @@ const T = localized({
     level: (n: number, title: string) => `Lv ${n} · ${title}`,
     hands: 'Hands played',
     rightCalls: 'Right calls',
-    biggestWin: 'Biggest win',
+    levelStat: 'Level',
   },
   es: {
     tagline: 'Aprende a jugar perfecto y a contar cartas',
@@ -45,7 +45,7 @@ const T = localized({
     level: (n: number, title: string) => `Nv ${n} · ${title}`,
     hands: 'Manos jugadas',
     rightCalls: 'Decisiones correctas',
-    biggestWin: 'Mayor ganancia',
+    levelStat: 'Nivel',
   },
 });
 
@@ -93,8 +93,7 @@ export default function Home() {
           </P>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={styles.chips}>${formatChips(settings.bankroll)}</Text>
-          <Text style={styles.level}>{T.level(lvl.level, lvl.title)}</Text>
+          <Text style={styles.levelBig}>{T.level(lvl.level, lvl.title)}</Text>
         </View>
       </View>
 
@@ -118,12 +117,12 @@ export default function Home() {
       {/* Your play so far, at a glance. */}
       {stats.handsPlayed > 0 && (
         <View style={styles.stats}>
-          <Stat value={formatChips(stats.handsPlayed)} label={T.hands} />
+          <Stat value={stats.handsPlayed.toLocaleString('en-US')} label={T.hands} />
           <Stat
             value={stats.decisions > 0 ? `${Math.round((100 * stats.correctDecisions) / stats.decisions)}%` : '–'}
             label={T.rightCalls}
           />
-          <Stat value={`$${formatChips(stats.biggestWin)}`} label={T.biggestWin} />
+          <Stat value={String(lvl.level)} label={T.levelStat} />
         </View>
       )}
 
@@ -159,8 +158,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing(2) },
   logo: { color: colors.gold, fontSize: 18, letterSpacing: 4 },
-  chips: { color: colors.gold, fontSize: 20, fontWeight: '900' },
-  level: { color: colors.muted, fontSize: 13, fontWeight: '600' },
+  levelBig: { color: colors.gold, fontSize: 16, fontWeight: '900' },
   next: { backgroundColor: colors.feltDark, borderRadius: radius.lg, padding: spacing(2.5), gap: spacing(1.25) },
   eyebrow: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   nextTitle: { color: colors.text, fontSize: 22, fontWeight: '800' },

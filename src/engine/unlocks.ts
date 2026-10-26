@@ -19,7 +19,6 @@ export type Feature =
   | 'decksDrill'
   | 'deviations'
   | 'exam'
-  | 'simulator'
   | 'tableCount';
 
 /** What unlocks a feature: a finished lesson, or enough hands played (whichever comes first). */
@@ -29,8 +28,8 @@ interface Rule {
 }
 
 /**
- * Lesson ids from src/content/lessons.ts. 'tableCount' is the count bar, bet
- * suggestion and level bar at the table (revealed with the counting lessons).
+ * Lesson ids from src/content/lessons.ts. 'tableCount' is the count bar
+ * and level bar at the table (revealed with the counting lessons).
  */
 const RULES: Record<Feature, Rule | null> = {
   lessons: null,
@@ -47,7 +46,6 @@ const RULES: Record<Feature, Rule | null> = {
   decksDrill: { lesson: 'true-count' },
   deviations: { lesson: 'deviations' },
   exam: { lesson: 'deviations' },
-  simulator: { lesson: 'betting' },
 };
 
 export const FEATURES = Object.keys(RULES) as Feature[];

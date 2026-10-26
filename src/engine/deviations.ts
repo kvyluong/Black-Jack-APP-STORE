@@ -102,8 +102,8 @@ const T = localized({
     insuranceRule: (i: string) => `Insurance: take it at ${i} or higher; decline it below.`,
     insuranceWhy: (tc: string, i: string, take: boolean) =>
       take
-        ? `Take it: the true count is ${tc}, at or above ${i}. Enough tens are left that the 2:1 insurance bet pays off.`
-        : `Decline it: the true count is ${tc}, below ${i}. Insurance pays 2:1, and with this few tens left it loses money.`,
+        ? `Take it: the true count is ${tc}, at or above ${i}. Enough tens are left that insurance is the right call.`
+        : `Decline it: the true count is ${tc}, below ${i}. With this few tens left, insurance is the wrong call.`,
   },
   es: {
     insurance: 'Seguro',
@@ -115,8 +115,8 @@ const T = localized({
     insuranceRule: (i: string) => `Seguro: tómalo con ${i} o más; recházalo por debajo.`,
     insuranceWhy: (tc: string, i: string, take: boolean) =>
       take
-        ? `Tómalo: el conteo real es ${tc}, igual o mayor que ${i}. Quedan suficientes cartas de 10 para que el seguro, que paga 2 a 1, sea rentable.`
-        : `Recházalo: el conteo real es ${tc}, menor que ${i}. El seguro paga 2 a 1 y, con tan pocas cartas de 10, pierde dinero.`,
+        ? `Tómalo: el conteo real es ${tc}, igual o mayor que ${i}. Quedan suficientes cartas de 10 para que el seguro sea la jugada correcta.`
+        : `Recházalo: el conteo real es ${tc}, menor que ${i}. Con tan pocas cartas de 10, el seguro es la jugada incorrecta.`,
   },
 });
 

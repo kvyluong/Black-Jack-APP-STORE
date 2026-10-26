@@ -1,5 +1,5 @@
 import { Card, Rank, createShoe, seededRng } from '../cards';
-import { decksRemaining, hiLoValue, runningCount, suggestedBetUnits, trueCount } from '../counting';
+import { decksRemaining, hiLoValue, runningCount, trueCount } from '../counting';
 import { act, legalActions, newGame, resolveInsurance, startRound, GameState } from '../game';
 import { describeHand, handValue, isBlackjack } from '../hand';
 import { DEFAULT_RULES, Rules } from '../rules';
@@ -46,8 +46,6 @@ describe('Hi-Lo counting', () => {
     expect(decksRemaining(156)).toBe(3);
     expect(trueCount(6, 156)).toBe(2);
     expect(decksRemaining(10)).toBe(0.5);
-    expect(suggestedBetUnits(-2)).toBe(1);
-    expect(suggestedBetUnits(5)).toBe(8);
   });
 });
 

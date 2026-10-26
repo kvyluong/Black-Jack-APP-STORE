@@ -1,5 +1,5 @@
 import { seededRng } from '../cards';
-import { GameState, YOU, act, currentTrueCount, decisionContext, isYours, newGame, resolveInsurance, startRound } from '../game';
+import { GameState, YOU, act, decisionContext, isYours, newGame, resolveInsurance, startRound } from '../game';
 import { DEFAULT_RULES } from '../rules';
 import { recommend } from '../strategy';
 import {
@@ -27,7 +27,7 @@ describe('table simulation', () => {
   it('deals to every seat in order and you get two hands', () => {
     const rng = seededRng(4);
     const t = createTable(2, 10, true, rng);
-    const g = startRound(newGame(DEFAULT_RULES, 1000, rng), roundBets(t, 10, 0, 10), rng);
+    const g = startRound(newGame(DEFAULT_RULES, 1000, rng), roundBets(t, 10, 10), rng);
     const seats = g.hands.map((h) => h.seat);
     expect(seats).toEqual([...seats].sort((a, b) => a - b));
     expect(g.hands.filter(isYours)).toHaveLength(2);
@@ -51,7 +51,7 @@ describe('table simulation', () => {
     let leaves = 0;
     for (let round = 0; round < 600; round++) {
       const before = g.bankroll;
-      g = startRound(g, roundBets(table, 10, currentTrueCount(g), 10), rng);
+      g = startRound(g, roundBets(table, 10, 10), rng);
       if (g.phase === 'insurance') g = resolveInsurance(g, false, rng);
       let guard = 0;
       while (g.phase === 'playing') {
@@ -81,12 +81,20 @@ describe('table simulation', () => {
     expect(leaves).toBeGreaterThan(5);
   });
 
-  it('card counters bet more when the count is high', () => {
-    const t = createTable(1, 10, true, seededRng(1));
-    const counter = { id: 'c', name: 'C', style: 'counter' as const, bankroll: 5000, buyIn: 5000, baseBet: 10, roundsPlayed: 0, patience: 50, hue: 0 };
+  it('every hand uses the same hidden practice stake, whatever the count', () => {
+    const t = createTable(1, 1, true, seededRng(1));
+    const counter = { id: 'c', name: 'C', style: 'counter' as const, bankroll: 5000, baseBet: 1, roundsPlayed: 0, patience: 50, hue: 0 };
     const seats = t.seats.map((o, i) => (i === 0 ? counter : o));
-    const low = roundBets({ ...t, seats }, 10, 0, 10).find((b) => b.owner === 'c')!.bet;
-    const high = roundBets({ ...t, seats }, 10, 5, 10).find((b) => b.owner === 'c')!.bet;
-    expect(high).toBeGreaterThan(low);
+    expect(roundBets({ ...t, seats }, 1, 1).every((b) => b.bet === 1)).toBe(true);
+  });
+
+  it('nobody leaves broke or talks about money', () => {
+    const rng = seededRng(9);
+    let table = createTable(1, 1, true, rng);
+    for (let i = 0; i < 300; i++) {
+      const r = betweenRounds(table, 1, true, rng);
+      for (const e of r.events) expect(e.text).not.toMatch(/\$|chip/i);
+      table = r.table;
+    }
   });
 });

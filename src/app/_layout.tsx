@@ -13,7 +13,7 @@ import { colors } from '../theme';
 const T = localized({
   en: {
     index: 'ShoeSharp',
-    tables: 'Casino Floor',
+    tables: 'Practice Tables',
     play: 'Table',
     learn: 'Lessons',
     lesson: 'Lesson',
@@ -29,14 +29,13 @@ const T = localized({
     settings: 'Settings',
     ready: 'Road to the Casino',
     progress: 'Your Progress',
-    simulator: 'Bankroll Simulator',
     exam: 'Casino Conditions',
     deviationsDrill: 'Count Plays',
     decksDrill: 'Deck Estimation',
   },
   es: {
     index: 'ShoeSharp',
-    tables: 'Sala del casino',
+    tables: 'Mesas de práctica',
     play: 'Mesa',
     learn: 'Lecciones',
     lesson: 'Lección',
@@ -52,7 +51,6 @@ const T = localized({
     settings: 'Ajustes',
     ready: 'Camino al casino',
     progress: 'Tu progreso',
-    simulator: 'Simulador de banca',
     exam: 'Condiciones de casino',
     deviationsDrill: 'Jugadas por conteo',
     decksDrill: 'Estimar barajas',
@@ -110,7 +108,6 @@ function AppStack() {
         <Stack.Screen name="settings" options={{ title: T.settings }} />
         <Stack.Screen name="ready" options={{ title: T.ready }} />
         <Stack.Screen name="progress" options={{ title: T.progress }} />
-        <Stack.Screen name="simulator" options={{ title: T.simulator }} />
         <Stack.Screen name="exam" options={{ title: T.exam }} />
         <Stack.Screen name="drills/deviations" options={{ title: T.deviationsDrill }} />
         <Stack.Screen name="drills/decks" options={{ title: T.decksDrill }} />

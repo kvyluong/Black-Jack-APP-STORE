@@ -1,4 +1,4 @@
-// Me: your chips and level, your casino-ready score and progress, and settings.
+// Me: your level and stats, your casino-ready score and progress, and settings.
 import { Href, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -8,7 +8,7 @@ import { IconName, IconWell } from '../../components/Icon';
 import { Meter } from '../../components/progress/Meter';
 import { P, Panel, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
-import { formatChips } from '../../engine/progression';
+import { levelInfo } from '../../engine/progression';
 import { benchmarks, readyHeadline, readyScore } from '../../engine/progress';
 import { localized } from '../../i18n/lang';
 import { useRemoveAds } from '../../purchases/RemoveAds';
@@ -17,24 +17,24 @@ import { colors, radius, spacing } from '../../theme';
 
 const T = localized({
   en: {
-    chips: 'Chips',
+    level: 'Level',
     accuracy: 'Accuracy',
     hands: 'Hands',
     score: 'Casino-ready score',
     settings: 'Settings',
     settingsBody: 'Language, table rules, coaching, sound and more',
     removeAds: 'Remove ads',
-    disclaimer: 'For entertainment and education only. No real money gambling. Play responsibly.',
+    disclaimer: 'For education and entertainment. ShoeSharp has no betting, no chips and no prizes: every hand is practice.',
   },
   es: {
-    chips: 'Fichas',
+    level: 'Nivel',
     accuracy: 'Precisión',
     hands: 'Manos',
     score: 'Puntaje para el casino',
     settings: 'Ajustes',
     settingsBody: 'Idioma, reglas de la mesa, coach, sonido y más',
     removeAds: 'Quitar anuncios',
-    disclaimer: 'Solo para entretenimiento y aprendizaje. Sin apuestas con dinero real. Juega con responsabilidad.',
+    disclaimer: 'Para aprender y entretenerse. ShoeSharp no tiene apuestas, fichas ni premios: cada mano es práctica.',
   },
 });
 
@@ -55,7 +55,7 @@ export default function Me() {
     <Screen>
       <Panel>
         <View style={styles.stats}>
-          <Stat label={T.chips} value={`$${formatChips(settings.bankroll)}`} />
+          <Stat label={T.level} value={String(levelInfo(stats.xp).level)} />
           <Stat label={T.hands} value={String(stats.handsPlayed)} />
           <Stat label={T.accuracy} value={accuracy} />
         </View>

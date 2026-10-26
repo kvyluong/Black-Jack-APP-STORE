@@ -21,7 +21,7 @@ const T = localized({
     system: 'Counting system',
     systemHint: 'Hi-Lo is the best place to start. KO needs no true count. Hi-Opt I and Omega II are for experienced counters. Count plays use Hi-Lo numbers.',
     resetTitle: 'Reset progress?',
-    resetBody: 'This clears your stats, levels, unlocked tables, lesson progress and chips. You start again with 1,000 chips.',
+    resetBody: 'This clears your stats, levels, unlocked tables and lesson progress.',
     cancel: 'Cancel',
     reset: 'Reset',
     coaching: 'Coaching',
@@ -36,11 +36,11 @@ const T = localized({
     deviations: 'Count-based advice',
     deviationsHint: 'Coach uses Hi-Lo index plays and insurance at +3',
     sound: 'Sound effects',
-    soundHint: "Card, chip and win/lose sounds (follows your phone's silent switch)",
+    soundHint: "Card and result sounds (follows your phone's silent switch)",
     haptics: 'Haptics',
-    hapticsHint: 'A light tap as your cards land, a buzz when you win',
+    hapticsHint: 'A light tap as your cards land, a buzz on a great hand',
     effects: 'Big effects',
-    effectsHint: 'Screen shake, chip bursts and score pop-ups',
+    effectsHint: 'Screen shake, confetti and score pop-ups',
     reminders: 'Daily reminder',
     remindersHint: (time: string) => `One nudge at ${time}, only on days you haven't claimed a goal yet`,
     remindersOffTitle: 'Notifications are off',
@@ -63,7 +63,6 @@ const T = localized({
     othersHint: 'Players sit down and leave like a real casino table. Their cards count too.',
     rules: 'Table rules',
     decks: 'Decks',
-    bjPays: 'Blackjack pays',
     h17: 'Dealer hits soft 17',
     das: 'Double after split',
     ls: 'Late surrender',
@@ -72,7 +71,7 @@ const T = localized({
     adsRemoved: '✓ Ads removed. Thanks for supporting ShoeSharp!',
     bringBack: 'Bring ads back (development only)',
     removeAdsInfo:
-      'A one-time purchase that removes the ads between hands, on every device signed in to your store account. The optional bonus-chip videos stay, since you choose when to watch those.',
+      'A one-time purchase that removes the ads between hands, on every device signed in to your store account.',
     opening: 'Opening the store…',
     removeAdsSimulated: 'Remove ads (simulated in development)',
     appsOnly: 'Available in the iPhone and Android apps.',
@@ -80,13 +79,13 @@ const T = localized({
     restore: 'Restore purchase',
     data: 'Data',
     privacy: 'Ad privacy choices',
-    resetButton: 'Reset progress and chips',
+    resetButton: 'Reset progress',
     privacyPolicy: 'Privacy policy',
     terms: 'Terms of use & refunds',
     contact: 'Contact the developer',
     about: 'About',
     aboutText:
-      'ShoeSharp is a training tool for entertainment and education. It uses play money only and offers no real-money gambling or prizes. Card counting is legal, but casinos may refuse service to players they suspect of counting. If gambling stops being fun, get help: in the US call 1-800-GAMBLER.',
+      'ShoeSharp is a training tool for education and entertainment. There is no betting of any kind: no chips, no wagers and no prizes. Every hand is practice. If gambling ever stops being fun, get help: in the US call 1-800-GAMBLER.',
   },
   es: {
     signals: 'Señas con la mano',
@@ -95,7 +94,7 @@ const T = localized({
     systemHint: 'Hi-Lo es el mejor para empezar. KO no necesita conteo real. Hi-Opt I y Omega II son para contadores con experiencia. Las jugadas por conteo usan los números de Hi-Lo.',
     resetTitle: '¿Reiniciar el progreso?',
     resetBody:
-      'Esto borra tus estadísticas, niveles, mesas desbloqueadas, progreso de lecciones y fichas. Empiezas de nuevo con 1,000 fichas.',
+      'Esto borra tus estadísticas, niveles, mesas desbloqueadas y progreso de lecciones.',
     cancel: 'Cancelar',
     reset: 'Reiniciar',
     coaching: 'Coach',
@@ -110,11 +109,11 @@ const T = localized({
     deviations: 'Consejos según el conteo',
     deviationsHint: 'El coach usa jugadas por conteo Hi-Lo y el seguro a +3',
     sound: 'Efectos de sonido',
-    soundHint: 'Sonidos de cartas, fichas y de ganar/perder (respeta el modo silencio de tu teléfono)',
+    soundHint: 'Sonidos de cartas y resultados (respeta el modo silencio de tu teléfono)',
     haptics: 'Vibración',
     hapticsHint: 'Un toque suave al caer tus cartas y una vibración cuando ganas',
     effects: 'Efectos grandes',
-    effectsHint: 'Sacudidas de pantalla, explosiones de fichas y puntos emergentes',
+    effectsHint: 'Sacudidas de pantalla, confeti y puntos emergentes',
     reminders: 'Recordatorio diario',
     remindersHint: (time: string) => `Un aviso a las ${time}, solo los días que aún no hayas cobrado una meta`,
     remindersOffTitle: 'Las notificaciones están desactivadas',
@@ -137,7 +136,6 @@ const T = localized({
     othersHint: 'Los jugadores se sientan y se van como en una mesa de casino real. Sus cartas también cuentan.',
     rules: 'Reglas de la mesa',
     decks: 'Barajas',
-    bjPays: 'El blackjack paga',
     h17: 'El crupier pide con 17 blando',
     das: 'Doblar después de dividir',
     ls: 'Rendición tardía',
@@ -146,7 +144,7 @@ const T = localized({
     adsRemoved: '✓ Anuncios quitados. ¡Gracias por apoyar a ShoeSharp!',
     bringBack: 'Volver a mostrar anuncios (solo desarrollo)',
     removeAdsInfo:
-      'Una compra única que quita los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda. Los videos opcionales de fichas extra se quedan, ya que tú eliges cuándo verlos.',
+      'Una compra única que quita los anuncios entre manos, en todos los dispositivos con tu cuenta de la tienda.',
     opening: 'Abriendo la tienda…',
     removeAdsSimulated: 'Quitar anuncios (simulado en desarrollo)',
     appsOnly: 'Disponible en las apps de iPhone y Android.',
@@ -154,13 +152,13 @@ const T = localized({
     restore: 'Restaurar compra',
     data: 'Datos',
     privacy: 'Opciones de privacidad de anuncios',
-    resetButton: 'Reiniciar progreso y fichas',
+    resetButton: 'Reiniciar progreso',
     privacyPolicy: 'Política de privacidad',
     terms: 'Términos de uso y reembolsos',
     contact: 'Contactar al desarrollador',
     about: 'Acerca de',
     aboutText:
-      'ShoeSharp es una herramienta de entrenamiento para entretenimiento y aprendizaje. Usa solo dinero de juego y no ofrece apuestas con dinero real ni premios. Contar cartas es legal, pero los casinos pueden negarse a atender a quienes sospechen que cuentan. Si apostar deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
+      'ShoeSharp es una herramienta de entrenamiento para aprender y entretenerse. No hay apuestas de ningún tipo: ni fichas, ni apuestas, ni premios. Cada mano es práctica. Si apostar alguna vez deja de ser divertido, busca ayuda: en EE. UU. llama al 1-800-GAMBLER.',
   },
 });
 
@@ -344,15 +342,6 @@ export default function SettingsScreen() {
           options={[1, 2, 6, 8].map((d) => ({ label: String(d), value: d }))}
           value={rules.decks}
           onChange={(d) => updateRules({ decks: d })}
-        />
-        <Text style={{ color: colors.text, fontWeight: '600' }}>{T.bjPays}</Text>
-        <Segmented
-          options={[
-            { label: '3:2', value: 1.5 },
-            { label: '6:5', value: 1.2 },
-          ]}
-          value={rules.blackjackPayout}
-          onChange={(v) => updateRules({ blackjackPayout: v })}
         />
         <ToggleRow label={T.h17} value={rules.dealerHitsSoft17} onChange={(v) => updateRules({ dealerHitsSoft17: v })} />
         <ToggleRow label={T.das} value={rules.doubleAfterSplit} onChange={(v) => updateRules({ doubleAfterSplit: v })} />

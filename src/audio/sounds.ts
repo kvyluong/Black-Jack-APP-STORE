@@ -5,7 +5,6 @@ import type { SoundName } from '../engine/dealSchedule';
 const SOURCES: Record<SoundName, number> = {
   card: require('../../assets/sounds/card.wav'),
   flip: require('../../assets/sounds/flip.wav'),
-  chips: require('../../assets/sounds/chips.wav'),
   win: require('../../assets/sounds/win.wav'),
   blackjack: require('../../assets/sounds/blackjack.wav'),
   lose: require('../../assets/sounds/lose.wav'),

@@ -11,9 +11,7 @@ import { useReviewPrompt } from '../components/useReviewPrompt';
 import { SYSTEM_NAME, isBalanced } from '../engine/counting';
 import { CARDS_PER_DECK, formatDecks, questionFor, scoreDeckGuess } from '../engine/decks';
 import {
-  BetRecord,
   DECK_QUIZZES,
-  EXAM_STACK_UNITS,
   ExamInput,
   PASS,
   addExam,
@@ -36,21 +34,19 @@ const T = localized({
     intro:
       'Play one full shoe, until the cut card comes out, the way you would in a casino. No hints, no count on screen, and no corrections until the end.',
     rules: [
-      'You choose every bet. Raise with the count and bet the minimum when it’s neutral or negative.',
+      'Every hand is graded silently: make the right play each time.',
       'Twice during the shoe you’ll be asked how many decks are left. Read the discard tray.',
       'At the end, give the running count and (for balanced systems) the true count.',
       'The dealer is quicker than at practice, and the other players talk.',
     ],
     countPlays: 'Count plays (Hi-Lo index numbers) are graded.',
     noCountPlays: (system: string) => `Basic strategy is graded (count plays are Hi-Lo only; you count with ${system}).`,
-    chips: (units: number) => `You play with ${units} units of test chips. Your real chips aren’t touched.`,
     passMarks: 'To pass',
     marks: (balanced: boolean) =>
       [
         'Running count exactly right',
         balanced ? 'True count within ±1' : null,
         'Playing decisions at least 95% right',
-        'Bet score at least 0.7',
         'Decks-left estimates within half a deck on average',
       ].filter((x): x is string => x !== null),
     start: 'Start the shoe',
@@ -71,8 +67,6 @@ const T = localized({
     count: 'Running count',
     countVal: (guess: string, actual: string) => `You said ${guess} · actual ${actual}`,
     trueCount: 'True count',
-    bets: 'Bet score',
-    betHint: 'Your bet vs the count’s bet each round (1.00 = always right).',
     decks: 'Decks left',
     decksVal: (err: string) => `Off by ${err} decks on average`,
     skipped: 'Not asked',
@@ -90,7 +84,7 @@ const T = localized({
     intro:
       'Juega un zapato completo, hasta que salga la carta de corte, como lo harías en un casino. Sin pistas, sin conteo en pantalla y sin correcciones hasta el final.',
     rules: [
-      'Tú eliges cada apuesta. Sube con el conteo y apuesta el mínimo cuando sea neutral o negativo.',
+      'Cada mano se califica en silencio: haz la jugada correcta cada vez.',
       'Dos veces durante el zapato te preguntaremos cuántas barajas quedan. Mira la bandeja de descartes.',
       'Al final, di el conteo continuo y (en sistemas balanceados) el conteo real.',
       'El crupier reparte más rápido que en la práctica y los demás jugadores conversan.',
@@ -98,14 +92,12 @@ const T = localized({
     countPlays: 'Se califican las jugadas por conteo (índices de Hi-Lo).',
     noCountPlays: (system: string) =>
       `Se califica la estrategia básica (las jugadas por conteo son solo para Hi-Lo; tú cuentas con ${system}).`,
-    chips: (units: number) => `Juegas con ${units} unidades de fichas de prueba. Tus fichas reales no se tocan.`,
     passMarks: 'Para aprobar',
     marks: (balanced: boolean) =>
       [
         'Conteo continuo exacto',
         balanced ? 'Conteo real con un margen de ±1' : null,
         'Al menos 95% de decisiones correctas',
-        'Puntaje de apuestas de 0,7 o más',
         'Estimaciones de barajas restantes con un error promedio de media baraja o menos',
       ].filter((x): x is string => x !== null),
     start: 'Empezar el zapato',
@@ -126,8 +118,6 @@ const T = localized({
     count: 'Conteo continuo',
     countVal: (guess: string, actual: string) => `Dijiste ${guess} · real ${actual}`,
     trueCount: 'Conteo real',
-    bets: 'Puntaje de apuestas',
-    betHint: 'Tu apuesta frente a la que pedía el conteo en cada ronda (1,00 = siempre correcta).',
     decks: 'Barajas restantes',
     decksVal: (err: string) => `Error promedio de ${err} barajas`,
     skipped: 'No se preguntó',
@@ -148,7 +138,6 @@ interface Tally {
   hands: number;
   decisions: number;
   correct: number;
-  bets: BetRecord[];
   deckErrors: number[];
   /** Cards dealt after which a decks-left question comes up. */
   deckPoints: number[];
@@ -185,7 +174,6 @@ export default function ExamScreen() {
   };
 
   const hooks: ExamHooks = {
-    onBet: (units, ideal) => setTally((t) => ({ ...t, bets: [...t.bets, { units, ideal }] })),
     onDecision: (ok) => setTally((t) => ({ ...t, decisions: t.decisions + 1, correct: t.correct + (ok ? 1 : 0) })),
     onRoundEnd: (hands) => setTally((t) => ({ ...t, hands: t.hands + hands })),
     onShoeEnd: (g) => {
@@ -215,7 +203,6 @@ export default function ExamScreen() {
       hands: tally.hands,
       decisions: tally.decisions,
       correct: tally.correct,
-      bets: tally.bets,
       countGuess: rcGuess,
       countActual: final.runningCount,
       trueGuess,
@@ -277,7 +264,6 @@ export default function ExamScreen() {
         <Text style={styles.bullet}>
           • {countingSystem === 'hiLo' ? T.countPlays : T.noCountPlays(SYSTEM_NAME[countingSystem])}
         </Text>
-        <Text style={styles.bullet}>• {T.chips(EXAM_STACK_UNITS)}</Text>
       </Panel>
       <Panel>
         <Text style={styles.label}>{T.passMarks}</Text>
@@ -297,7 +283,6 @@ const freshTally = (shoeSize: number, penetration: number): Tally => ({
   hands: 0,
   decisions: 0,
   correct: 0,
-  bets: [],
   deckErrors: [],
   deckPoints: deckQuizPoints(shoeSize, penetration).slice(0, DECK_QUIZZES),
 });
@@ -375,7 +360,6 @@ function ReportCard({ input, onAgain }: { input: ExamInput; onAgain: () => void 
         ok: r.checks.trueCount,
         need: T.within(`±${PASS.trueError}`),
       },
-      { label: T.bets, value: num(r.betScore), ok: r.checks.bet, need: T.atLeast(num(PASS.betScore, 1)), hint: T.betHint },
       {
         label: T.decks,
         value: r.deckError === null ? T.skipped : T.decksVal(num(r.deckError)),
@@ -405,7 +389,6 @@ function ReportCard({ input, onAgain }: { input: ExamInput; onAgain: () => void 
                 <Text style={styles.label}>{row.label}</Text>
                 <Text style={[styles.value, { color }]}>{row.value}</Text>
                 {row.need && <Text style={styles.need}>{T.need(row.need)}</Text>}
-                {'hint' in row && row.hint && <Text style={styles.need}>{row.hint}</Text>}
               </View>
             </View>
           );

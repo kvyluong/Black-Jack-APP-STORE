@@ -1,6 +1,6 @@
 // Regression tests for bugs found in review.
 import { Card, Rank, seededRng } from '../cards';
-import { betUnitsForCount, koBetUnits, runningCount } from '../counting';
+import { runningCount } from '../counting';
 import { fullDeckDrillCards } from '../drills';
 import { review } from '../deviations';
 import { emptyGoals, rolloverDay } from '../progress';
@@ -43,7 +43,7 @@ describe('shoe', () => {
     let emptied = 0;
     for (let round = 0; round < 400; round++) {
       const before = g.shoe.length;
-      g = startRound(g, roundBets(table, 10, 0, 10), rng);
+      g = startRound(g, roundBets(table, 10, 10), rng);
       g = playOut(g, table, rng);
       if (g.shoe.length > before) emptied++;
       const keys = onTable(g).map(cardKey);
@@ -58,7 +58,7 @@ describe('shoe', () => {
     let g = newGame({ ...DEFAULT_RULES, decks: 1, penetration: 1 }, 1_000_000, rng);
     const table = createTable(2, 10, true, rng);
     for (let round = 0; round < 200; round++) {
-      g = startRound(g, roundBets(table, 10, 0, 10), rng);
+      g = startRound(g, roundBets(table, 10, 10), rng);
       g = playOut(g, table, rng);
       if (g.justShuffled) {
         // Everything that's left plus what's on the table is one full deck.
@@ -87,7 +87,6 @@ describe('computer players', () => {
     name: 'N',
     style: 'counter',
     bankroll: 10_000,
-    buyIn: 10_000,
     baseBet: 15,
     roundsPlayed: 0,
     patience: 10,
@@ -95,8 +94,8 @@ describe('computer players', () => {
     ...over,
   });
 
-  it('bet within the table maximum', () => {
-    expect(npcBet(npc({}), 6, 5, 100)).toBe(100);
+  it('always play the fixed practice stake: nobody raises with the count', () => {
+    expect(npcBet(npc({ baseBet: 1 }), 1)).toBe(1);
   });
 
   it("can't double or split with chips they don't have, so their bankroll stays at or above zero", () => {
@@ -108,7 +107,7 @@ describe('computer players', () => {
       return { ...g, shoe: [...g.shoe.slice(0, 100), ...cards.reverse()] };
     };
     // High roller: 8,8 vs dealer 10 would normally split.
-    let g = startRound(rigged(['8', '5', '10', '8', '6', '9']), roundBets(table, 5, 0, 5), seededRng(2));
+    let g = startRound(rigged(['8', '5', '10', '8', '6', '9']), roundBets(table, 5, 5), seededRng(2));
     expect(g.hands[0].owner).toBe('hr');
     expect(legalActions(g).split).toBe(false);
     expect(legalActions(g).double).toBe(false);
@@ -123,7 +122,7 @@ describe('deal animation', () => {
     const table: Table = { seats: [YOU, npc2(), null, null, null, null, null], nextId: 3 };
     const g0 = newGame(DEFAULT_RULES, 1000, seededRng(1));
     const cards = (['8', '9', '10', '8', '7', '6', '3', '4'] as Rank[]).map((rank) => ({ rank, suit: '♥' as const }));
-    const g = startRound({ ...g0, shoe: [...g0.shoe.slice(0, 100), ...cards.reverse()] }, roundBets(table, 10, 0, 10), seededRng(2));
+    const g = startRound({ ...g0, shoe: [...g0.shoe.slice(0, 100), ...cards.reverse()] }, roundBets(table, 10, 10), seededRng(2));
     expect(g.hands[0].cards.map((c) => c.rank)).toEqual(['8', '8']);
     const split = act(g, 'split', seededRng(3));
     const s = dealSchedule(g, split);
@@ -133,7 +132,7 @@ describe('deal animation', () => {
 });
 
 function npc2(): Npc {
-  return { id: 'b', name: 'B', style: 'book', bankroll: 1000, buyIn: 1000, baseBet: 10, roundsPlayed: 0, patience: 10, hue: 0 };
+  return { id: 'b', name: 'B', style: 'book', bankroll: 1000, baseBet: 10, roundsPlayed: 0, patience: 10, hue: 0 };
 }
 
 describe('count plays', () => {
@@ -183,15 +182,6 @@ describe('round 2 fixes', () => {
       counts.add(runningCount(cards, 'hiLo'));
     }
     expect(counts.size).toBeGreaterThan(3);
-  });
-
-  it('bet sizing follows each system: KO by key count, Omega II halved', () => {
-    // KO, 6 decks: the ramp the KO drill teaches.
-    expect(betUnitsForCount(0, 78, 6, 'ko')).toBe(koBetUnits(0, 6));
-    expect(betUnitsForCount(-2, 312, 6, 'ko')).toBe(koBetUnits(-2, 6));
-    // Omega II running +8 with 2 decks left: TC +4, like Hi-Lo +2.
-    expect(betUnitsForCount(8, 104, 6, 'omegaII')).toBe(2);
-    expect(betUnitsForCount(4, 104, 6, 'hiLo')).toBe(2);
   });
 });
 

@@ -1,9 +1,10 @@
 // A casino table: seven seats, computer players who sit down, play in their
-// own style, win or lose, and leave, plus one or two seats for you.
+// own style and leave after a while, plus one or two seats for you. Nobody
+// bets: the stake behind every hand is a fixed, hidden practice unit.
 import { localized } from '../i18n/lang';
 import { Rng } from './cards';
-import { suggestedBetUnits } from './counting';
 import { GameState, SeatBet, YOU, decisionContext, hiLoTrueCount, legalActions } from './game';
+import { PRACTICE_BUDGET } from './progression';
 import { handValue } from './hand';
 import { Action, basicAction, recommend } from './strategy';
 
@@ -19,7 +20,7 @@ export const STYLE_LABEL: Record<NpcStyle, string> = localized<Record<NpcStyle, 
     hunch: 'Plays hunches',
     neverBust: 'Never busts',
     mimic: 'Copies the dealer',
-    highRoller: 'High roller',
+    highRoller: 'Plays it bold',
   },
   es: {
     book: 'Juega según el manual',
@@ -27,24 +28,20 @@ export const STYLE_LABEL: Record<NpcStyle, string> = localized<Record<NpcStyle, 
     hunch: 'Juega por corazonadas',
     neverBust: 'Nunca se pasa',
     mimic: 'Imita al crupier',
-    highRoller: 'Gran apostador',
+    highRoller: 'Juega con audacia',
   },
 });
 
 const T = localized({
   en: {
-    broke: 'is out of chips',
-    ahead: (n: number) => `colors up $${n} ahead`,
-    reasons: ['calls it a night', 'heads to the buffet', 'goes to try the slots', 'takes a break'],
+    reasons: ['calls it a night', 'heads to the buffet', 'goes for a walk on deck', 'takes a break'],
     leaves: (name: string, why: string) => `${name} ${why} and leaves.`,
-    joins: (name: string, seat: number, bet: number) => `${name} sits down at seat ${seat} with $${bet} bets.`,
+    joins: (name: string, seat: number) => `${name} sits down at seat ${seat}.`,
   },
   es: {
-    broke: 'se quedó sin fichas',
-    ahead: (n: number) => `cambia sus fichas con $${n} de ganancia`,
-    reasons: ['da por terminada la noche', 'va al bufé', 'va a probar las tragamonedas', 'se toma un descanso'],
+    reasons: ['da por terminada la noche', 'va al bufé', 'sale a dar un paseo', 'se toma un descanso'],
     leaves: (name: string, why: string) => `${name} ${why} y se va.`,
-    joins: (name: string, seat: number, bet: number) => `${name} se sienta en el asiento ${seat} con apuestas de $${bet}.`,
+    joins: (name: string, seat: number) => `${name} se sienta en el asiento ${seat}.`,
   },
 });
 
@@ -52,10 +49,9 @@ export interface Npc {
   id: string;
   name: string;
   style: NpcStyle;
+  /** Hidden practice budget; never runs out, so nobody leaves broke. */
   bankroll: number;
-  /** What they sat down with, to tell winners from losers when they leave. */
-  buyIn: number;
-  /** Usual bet, in dollars. */
+  /** Hidden stake per hand, in practice units. */
   baseBet: number;
   roundsPlayed: number;
   /** Roughly how many rounds they'll play before getting up. */
@@ -97,16 +93,12 @@ function makeNpc(table: Table, minBet: number, rng: Rng): Npc {
   const style = pick(STYLES, rng);
   const taken = new Set(table.seats.filter(isNpc).map((n) => n.name));
   const name = pick(NAMES.filter((n) => !taken.has(n)), rng);
-  const units = style === 'highRoller' ? pick([5, 10, 10, 20], rng) : pick([1, 1, 1, 2, 2, 3], rng);
-  const baseBet = minBet * units;
-  const bankroll = baseBet * (15 + Math.floor(rng() * 40));
   return {
     id: `npc${table.nextId++}`,
     name,
     style,
-    bankroll,
-    buyIn: bankroll,
-    baseBet,
+    bankroll: PRACTICE_BUDGET,
+    baseBet: minBet,
     roundsPlayed: 0,
     patience: 6 + Math.floor(rng() * 30),
     hue: Math.floor(rng() * 360),
@@ -141,8 +133,8 @@ export function setYourHands(prev: Table, hands: number): Table {
 }
 
 /**
- * What happens at the table between rounds: players who are broke, bored or
- * done get up, and new players sit down in open seats. At most one of each per
+ * What happens at the table between rounds: players who are bored or done
+ * get up, and new players sit down in open seats. At most one of each per
  * round, so the table changes at a natural pace.
  */
 export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean, rng: Rng = Math.random): { table: Table; events: TableEvent[] } {
@@ -152,16 +144,11 @@ export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean
   const leaving = table.seats
     .map((o, seat) => ({ o, seat }))
     .filter((x): x is { o: Npc; seat: number } => isNpc(x.o))
-    .find(({ o }) => !otherPlayers || o.bankroll < minBet || o.roundsPlayed >= o.patience || rng() < 0.03);
+    .find(({ o }) => !otherPlayers || o.roundsPlayed >= o.patience || rng() < 0.03);
   if (leaving) {
     const { o, seat } = leaving;
     table.seats[seat] = null;
-    const why =
-      o.bankroll < minBet
-        ? T.broke
-        : o.bankroll > o.buyIn
-          ? T.ahead(o.bankroll - o.buyIn)
-          : pick(T.reasons, rng);
+    const why = pick(T.reasons, rng);
     events.push({ kind: 'leave', seat, text: T.leaves(o.name, why) });
   }
 
@@ -172,26 +159,23 @@ export function betweenRounds(prev: Table, minBet: number, otherPlayers: boolean
     const seat = pick(open, rng);
     const npc = makeNpc(table, minBet, rng);
     table.seats[seat] = npc;
-    events.push({ kind: 'join', seat, text: T.joins(npc.name, seat + 1, npc.baseBet) });
+    events.push({ kind: 'join', seat, text: T.joins(npc.name, seat + 1) });
   }
   return { table, events };
 }
 
-/** How much a player bets this round. Card counters raise their bets when the count is high. */
-export function npcBet(npc: Npc, trueCount: number, minBet: number, maxBet = Infinity): number {
-  let bet = npc.baseBet;
-  if (npc.style === 'counter') bet = npc.baseBet * suggestedBetUnits(Math.floor(trueCount));
-  // Within the table limits and what they have.
-  return Math.max(minBet, Math.min(bet, maxBet, Math.floor(npc.bankroll / minBet) * minBet));
+/** A player's hidden stake for this round: always the fixed practice unit. */
+export function npcBet(npc: Npc, minBet: number): number {
+  return Math.max(minBet, npc.baseBet);
 }
 
-/** Every bet on the table for the next round, in seat order. */
-export function roundBets(table: Table, yourBet: number, trueCount: number, minBet: number, maxBet = Infinity): SeatBet[] {
+/** Every hand dealt in the next round, in seat order, each with the hidden practice stake. */
+export function roundBets(table: Table, yourBet: number, minBet: number): SeatBet[] {
   const bets: SeatBet[] = [];
   table.seats.forEach((o, seat) => {
     if (o === YOU) bets.push({ seat, owner: YOU, bet: yourBet });
     else if (isNpc(o) && o.bankroll >= minBet) {
-      const bet = npcBet(o, trueCount, minBet, maxBet);
+      const bet = npcBet(o, minBet);
       // What's left limits their doubles and splits, so they can't go below zero.
       bets.push({ seat, owner: o.id, bet, chipsLeft: o.bankroll - bet });
     }
@@ -239,7 +223,7 @@ export function npcAction(s: GameState, npc: Npc, rng: Rng = Math.random): { act
   return { action, book };
 }
 
-/** Pays computer players for the finished round. */
+/** Records a finished round for the computer players. */
 export function settleNpcs(prev: Table, s: GameState): Table {
   const seats = prev.seats.map((o) => {
     if (!isNpc(o)) return o;

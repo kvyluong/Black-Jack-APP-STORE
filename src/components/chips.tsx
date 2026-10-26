@@ -1,50 +1,13 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { CHIP_COLORS, chipBreakdown, chipLabel, levelInfo } from '../engine/progression';
+import { levelInfo } from '../engine/progression';
 import { localized } from '../i18n/lang';
 import { colors } from '../theme';
 
 const T = localized({
-  en: { addChip: (v: number) => `Add a ${v} chip`, level: 'Lv' },
-  es: { addChip: (v: number) => `Agregar una ficha de ${v}`, level: 'Nv' },
+  en: { level: 'Lv' },
+  es: { level: 'Nv' },
 });
-
-/** A casino chip you can tap to add to your bet. */
-export function ChipButton({ value, onPress, disabled }: { value: number; onPress: () => void; disabled?: boolean }) {
-  const c = CHIP_COLORS[value] ?? CHIP_COLORS[1];
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={T.addChip(value)}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        { backgroundColor: c.fill },
-        disabled && { opacity: 0.3 },
-        pressed && { transform: [{ scale: 0.9 }, { translateY: 2 }] },
-      ]}
-    >
-      <View style={styles.inner}>
-        <Text style={[styles.chipText, { color: c.text }]}>{chipLabel(value)}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
-/** Your bet drawn as a small stack of chips. */
-export function ChipStack({ amount }: { amount: number }) {
-  const chips = chipBreakdown(amount, 10);
-  return (
-    <View style={[styles.stack, { height: 26 + Math.max(0, chips.length - 1) * 4 }]}>
-      {chips.reverse().map((d, i) => {
-        const c = CHIP_COLORS[d] ?? CHIP_COLORS[1];
-        return <View key={i} style={[styles.stackChip, { backgroundColor: c.fill, bottom: i * 4 }]} />;
-      })}
-    </View>
-  );
-}
 
 /** Level, title and progress toward the next level. */
 export function LevelBar({ xp, compact }: { xp: number; compact?: boolean }) {

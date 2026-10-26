@@ -29,7 +29,7 @@ describe('roundFanfare', () => {
     const g = act(startRound(rigged(['6', '6', '5', '10', '10', '10']), 10), 'double');
     const f = roundFanfare(g)!;
     expect(f.tier).toBe('bigWin');
-    expect(f.label).toBe('BIG WIN +$20');
+    expect(f.label).toBe('BIG WIN!');
   });
 
   it('shakes on a bust and plays the bust sound', () => {
@@ -42,7 +42,7 @@ describe('roundFanfare', () => {
 
   it('labels a plain loss and a surrender', () => {
     const lose = act(startRound(rigged(['10', '10', '7', '9']), 10), 'stand');
-    expect(roundFanfare(lose)!.label).toBe('−$10');
+    expect(roundFanfare(lose)!.label).toBe('DEALER WINS');
     const sur = act(startRound(rigged(['10', '10', '6', '7']), 10), 'surrender');
     expect(roundFanfare(sur)!.tier).toBe('surrender');
   });

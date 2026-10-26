@@ -7,7 +7,7 @@ export function getAds(): AdsModule | null {
   return null;
 }
 
-export type Placement = 'interstitial' | 'rewarded';
+export type Placement = 'interstitial';
 
 export function adUnitId(_placement: Placement): string | null {
   return null;

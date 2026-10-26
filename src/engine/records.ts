@@ -49,8 +49,8 @@ export interface ExamResult {
   /** True count you gave vs the real one (null for unbalanced systems like KO). */
   trueGuess: number | null;
   trueActual: number | null;
-  /** How well your bets followed the count, 0–1 (1 = always the right size). */
-  betScore: number;
+  /** Saved by older versions that graded bets; no longer used. */
+  betScore?: number;
   /** Decks-remaining estimates: average absolute error in decks. */
   deckError: number | null;
   /** Overall grade, 0–100. */

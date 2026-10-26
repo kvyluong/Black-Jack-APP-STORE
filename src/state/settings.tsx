@@ -20,7 +20,6 @@ import {
   emptyDeviationProgress,
   emptyTally,
 } from '../engine/records';
-import { BonusClaims, STARTING_CHIPS } from '../engine/progression';
 import { DEFAULT_RULES, Rules } from '../engine/rules';
 import { DEFAULT_REMINDER_HOUR } from '../engine/reminders';
 import { ReviewState } from '../engine/review';
@@ -35,13 +34,6 @@ export interface Stats {
   lessonsCompleted: string[];
   /** Experience from hands played and correct decisions; sets your level. */
   xp: number;
-  /** Most chips you've ever had; unlocks tables. */
-  peakChips: number;
-  biggestWin: number;
-  refills: number;
-  /** Rewarded-ad bonus claims today (resets daily). */
-  bonusClaims?: BonusClaims;
-  bonusChipsEarned: number;
   /** Which decisions you get right and wrong, by kind and by exact spot. */
   leaks: LeakStats;
   /** Finished (or skipped) the guided first hand. */
@@ -100,8 +92,6 @@ export interface Settings {
   yourHands: number;
   /** Computer players who come and go at the practice table. */
   otherPlayers: boolean;
-  /** Your chips. They start at STARTING_CHIPS and carry over between sessions. */
-  bankroll: number;
   /** The casino table you're sitting at (see TABLES in engine/progression). */
   tableId: string;
   /** Bought "Remove ads": no between-hand ads. Kept on reset (it was paid for). */
@@ -135,7 +125,6 @@ const DEFAULT_SETTINGS: Settings = {
   colorblind: false,
   yourHands: 2,
   otherPlayers: true,
-  bankroll: STARTING_CHIPS,
   adsRemoved: false,
   language: 'system',
   countingSystem: 'hiLo',
@@ -155,10 +144,6 @@ const DEFAULT_STATS: Stats = {
   bestStrategyStreak: 0,
   lessonsCompleted: [],
   xp: 0,
-  peakChips: STARTING_CHIPS,
-  biggestWin: 0,
-  refills: 0,
-  bonusChipsEarned: 0,
   academy: { progress: {}, streak: 0 },
   leaks: emptyLeaks(),
   onboarded: false,
@@ -183,8 +168,6 @@ interface Store {
   stats: Stats;
   updateSettings: (patch: Partial<Settings>) => void;
   updateRules: (patch: Partial<Rules>) => void;
-  /** Adds chips to your current balance (e.g. a rewarded-ad bonus). */
-  addChips: (amount: number) => void;
   updateStats: (fn: (s: Stats) => Stats) => void;
   resetProgress: () => void;
 }
@@ -269,11 +252,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     (patch: Partial<Rules>) => setSettings((s) => ({ ...s, rules: { ...s.rules, ...patch } })),
     [],
   );
-  const addChips = useCallback((amount: number) => setSettings((s) => ({ ...s, bankroll: s.bankroll + amount })), []);
   const updateStats = useCallback((fn: (s: Stats) => Stats) => setStats(fn), []);
   const resetProgress = useCallback(() => {
     setStats(DEFAULT_STATS);
-    setSettings((s) => ({ ...s, bankroll: STARTING_CHIPS, tableId: 'floor' }));
+    setSettings((s) => ({ ...s, tableId: 'floor' }));
   }, []);
 
   // Text everywhere (including the engine) reads the current language; set it before children render.
@@ -282,11 +264,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   setCountingSystem(settings.countingSystem);
 
   const prefs = useMemo(
-    () => ({ ready, lang, settings, updateSettings, updateRules, addChips, updateStats, resetProgress }),
-    [ready, lang, settings, updateSettings, updateRules, addChips, updateStats, resetProgress],
+    () => ({ ready, lang, settings, updateSettings, updateRules, updateStats, resetProgress }),
+    [ready, lang, settings, updateSettings, updateRules, updateStats, resetProgress],
   );
   // Until saved settings load, render nothing (the splash screen is still up), so the
-  // first frame is already in the right language with the right chips.
+  // first frame is already in the right language.
   return (
     <PrefsCtx.Provider value={prefs}>
       <LangCtx.Provider value={lang}>

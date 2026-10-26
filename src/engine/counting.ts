@@ -85,18 +85,6 @@ export function shouldTakeInsurance(tc: number): boolean {
   return tc >= INSURANCE_INDEX;
 }
 
-/**
- * A simple 1–8 unit bet ramp. Each +1 of true count is worth roughly +0.5% to
- * the player, so the edge flips positive around +1 to +2 in a typical game.
- */
-export function suggestedBetUnits(flooredTc: number): number {
-  if (flooredTc <= 1) return 1;
-  if (flooredTc === 2) return 2;
-  if (flooredTc === 3) return 4;
-  if (flooredTc === 4) return 6;
-  return 8;
-}
-
 /** Rough player edge in percent for a typical 6-deck S17 game with good rules. */
 export function estimatedEdge(tc: number): number {
   return -0.5 + 0.5 * tc;
@@ -156,13 +144,13 @@ const NOTE = localized({
   en: {
     balanced: (name: string) =>
       `${name} is balanced: a full deck adds up to 0, so you divide the running count by the decks left to get the true count.`,
-    ko: 'KO is unbalanced: a full deck adds up to +4, so there’s no true count. Real shoes start at 4 − 4 × decks (6 decks: −20); bet more at the key count and the most from the pivot, +4.',
+    ko: 'KO is unbalanced: a full deck adds up to +4, so there’s no true count. Real shoes start at 4 − 4 × decks (6 decks: −20). From the key count the cards left favor the player, and strongly from the pivot, +4.',
     sideCount: (name: string) => `${name} players often keep a separate Ace count; this app uses the plain tags.`,
   },
   es: {
     balanced: (name: string) =>
       `${name} es balanceado: una baraja completa suma 0, así que divides el conteo continuo entre las barajas restantes para obtener el conteo real.`,
-    ko: 'KO no es balanceado: una baraja completa suma +4, así que no hay conteo real. En un zapato real empiezas en 4 − 4 × barajas (6 barajas: −20); sube la apuesta en el conteo clave y apuesta lo máximo desde el pivote, +4.',
+    ko: 'KO no es balanceado: una baraja completa suma +4, así que no hay conteo real. En un zapato real empiezas en 4 − 4 × barajas (6 barajas: −20). Desde el conteo clave las cartas que quedan favorecen al jugador, y mucho desde el pivote, +4.',
     sideCount: (name: string) => `Quienes usan ${name} suelen llevar aparte la cuenta de Ases; esta app usa los valores simples.`,
   },
 });
@@ -180,7 +168,7 @@ export function systemNote(system: CountingSystem = current): string {
 export const KO_PIVOT = 4;
 
 /**
- * KO key count (where the player's edge turns positive and the bet goes up),
+ * KO key count (where the cards left start to favor the player),
  * from the "Rookie KO" tables in Vancura & Fuchs, Knock-Out Blackjack:
  * 1 deck +2, 2 decks +1, 6 decks −4, 8 decks −6. Other deck counts are
  * interpolated between those.
@@ -211,28 +199,13 @@ export function koBetZone(running: number, decks: number): KoBetZone {
   return 'min';
 }
 
-/**
- * A 1–8 unit KO bet ramp to match suggestedBetUnits: 1 unit below the key
- * count, 2 rising to 4 between the key count and the pivot, 6 at the pivot
- * (roughly a Hi-Lo true count of +4) and 8 from two above it.
- */
-export function koBetUnits(running: number, decks: number): number {
-  const key = koKeyCount(decks);
-  if (running < key) return 1;
-  if (running < KO_PIVOT) {
-    const span = KO_PIVOT - key;
-    return 2 + Math.floor(((running - key) / span) * 3);
-  }
-  return running >= KO_PIVOT + 2 ? 8 : 6;
-}
-
 export interface KoQuestion {
   running: number;
   decks: number;
   answer: KoBetZone;
 }
 
-/** A KO bet-zone quiz question: each zone comes up about equally often. */
+/** A KO count-zone quiz question: each zone comes up about equally often. */
 export function koQuestion(deckChoices: number[] = [1, 2, 6, 8], rng: () => number = Math.random): KoQuestion {
   const decks = deckChoices[Math.floor(rng() * deckChoices.length)];
   const key = koKeyCount(decks);
@@ -242,14 +215,3 @@ export function koQuestion(deckChoices: number[] = [1, 2, 6, 8], rng: () => numb
   return { running, decks, answer: koBetZone(running, decks) };
 }
 
-/**
- * Bet in units for the current count, in the way each system is taught:
- * KO by its key count and pivot (koBetUnits); Omega II's level-2 true count runs
- * about twice Hi-Lo's, so it's halved before the 1–8 ramp; Hi-Lo and Hi-Opt I use
- * the ramp on the floored true count.
- */
-export function betUnitsForCount(running: number, cardsRemaining: number, decks: number, system: CountingSystem = current): number {
-  if (system === 'ko') return koBetUnits(running, decks);
-  const tc = trueCount(running, cardsRemaining, system);
-  return suggestedBetUnits(Math.floor(system === 'omegaII' ? tc / 2 : tc));
-}

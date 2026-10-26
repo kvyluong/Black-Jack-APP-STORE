@@ -19,12 +19,12 @@ export const LESSONS_ES: Lesson[] = [
       },
       {
         heading: 'Blackjack',
-        body: 'Un As más cualquier carta que valga 10 como tus dos primeras cartas es un "blackjack" (o "natural"). Normalmente paga 3 a 2: apuestas $10 y ganas $15. Evita las mesas que pagan 6 a 5; ese pequeño cambio más que triplica la ventaja de la casa.',
+        body: 'Un As más cualquier carta que valga 10 como tus dos primeras cartas es un "blackjack" (o "natural"). Es la mejor mano del juego: le gana a cualquier otro 21, incluso a uno hecho con tres cartas o más.',
         cards: ['A', 'Q'],
       },
       {
         heading: 'Cómo es una ronda',
-        body: '1. Haz tu apuesta.\n2. Recibes dos cartas boca arriba. El crupier recibe una boca arriba (la "carta visible") y otra boca abajo (la "carta oculta").\n3. Si el crupier muestra un As o un 10, revisa si tiene blackjack.\n4. Juegas tu mano.\n5. El crupier revela la carta oculta y debe pedir hasta llegar a 17 o más. El crupier no decide nada; las reglas marcan cada jugada.',
+        body: '1. El crupier reparte. Recibes dos cartas boca arriba. El crupier recibe una boca arriba (la "carta visible") y otra boca abajo (la "carta oculta").\n2. Si el crupier muestra un As o un 10, revisa si tiene blackjack.\n3. Juegas tu mano.\n4. El crupier revela la carta oculta y debe pedir hasta llegar a 17 o más. El crupier no decide nada; las reglas marcan cada jugada.',
       },
     ],
     quiz: [
@@ -38,7 +38,7 @@ export const LESSONS_ES: Lesson[] = [
         question: 'Te pasas con 23 y luego el crupier se pasa con 24. ¿Qué pasa?',
         options: ['Empate', 'Ganas', 'Pierdes'],
         answer: 2,
-        explanation: 'Tú juegas primero, así que si te pasas pierdes de inmediato. De ahí sale la ventaja de la casa.',
+        explanation: 'Tú juegas primero, así que si te pasas pierdes de inmediato. Esa es la mayor ventaja del crupier.',
       },
     ],
     practice: { label: 'Juega unas manos', href: '/play' },
@@ -88,21 +88,21 @@ export const LESSONS_ES: Lesson[] = [
       { heading: 'Plantarse', body: 'Te quedas con tu total y terminas tu turno.' },
       {
         heading: 'Doblar',
-        body: 'Duplicas tu apuesta y recibes exactamente una carta más. Solo puedes hacerlo con tus dos primeras cartas. Úsalo cuando tienes buenas probabilidades de ganar, como con 11 contra un 6 del crupier.',
+        body: 'Recibes exactamente una carta más y la mano cuenta doble. Solo puedes hacerlo con tus dos primeras cartas. Úsalo cuando eres el favorito, como con 11 contra un 6 del crupier.',
         cards: ['6', '5'],
       },
       {
         heading: 'Dividir',
-        body: 'Con una pareja, pones una segunda apuesta y juegas cada carta como una mano aparte. Cada mano recibe una segunda carta.',
+        body: 'Con una pareja, separas las dos cartas y juegas cada una como una mano aparte. Cada mano recibe una segunda carta.',
         cards: ['8', '8'],
       },
       {
         heading: 'Rendirse',
-        body: 'Algunos casinos te dejan abandonar tus dos primeras cartas y recuperar la mitad de tu apuesta. Es la jugada correcta en unas pocas manos que pierden muy a menudo, como 16 contra un 10.',
+        body: 'Abandonas la mano antes de jugarla. No todas las mesas lo permiten. Es la jugada correcta en unas pocas manos que pierden muy a menudo, como 16 contra un 10.',
       },
       {
         heading: 'Seguro',
-        body: 'Cuando el crupier muestra un As, puedes apostar la mitad de tu apuesta a que tiene blackjack. Si no cuentas cartas, es una mala apuesta: recházalo siempre. Los contadores de cartas lo toman cuando el conteo es lo bastante alto.',
+        body: 'Es una opción adicional que se ofrece cuando el crupier muestra un As. Si no cuentas cartas, recházalo siempre. Los contadores lo toman cuando el conteo es lo bastante alto (conteo real Hi-Lo de +3 o más), porque más de 1 de cada 3 cartas restantes es un 10.',
       },
     ],
     quiz: [
@@ -110,13 +110,13 @@ export const LESSONS_ES: Lesson[] = [
         question: '¿Cuándo puedes doblar?',
         options: ['En cualquier momento', 'Solo con tus dos primeras cartas', 'Solo con una pareja'],
         answer: 1,
-        explanation: 'Solo puedes doblar con tus dos primeras cartas (y, en la mayoría de los casinos, en manos divididas).',
+        explanation: 'Solo puedes doblar con tus dos primeras cartas (y, en la mayoría de las mesas, en manos divididas).',
       },
       {
         question: '¿Debe tomar el seguro alguien que juega con estrategia básica?',
         options: ['Sí, siempre', 'Solo con una buena mano', 'No, nunca'],
         answer: 2,
-        explanation: 'El seguro tiene una gran ventaja para la casa, salvo que sepas que quedan muchos 10, y para eso hay que contar.',
+        explanation: 'El seguro pierde mucho más de lo que gana, salvo que sepas que quedan muchos 10, y para eso hay que contar.',
       },
     ],
   },
@@ -127,7 +127,7 @@ export const LESSONS_ES: Lesson[] = [
     summary: 'La jugada matemáticamente óptima para cada mano, explicada de forma sencilla.',
     sections: [
       {
-        body: 'La estrategia básica es la mejor jugada para cada combinación de tu mano y la carta visible del crupier, calculada por computadora. Si la juegas a la perfección, reduce la ventaja de la casa a cerca del 0.5%. Puedes memorizarla a partir de unas pocas ideas sencillas.',
+        body: 'La estrategia básica es la mejor jugada para cada combinación de tu mano y la carta visible del crupier, calculada por computadora. Si la juegas a la perfección, es la mejor forma posible de jugar cada mano. Puedes memorizarla a partir de unas pocas ideas sencillas.',
       },
       {
         heading: '1. Supón que la carta oculta es un 10',
@@ -144,7 +144,7 @@ export const LESSONS_ES: Lesson[] = [
         cards: ['10'],
       },
       {
-        heading: '4. Dobla cuando tienes la ventaja',
+        heading: '4. Dobla cuando eres el favorito',
         body: 'Dobla con 11 contra todo menos un As, con 10 contra 2–9 y con 9 contra 3–6. Dobla con manos blandas (como A-7) contra cartas débiles del crupier.',
       },
       {
@@ -186,7 +186,7 @@ export const LESSONS_ES: Lesson[] = [
       },
       {
         heading: 'Cuando quedan muchos 10 y Ases',
-        body: '• Te salen más blackjacks, que pagan 3 a 2. Al crupier también, pero él solo gana lo apostado (1 a 1).\n• El crupier se pasa más seguido, porque está obligado a pedir con manos rígidas.\n• Tus dobladas ganan más a menudo.',
+        body: '• Te salen más blackjacks, la mejor mano del juego.\n• El crupier se pasa más seguido, porque está obligado a pedir con manos rígidas.\n• Tus dobladas ganan más a menudo.',
         cards: ['10', 'A', 'K'],
       },
       {
@@ -196,7 +196,7 @@ export const LESSONS_ES: Lesson[] = [
       },
       {
         heading: 'El plan',
-        body: 'Contar cartas sirve para saber si las cartas que quedan tienen muchas altas o muchas bajas. Apuesta poco cuando quedan bajas y más cuando quedan altas. No hace falta memorizar cada carta, y no es ilegal. Solo requiere práctica.',
+        body: 'Contar cartas sirve para saber si las cartas que quedan tienen muchas altas o muchas bajas. Eso te dice cuándo las cartas que quedan te favorecen y cuándo cambian algunas jugadas, como el seguro y las jugadas por conteo. No hace falta memorizar cada carta, y contar cartas es legal; es una habilidad mental. Solo requiere práctica.',
       },
     ],
     quiz: [
@@ -294,7 +294,7 @@ export const LESSONS_ES: Lesson[] = [
       },
       {
         heading: 'Redondeo',
-        body: 'Para apostar, la mayoría de los contadores redondean el conteo real hacia abajo (+2.7 se vuelve +2). Así eres prudente con tus apuestas.',
+        body: 'La mayoría de los contadores redondean el conteo real hacia abajo (+2.7 se vuelve +2). Así solo cambias una jugada cuando el conteo de verdad llegó a su índice.',
       },
     ],
     quiz: [
@@ -308,42 +308,10 @@ export const LESSONS_ES: Lesson[] = [
         question: 'Conteo continuo −3, queda 1 baraja. ¿Conteo real?',
         options: ['−1', '−3', '0'],
         answer: 1,
-        explanation: '−3 ÷ 1 = −3. Apuesta el mínimo.',
+        explanation: '−3 ÷ 1 = −3: las cartas que quedan no te favorecen.',
       },
     ],
     practice: { label: 'Practica la conversión al conteo real', href: '/drills/true-count' },
-  },
-  {
-    id: 'betting',
-    unit: 'Counting',
-    title: 'Cómo apostar con el conteo',
-    summary: 'Convierte el conteo en una ventaja.',
-    sections: [
-      {
-        body: 'Cada +1 de conteo real vale cerca de +0.5% a tu favor. En un juego típico empiezas alrededor de −0.5%, así que tienes la ventaja a partir de +1 o +2 aproximadamente.',
-      },
-      {
-        heading: 'Una escala de apuestas sencilla',
-        body: 'Conteo real +1 o menos: 1 unidad\nConteo real +2: 2 unidades\nConteo real +3: 4 unidades\nConteo real +4: 6 unidades\nConteo real +5 o más: 8 unidades',
-      },
-      {
-        heading: 'Bankroll',
-        body: 'Incluso con ventaja, las rachas son muy fuertes. Los contadores mantienen un bankroll de cientos de unidades de apuesta para no quedarse sin dinero en las rachas perdedoras. Nunca apuestes dinero que no puedas permitirte perder.',
-      },
-      {
-        heading: 'Baño de realidad',
-        body: 'Contar cartas es legal, pero los casinos pueden rechazar tus apuestas o pedirte que dejes de jugar. Los saltos de apuesta grandes y evidentes llaman la atención. Usa esta app para aprender la habilidad y las matemáticas.',
-      },
-    ],
-    quiz: [
-      {
-        question: 'El conteo real es +3. Con la escala de arriba, ¿cuántas unidades apuestas?',
-        options: ['1', '4', '8'],
-        answer: 1,
-        explanation: '+3 → 4 unidades.',
-      },
-    ],
-    practice: { label: 'Juega viendo el conteo', href: '/play' },
   },
   {
     id: 'deviations',
@@ -353,7 +321,7 @@ export const LESSONS_ES: Lesson[] = [
     sections: [
       {
         heading: 'Seguro a partir de +3',
-        body: 'El seguro paga 2 a 1. Se vuelve una buena apuesta cuando más de 1 de cada 3 cartas restantes es un 10. Eso ocurre con un conteo real Hi-Lo de alrededor de +3. Toma el seguro con +3 o más, nunca por debajo.',
+        body: 'El seguro es la opción adicional que se ofrece cuando el crupier muestra un As. Se vuelve la jugada correcta cuando más de 1 de cada 3 cartas restantes es un 10. Eso ocurre con un conteo real Hi-Lo de alrededor de +3. Toma el seguro con +3 o más, nunca por debajo.',
       },
       {
         heading: 'Jugadas por conteo',
@@ -368,7 +336,7 @@ export const LESSONS_ES: Lesson[] = [
         question: 'El crupier muestra un As. El conteo real es +4. ¿Seguro?',
         options: ['Tomarlo', 'Rechazarlo'],
         answer: 0,
-        explanation: 'Con +3 o más quedan suficientes 10 para que el seguro sea rentable.',
+        explanation: 'Con +3 o más quedan suficientes 10 para que el seguro sea la jugada correcta.',
       },
       {
         question: '16 contra un 10 del crupier, sin rendición, conteo real +1. ¿Jugada?',

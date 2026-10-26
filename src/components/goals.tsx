@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Alert, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { playSound } from '../audio/sounds';
-import { formatChips, localDay } from '../engine/progression';
+import { localDay } from '../engine/progression';
 import { DEFAULT_REMINDER_HOUR, formatHour, reminderText, reminderTimes } from '../engine/reminders';
 import { remindersSupported, requestReminderPermission, scheduleReminders } from '../notifications/reminders';
 import {
@@ -47,7 +47,7 @@ const T = localized({
     notNow: 'Not now',
     claim: 'Claim',
     claimed: '✓ Claimed',
-    reward: (chips: string, xp: number) => `+$${chips} · +${xp} XP`,
+    reward: (xp: number) => `+${xp} XP`,
     claimA11y: (goal: string, reward: string) => `Claim ${goal}: ${reward}`,
     goalA11y: (goal: string, done: number, target: number, reward: string) => `${goal}. ${done} of ${target}. Reward ${reward}. Opens practice`,
     streakA11y: (n: number) => `Daily goal streak: ${n} days`,
@@ -74,7 +74,7 @@ const T = localized({
     notNow: 'Ahora no',
     claim: 'Cobrar',
     claimed: '✓ Cobrado',
-    reward: (chips: string, xp: number) => `+$${chips} · +${xp} XP`,
+    reward: (xp: number) => `+${xp} XP`,
     claimA11y: (goal: string, reward: string) => `Cobrar ${goal}: ${reward}`,
     goalA11y: (goal: string, done: number, target: number, reward: string) =>
       `${goal}. ${done} de ${target}. Premio ${reward}. Abre la práctica`,
@@ -145,7 +145,7 @@ const practiceHour = () => {
 /** Today's goals, shown on the home screen. `collapsible`: starts as one line that opens on tap. */
 export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean }) {
   const [open, setOpen] = useState(!collapsible);
-  const { stats, settings, addChips, updateStats, updateSettings } = useSettings();
+  const { stats, settings, updateStats, updateSettings } = useSettings();
   const today = useToday();
   const goals = todaysGoals(stats, today);
   const ids = goals.map((g) => g.id);
@@ -163,13 +163,12 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
 
   const claim = (g: GoalDef) => {
     const key = `${today}:${g.id}`;
-    // Guards a fast double tap before the next render (the chips would be paid twice).
+    // Guards a fast double tap before the next render (the XP would be paid twice).
     if (!live || claimed.includes(g.id) || claiming.current.has(key)) return;
     claiming.current.add(key);
-    const r = goalReward(g, stats.peakChips);
-    addChips(r.chips);
+    const r = goalReward(g);
     updateStats((s) => ({ ...s, xp: s.xp + r.xp, goals: claimGoal(s.goals, g.id, today, ids) }));
-    if (settings.soundEffects) playSound('chips');
+    if (settings.soundEffects) playSound('correct');
     // The first claimed goal starts a streak: the moment to offer a daily reminder (once).
     if (!stats.remindersAsked && !settings.reminders && remindersSupported()) {
       updateStats((s) => ({ ...s, remindersAsked: true }));
@@ -253,7 +252,7 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
           goal={g}
           done={goalProgress(g, stats, today)}
           claimed={claimed.includes(g.id)}
-          reward={goalReward(g, stats.peakChips)}
+          reward={goalReward(g)}
           canClaim={live}
           onClaim={() => claim(g)}
         />
@@ -274,13 +273,13 @@ function GoalRow({
   goal: GoalDef;
   done: number;
   claimed: boolean;
-  reward: { chips: number; xp: number };
+  reward: { xp: number };
   canClaim: boolean;
   onClaim: () => void;
 }) {
   const { good } = useOutcomeColors();
   const title = goalTitle(goal);
-  const rewardText = T.reward(formatChips(reward.chips), reward.xp);
+  const rewardText = T.reward(reward.xp);
   const complete = done >= goal.target;
   return (
     <View style={styles.row}>

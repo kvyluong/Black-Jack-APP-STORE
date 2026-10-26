@@ -55,12 +55,12 @@ export const LESSONS: Lesson[] = [
       },
       {
         heading: 'Blackjack',
-        body: 'An Ace plus any 10-value card as your first two cards is a "blackjack" (or "natural"). It usually pays 3 to 2: bet $10, win $15. Avoid tables that pay 6 to 5; that small change more than triples the house edge.',
+        body: 'An Ace plus any 10-value card as your first two cards is a "blackjack" (or "natural"). It\'s the best hand in the game: it beats any other 21, even one made with three or more cards.',
         cards: ['A', 'Q'],
       },
       {
         heading: 'How a round goes',
-        body: '1. Place your bet.\n2. You get two cards face up. The dealer gets one face up (the "upcard") and one face down (the "hole card").\n3. If the dealer shows an Ace or 10, they check for blackjack.\n4. You play your hand.\n5. The dealer reveals the hole card and must hit until reaching 17 or more. The dealer has no choices; the rules decide every move.',
+        body: '1. The dealer deals. You get two cards face up. The dealer gets one face up (the "upcard") and one face down (the "hole card").\n2. If the dealer shows an Ace or 10, they check for blackjack.\n3. You play your hand.\n4. The dealer reveals the hole card and must hit until reaching 17 or more. The dealer has no choices; the rules decide every move.',
       },
     ],
     quiz: [
@@ -74,7 +74,7 @@ export const LESSONS: Lesson[] = [
         question: 'You bust with 23, then the dealer busts with 24. What happens?',
         options: ['Push (tie)', 'You win', 'You lose'],
         answer: 2,
-        explanation: 'You act first, so your bust loses immediately. This is where the house gets its edge.',
+        explanation: 'You act first, so your bust loses immediately. This is the dealer\'s biggest advantage.',
       },
     ],
     practice: { label: 'Play a few hands', href: '/play' },
@@ -124,21 +124,21 @@ export const LESSONS: Lesson[] = [
       { heading: 'Stand', body: 'Keep your total and end your turn.' },
       {
         heading: 'Double down',
-        body: 'Double your bet and take exactly one more card. You can only do this on your first two cards. Use it when you\'re likely to win, like 11 against a dealer 6.',
+        body: 'Take exactly one more card, and the hand counts double. You can only do this on your first two cards. Use it when you\'re the favorite, like 11 against a dealer 6.',
         cards: ['6', '5'],
       },
       {
         heading: 'Split',
-        body: 'With a pair, put up a second bet and play each card as its own hand. Each hand gets a second card.',
+        body: 'With a pair, separate the two cards and play each card as its own hand. Each hand gets a second card.',
         cards: ['8', '8'],
       },
       {
         heading: 'Surrender',
-        body: 'Some casinos let you give up your first two cards and get half your bet back. It\'s the right play for a few hands that lose very often, like 16 against a 10.',
+        body: 'Give up the hand early, before you play it. Not every table offers it. It\'s the right play for a few hands that lose very often, like 16 against a 10.',
       },
       {
         heading: 'Insurance',
-        body: 'When the dealer shows an Ace, you can bet half your wager that they have blackjack. Without counting cards, it\'s a bad bet: always decline it. Card counters take it when the count is high enough.',
+        body: 'A side option offered when the dealer shows an Ace. Without counting, always decline it. Counters take it when the count is high enough (Hi-Lo true count +3 or more), because more than 1 in 3 remaining cards are 10s.',
       },
     ],
     quiz: [
@@ -146,13 +146,13 @@ export const LESSONS: Lesson[] = [
         question: 'When are you allowed to double down?',
         options: ['Any time', 'Only on your first two cards', 'Only with a pair'],
         answer: 1,
-        explanation: 'Doubling is only offered on your first two cards (and on split hands at most casinos).',
+        explanation: 'Doubling is only offered on your first two cards (and on split hands at most tables).',
       },
       {
         question: 'Should a basic strategy player take insurance?',
         options: ['Yes, always', 'Only with a good hand', 'No, never'],
         answer: 2,
-        explanation: 'Insurance has a big house edge unless you know the deck is rich in 10s, which takes counting.',
+        explanation: 'Insurance loses far more often than it wins unless you know the deck is rich in 10s, which takes counting.',
       },
     ],
   },
@@ -163,7 +163,7 @@ export const LESSONS: Lesson[] = [
     summary: 'The mathematically best play for every hand, explained simply.',
     sections: [
       {
-        body: 'Basic strategy is the best play for every combination of your hand and the dealer\'s upcard, worked out by computer. Played perfectly, it cuts the house edge to about 0.5%. You can memorise it from a few simple ideas.',
+        body: 'Basic strategy is the best play for every combination of your hand and the dealer\'s upcard, worked out by computer. Played perfectly, it\'s the best possible way to play every hand. You can memorise it from a few simple ideas.',
       },
       {
         heading: '1. Assume the hole card is a 10',
@@ -180,7 +180,7 @@ export const LESSONS: Lesson[] = [
         cards: ['10'],
       },
       {
-        heading: '4. Double when you have the edge',
+        heading: '4. Double when you\'re the favorite',
         body: 'Double 11 against everything but an Ace, 10 against 2–9, and 9 against 3–6. Double soft hands (like A-7) against weak dealer cards.',
       },
       {
@@ -222,7 +222,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         heading: 'When lots of 10s and Aces remain',
-        body: '• You get more blackjacks, which pay 3 to 2. The dealer gets them too but only wins even money.\n• The dealer busts more often, because they must hit stiff hands.\n• Your double downs win more often.',
+        body: '• You get more blackjacks, the best hand in the game.\n• The dealer busts more often, because they must hit stiff hands.\n• Your double downs win more often.',
         cards: ['10', 'A', 'K'],
       },
       {
@@ -232,7 +232,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         heading: 'The plan',
-        body: 'Counting tracks whether the remaining cards are rich in high cards or low cards. Bet small when they\'re low, bet bigger when they\'re high. No memorising every card, and it is not illegal. It just takes practice.',
+        body: 'Counting tracks whether the remaining cards are rich in high cards or low cards. That tells you when the cards left favor you, and when some plays change, like insurance and the index plays. No memorising every card, and card counting is legal; it\'s a mental skill. It just takes practice.',
       },
     ],
     quiz: [
@@ -330,7 +330,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         heading: 'Rounding',
-        body: 'For betting, most counters round the true count down (+2.7 becomes +2). That keeps you careful with your bets.',
+        body: 'Most counters round the true count down (+2.7 becomes +2). That way you only change a play once the count has really reached its index.',
       },
     ],
     quiz: [
@@ -344,42 +344,10 @@ export const LESSONS: Lesson[] = [
         question: 'Running count −3, 1 deck left. True count?',
         options: ['−1', '−3', '0'],
         answer: 1,
-        explanation: '−3 ÷ 1 = −3. Bet the minimum.',
+        explanation: '−3 ÷ 1 = −3: the cards left don\'t favor you.',
       },
     ],
     practice: { label: 'Practice true count conversions', href: '/drills/true-count' },
-  },
-  {
-    id: 'betting',
-    unit: 'Counting',
-    title: 'Betting With the Count',
-    summary: 'Turn the count into an edge.',
-    sections: [
-      {
-        body: 'Each +1 of true count is worth about +0.5% to you. In a typical game you start around −0.5%, so you have the edge from about +1 or +2.',
-      },
-      {
-        heading: 'A simple bet spread',
-        body: 'True count +1 or less: 1 unit\nTrue count +2: 2 units\nTrue count +3: 4 units\nTrue count +4: 6 units\nTrue count +5 or more: 8 units',
-      },
-      {
-        heading: 'Bankroll',
-        body: 'Even with an edge, swings are big. Counters keep a bankroll of hundreds of betting units to avoid going broke during losing streaks. Never bet money you can\'t afford to lose.',
-      },
-      {
-        heading: 'Reality check',
-        body: 'Counting is legal, but casinos can refuse your action or ask you to stop playing. Big, obvious bet jumps attract attention. Use this app to learn the skill and the math.',
-      },
-    ],
-    quiz: [
-      {
-        question: 'True count is +3. Using the spread above, how many units do you bet?',
-        options: ['1', '4', '8'],
-        answer: 1,
-        explanation: '+3 → 4 units.',
-      },
-    ],
-    practice: { label: 'Play with the count shown', href: '/play' },
   },
   {
     id: 'deviations',
@@ -389,7 +357,7 @@ export const LESSONS: Lesson[] = [
     sections: [
       {
         heading: 'Insurance at +3',
-        body: 'Insurance pays 2 to 1. It becomes a good bet when more than 1 in 3 remaining cards is a 10. That happens at a Hi-Lo true count of about +3. Take insurance at +3 or higher, never below.',
+        body: 'Insurance is the side option offered when the dealer shows an Ace. It becomes the right play when more than 1 in 3 remaining cards is a 10. That happens at a Hi-Lo true count of about +3. Take insurance at +3 or higher, never below.',
       },
       {
         heading: 'Index plays',
@@ -404,7 +372,7 @@ export const LESSONS: Lesson[] = [
         question: 'Dealer shows an Ace. True count is +4. Insurance?',
         options: ['Take it', 'Decline'],
         answer: 0,
-        explanation: 'At +3 or higher there are enough 10s left to make insurance profitable.',
+        explanation: 'At +3 or higher there are enough 10s left to make insurance the right play.',
       },
       {
         question: '16 vs dealer 10, no surrender, true count +1. Play?',

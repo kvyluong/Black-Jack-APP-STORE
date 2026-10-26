@@ -3,7 +3,6 @@
 import { LESSONS } from '../content/lessons';
 import { localized, tr } from '../i18n/lang';
 import { LeakStats, weakestDrillable } from './leaks';
-import { TABLES, isUnlocked } from './progression';
 import { CountRecords, DeckEstimateRecords, DeviationProgress, ExamResult, Tally } from './records';
 import { DEVIATIONS, SURRENDER_DEVIATIONS } from './strategy';
 
@@ -45,7 +44,6 @@ export interface ProgressStats {
   decisions: number;
   correctDecisions: number;
   lessonsCompleted: string[];
-  peakChips: number;
   leaks: LeakStats;
   academy: { lastWorkoutDay?: string; pref?: string };
   countRecords: CountRecords;
@@ -137,8 +135,6 @@ export interface GoalDef {
   id: string;
   counter: CounterId;
   target: number;
-  /** Reward in minimum bets at your best unlocked table. */
-  bets: number;
   xp: number;
   route: string;
   eligible: (s: ProgressStats) => boolean;
@@ -147,22 +143,20 @@ export interface GoalDef {
 }
 
 export const GOAL_POOL: GoalDef[] = [
-  { id: 'hands', counter: 'hands', target: 20, bets: 3, xp: 40, route: '/tables', eligible: () => true },
-  { id: 'correct', counter: 'correct', target: 15, bets: 3, xp: 30, route: '/drills/strategy', eligible: () => true },
+  { id: 'hands', counter: 'hands', target: 20, xp: 40, route: '/tables', eligible: () => true },
+  { id: 'correct', counter: 'correct', target: 15, xp: 30, route: '/drills/strategy', eligible: () => true },
   {
     id: 'lesson',
     counter: 'lessons',
     target: 1,
-    bets: 4,
     xp: 40,
     route: '/learn',
-    eligible: (s) => s.lessonsCompleted.length < LESSONS.length,
+    eligible: (s) => LESSONS.some((l) => !s.lessonsCompleted.includes(l.id)),
   },
   {
     id: 'workout',
     counter: 'workout',
     target: 1,
-    bets: 4,
     xp: 40,
     route: '/academy',
     absolute: true,
@@ -173,7 +167,6 @@ export const GOAL_POOL: GoalDef[] = [
     id: 'perfectDeck',
     counter: 'perfectDecks',
     target: 1,
-    bets: 5,
     xp: 50,
     route: '/drills/count',
     eligible: counting(['hi-lo', 'running-count'], (s) => (s.countRecords?.perfectDecks ?? 0) > 0),
@@ -182,7 +175,6 @@ export const GOAL_POOL: GoalDef[] = [
     id: 'trueCount',
     counter: 'trueCount',
     target: 10,
-    bets: 3,
     xp: 30,
     route: '/drills/true-count',
     eligible: counting(['true-count'], (s) => (s.trueCountDrill?.total ?? 0) > 0),
@@ -191,7 +183,6 @@ export const GOAL_POOL: GoalDef[] = [
     id: 'deckEstimates',
     counter: 'deckEstimates',
     target: 5,
-    bets: 2,
     xp: 25,
     route: '/drills/decks',
     eligible: counting(['true-count'], (s) => (s.deckEstimates?.total ?? 0) > 0),
@@ -200,7 +191,6 @@ export const GOAL_POOL: GoalDef[] = [
     id: 'devReviews',
     counter: 'devReviews',
     target: 10,
-    bets: 4,
     xp: 40,
     route: '/drills/deviations',
     eligible: counting(['deviations'], (s) => Object.keys(s.deviations?.cards ?? {}).length > 0),
@@ -282,10 +272,9 @@ export function goalProgress(g: GoalDef, s: ProgressStats, today: string): numbe
   return Math.max(0, Math.min(g.target, value));
 }
 
-/** Chips and XP for claiming a goal: a few minimum bets at your best unlocked table. */
-export function goalReward(g: GoalDef, peakChips: number): { chips: number; xp: number } {
-  const best = [...TABLES].reverse().find((t) => isUnlocked(t, peakChips)) ?? TABLES[0];
-  return { chips: best.minBet * g.bets, xp: g.xp };
+/** XP for claiming a goal. */
+export function goalReward(g: GoalDef): { xp: number } {
+  return { xp: g.xp };
 }
 
 /** Most streak freezes you can bank. */
@@ -466,7 +455,7 @@ export const COUNT_PLAY_IDS: string[] = [...DEVIATIONS, ...SURRENDER_DEVIATIONS]
 
 /**
  * Weights for the overall score (sum 100). Basic strategy and the casino-conditions
- * test count most: they're what actually protects your money at a real table.
+ * test count most: they're the core skills the app teaches.
  */
 export const READY_WEIGHTS: Record<BenchmarkId, number> = {
   strategy: 25,
@@ -509,7 +498,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
     trueCount: {
       title: 'True count conversion',
       goal: '90%+ correct, with at least 20 answers',
-      why: 'Your bets and count plays depend on the true count, not the running count.',
+      why: 'Count plays depend on the true count, not the running count.',
     },
     decks: {
       title: 'Deck estimation',
@@ -519,7 +508,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
     deviations: {
       title: 'Count plays',
       goal: 'Learn every card in the count-play deck',
-      why: 'Index plays like 16 vs 10 and insurance add most of a counter’s extra edge after betting.',
+      why: 'Index plays like 16 vs 10 and insurance are where the count changes the right play.',
     },
     exam: {
       title: 'Casino conditions',
@@ -542,7 +531,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
     trueCount: {
       title: 'Conversión al conteo real',
       goal: '90% o más de aciertos, con al menos 20 respuestas',
-      why: 'Tus apuestas y jugadas por conteo dependen del conteo real, no del continuo.',
+      why: 'Las jugadas por conteo dependen del conteo real, no del continuo.',
     },
     decks: {
       title: 'Estimar barajas',
@@ -552,7 +541,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
     deviations: {
       title: 'Jugadas por conteo',
       goal: 'Aprende todas las tarjetas de jugadas por conteo',
-      why: 'Jugadas como 16 contra 10 y el seguro dan casi toda la ventaja extra después de las apuestas.',
+      why: 'Jugadas como 16 contra 10 y el seguro son donde el conteo cambia la jugada correcta.',
     },
     exam: {
       title: 'Condiciones de casino',

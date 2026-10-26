@@ -23,7 +23,6 @@ const SYMBOLS = {
   leaks: { ios: 'magnifyingglass', android: 'search' },
   exam: { ios: 'graduationcap.fill', android: 'school' },
   chart: { ios: 'tablecells', android: 'table_chart' },
-  simulator: { ios: 'function', android: 'functions' },
   ready: { ios: 'trophy.fill', android: 'trophy' },
   progress: { ios: 'chart.line.uptrend.xyaxis', android: 'trending_up' },
   lock: { ios: 'lock.fill', android: 'lock' },
@@ -37,7 +36,7 @@ const SYMBOLS = {
   // Table plays
   hit: { ios: 'plus.circle.fill', android: 'add_circle' },
   stand: { ios: 'hand.raised.fill', android: 'back_hand' },
-  double: { ios: 'dollarsign.circle.fill', android: 'paid' },
+  double: { ios: '2.circle.fill', android: 'looks_two' },
   split: { ios: 'arrow.left.and.right.circle.fill', android: 'call_split' },
   surrender: { ios: 'flag.fill', android: 'flag' },
 } as const;

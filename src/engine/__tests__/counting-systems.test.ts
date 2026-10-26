@@ -10,7 +10,6 @@ import {
   describeTags,
   initialRunningCount,
   isBalanced,
-  koBetUnits,
   koBetZone,
   koKeyCount,
   koQuestion,
@@ -110,18 +109,11 @@ describe('KO', () => {
     expect([1, 2, 6, 8].map(koKeyCount)).toEqual([2, 1, -4, -6]);
   });
 
-  it('bet zones and units', () => {
+  it('count zones: below the key count, at it, at the pivot', () => {
     expect(koBetZone(-5, 6)).toBe('min');
     expect(koBetZone(-4, 6)).toBe('raise');
     expect(koBetZone(3, 6)).toBe('raise');
     expect(koBetZone(4, 6)).toBe('max');
-    expect(koBetUnits(-5, 6)).toBe(1);
-    expect(koBetUnits(-4, 6)).toBe(2);
-    expect(koBetUnits(3, 6)).toBe(4);
-    expect(koBetUnits(4, 6)).toBe(6);
-    expect(koBetUnits(6, 6)).toBe(8);
-    expect(koBetUnits(1, 1)).toBe(1);
-    expect(koBetUnits(2, 1)).toBe(2);
   });
 
   it('quiz questions have the right answer for their count', () => {

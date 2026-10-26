@@ -18,20 +18,18 @@ const T = localized({
   en: {
     open: 'open',
     openSeat: (n: number) => `Seat ${n}, open`,
-    yourSeat: (n: number, bet: number) => `Seat ${n}, your seat${bet > 0 ? `, bet $${bet}` : ''}`,
+    yourSeat: (n: number) => `Seat ${n}, your seat`,
     you: 'YOU',
     seat: (n: number, name: string, style: string) => `Seat ${n}, ${name}, ${style}`,
-    bet: (bet: number, rest: string) => `bet $${bet}, ${rest}`,
     dealing: 'dealing',
     theirTurn: 'their turn',
   },
   es: {
     open: 'libre',
     openSeat: (n: number) => `Asiento ${n}, libre`,
-    yourSeat: (n: number, bet: number) => `Asiento ${n}, tu asiento${bet > 0 ? `, apuesta $${bet}` : ''}`,
+    yourSeat: (n: number) => `Asiento ${n}, tu asiento`,
     you: 'TÚ',
     seat: (n: number, name: string, style: string) => `Asiento ${n}, ${name}, ${style}`,
-    bet: (bet: number, rest: string) => `apuesta $${bet}, ${rest}`,
     dealing: 'repartiendo',
     theirTurn: 'su turno',
   },
@@ -84,13 +82,11 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
     );
   }
   if (occupant === YOU) {
-    const bet = game.hands.filter((h) => h.seat === seat).reduce((sum, h) => sum + h.bet, 0);
     return (
-      <View style={styles.seat} accessible accessibilityLabel={T.yourSeat(seat + 1, bet)}>
+      <View style={styles.seat} accessible accessibilityLabel={T.yourSeat(seat + 1)}>
         <View style={[st('avatar'), styles.you]}>
           <Text style={st('youText')}>{T.you}</Text>
         </View>
-        {bet > 0 && <Text style={st('bet')}>${bet}</Text>}
         {label}
       </View>
     );
@@ -107,7 +103,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
   const summary = [
     T.seat(seat + 1, occupant.name, STYLE_LABEL[occupant.style]),
     ...hands.map(({ h }) =>
-      T.bet(h.bet, settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards, h.fromSplit)}`) : T.dealing),
+      settled ? (h.outcome ? OUTCOME_SHORT[h.outcome] : `${h.cards.map((c) => c.rank).join(' ')}, ${describeHand(h.cards, h.fromSplit)}`) : T.dealing,
     ),
     theirTurn ? T.theirTurn : '',
     bubble ?? '',
@@ -129,7 +125,6 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
       )}
       {hands.map(({ h, i }) => (
         <View key={h.id} style={styles.hand}>
-          <Text style={st('bet')}>${h.bet}</Text>
           <View style={stackBox}>
             {h.cards.map((c, ci) => (
               <View
@@ -141,7 +136,7 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
             ))}
           </View>
           <Text
-            style={[st('total'), h.outcome && { color: h.payout! > h.bet ? good : h.payout === h.bet ? colors.text : bad }]}
+            style={[st('total'), h.outcome && { color: h.outcome === 'win' || h.outcome === 'blackjack' ? good : h.outcome === 'push' ? colors.text : bad }]}
             // One line, shrinking a long total ("17 blando", "Pasado (22)") instead of wrapping it.
             numberOfLines={1}
             adjustsFontSizeToFit

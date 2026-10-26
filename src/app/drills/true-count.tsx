@@ -13,7 +13,7 @@ import { useOutcomeColors } from '../../components/useColors';
 const T = localized({
   en: {
     formula: (name: string) => `${name} true count = running count ÷ decks remaining.`,
-    koIntro: `KO is unbalanced, so there’s no true count to work out. Instead you compare the running count with two fixed numbers: the key count (bet more from here) and the pivot, +${KO_PIVOT} (bet the most from here).`,
+    koIntro: `KO is unbalanced, so there’s no true count to work out. Instead you compare the running count with two fixed numbers: the key count (from here the cards left favor the player) and the pivot, +${KO_PIVOT} (from here they strongly favor the player).`,
     koKeys: (list: string) => `Key counts: ${list}. A real shoe starts at 4 − 4 × decks.`,
     correctOf: (right: number, total: number) => `${right}/${total} correct`,
     allTime: (right: number, total: number) => `All time: ${right}/${total}`,
@@ -21,19 +21,19 @@ const T = localized({
     decksLeft: (d: number) => `${d} deck${d === 1 ? '' : 's'} left`,
     decksGame: (d: number) => `${d}-deck game`,
     question: 'What’s the true count?',
-    koQuestion: 'How much do you bet?',
-    zone: { min: 'Minimum bet', raise: 'Raise the bet', max: 'Biggest bet' } as Record<KoBetZone, string>,
+    koQuestion: 'Where does this count stand?',
+    zone: { min: 'Below the key count', raise: 'At the key count', max: 'At the pivot' } as Record<KoBetZone, string>,
     correct: '✓ Correct',
     wrong: (n: string) => `✗ It’s ${n}`,
     koExplain: (rc: string, key: string, irc: string, zone: KoBetZone) =>
       `Key count ${key}, pivot +${KO_PIVOT} (this shoe started at ${irc}). ${rc} is ${
-        { min: 'below the key count: bet the minimum', raise: 'at or above the key count but below the pivot: raise the bet', max: 'at or above the pivot: bet the most' }[zone]
+        { min: 'below the key count: the cards left don’t favor you yet', raise: 'at or above the key count but below the pivot: the cards left favor you', max: 'at or above the pivot: the cards left strongly favor you' }[zone]
       }.`,
     next: 'Next',
   },
   es: {
     formula: (name: string) => `Conteo real ${name} = conteo continuo ÷ barajas restantes.`,
-    koIntro: `KO no es balanceado, así que no calculas un conteo real. En su lugar comparas el conteo continuo con dos números fijos: el conteo clave (sube la apuesta desde ahí) y el pivote, +${KO_PIVOT} (apuesta lo máximo desde ahí).`,
+    koIntro: `KO no es balanceado, así que no calculas un conteo real. En su lugar comparas el conteo continuo con dos números fijos: el conteo clave (desde ahí las cartas que quedan favorecen al jugador) y el pivote, +${KO_PIVOT} (desde ahí lo favorecen mucho).`,
     koKeys: (list: string) => `Conteos clave: ${list}. Un zapato real empieza en 4 − 4 × barajas.`,
     correctOf: (right: number, total: number) => `${right}/${total} correctas`,
     allTime: (right: number, total: number) => `En total: ${right}/${total}`,
@@ -41,13 +41,13 @@ const T = localized({
     decksLeft: (d: number) => `${d === 1 ? 'Queda' : 'Quedan'} ${d} baraja${d === 1 ? '' : 's'}`,
     decksGame: (d: number) => `Juego de ${d} baraja${d === 1 ? '' : 's'}`,
     question: '¿Cuál es el conteo real?',
-    koQuestion: '¿Cuánto apuestas?',
-    zone: { min: 'Apuesta mínima', raise: 'Sube la apuesta', max: 'Apuesta máxima' },
+    koQuestion: '¿Dónde está este conteo?',
+    zone: { min: 'Debajo del conteo clave', raise: 'En el conteo clave', max: 'En el pivote' },
     correct: '✓ Correcto',
     wrong: (n: string) => `✗ Es ${n}`,
     koExplain: (rc: string, key: string, irc: string, zone: KoBetZone) =>
       `Conteo clave ${key}, pivote +${KO_PIVOT} (este zapato empezó en ${irc}). ${rc} está ${
-        { min: 'debajo del conteo clave: apuesta lo mínimo', raise: 'en el conteo clave o más, pero debajo del pivote: sube la apuesta', max: 'en el pivote o más: apuesta lo máximo' }[zone]
+        { min: 'debajo del conteo clave: las cartas que quedan aún no te favorecen', raise: 'en el conteo clave o más, pero debajo del pivote: las cartas que quedan te favorecen', max: 'en el pivote o más: las cartas que quedan te favorecen mucho' }[zone]
       }.`,
     next: 'Siguiente',
   },
@@ -56,7 +56,7 @@ const T = localized({
 const KO_DECKS = [1, 2, 6, 8];
 const ZONES: KoBetZone[] = ['min', 'raise', 'max'];
 
-/** True count drill: divide by decks left (balanced systems), or KO's key-count/pivot bet quiz. */
+/** True count drill: divide by decks left (balanced systems), or KO's key-count/pivot quiz. */
 export default function TrueCountDrill() {
   const { settings, stats, updateStats } = useSettings();
   const system = settings.countingSystem;

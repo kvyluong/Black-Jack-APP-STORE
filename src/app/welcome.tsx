@@ -17,7 +17,6 @@ import { cardTag } from '../engine/counting';
 import { cardDelay } from '../engine/dealSchedule';
 import { GameState, act, startRound } from '../engine/game';
 import { KNOW_THE_GAME, markLessonsKnown } from '../engine/progress';
-import { STARTING_CHIPS, formatChips } from '../engine/progression';
 import { ACTION_LABEL, Action } from '../engine/strategy';
 import { TUTORIAL, TUTORIAL_BET, tutorialGame } from '../engine/tutorial';
 import { localized } from '../i18n/lang';
@@ -32,7 +31,7 @@ const T = localized({
     levelQ: 'How well do you know blackjack?',
     levelNote: 'Every lesson stays open to revisit, and Settings → Show every feature opens the rest anytime.',
     newTitle: 'I’m new',
-    newBody: (chips: string) => `Two quick guided hands, then the rules step by step. Practice chips only: your $${chips} waits for you.`,
+    newBody: 'Two quick guided hands, then the rules step by step. Nothing is bet: every hand is practice.',
     knowTitle: 'I know how to play',
     knowBody: 'Skip the rules. Start at basic strategy, the best play for every hand, and take a seat.',
     countTitle: 'I already count cards',
@@ -45,8 +44,8 @@ const T = localized({
     seenA11y: (rc: string) => `Cards seen. Running count ${rc}`,
     runningCount: 'Running count:',
     positive:
-      'Positive means more low cards than high ones have gone, so the cards left are rich in 10s and Aces. That favors you, so counters bet more.',
-    negative: 'Negative means lots of 10s and Aces have gone, which is bad news for you. When the count is high, counters bet more.',
+      'Positive means more low cards than high ones have gone, so the cards left are rich in 10s and Aces. That favors you.',
+    negative: 'Negative means lots of 10s and Aces have gone, which is bad news for you. A high count is good news.',
     academyNote: 'The Counting Academy teaches you to keep this count in your head.',
     startLessons: 'Start the lessons',
     goFloor: 'Go to the casino floor',
@@ -67,7 +66,7 @@ const T = localized({
     levelQ: '¿Qué tan bien conoces el blackjack?',
     levelNote: 'Todas las lecciones siguen abiertas, y Ajustes → Mostrar todas las funciones abre el resto cuando quieras.',
     newTitle: 'Soy nuevo',
-    newBody: (chips: string) => `Dos manos guiadas rápidas y luego las reglas paso a paso. Solo fichas de práctica: tus $${chips} te esperan.`,
+    newBody: 'Dos manos guiadas rápidas y luego las reglas paso a paso. No se apuesta nada: cada mano es práctica.',
     knowTitle: 'Ya sé jugar',
     knowBody: 'Salta las reglas. Empieza con la estrategia básica, la mejor jugada para cada mano, y siéntate a jugar.',
     countTitle: 'Ya cuento cartas',
@@ -80,8 +79,8 @@ const T = localized({
     seenA11y: (rc: string) => `Cartas vistas. Conteo continuo ${rc}`,
     runningCount: 'Conteo continuo:',
     positive:
-      'Positivo significa que han salido más cartas bajas que altas, así que las que quedan están cargadas de 10 y ases. Eso te favorece, por eso los contadores apuestan más.',
-    negative: 'Negativo significa que han salido muchos 10 y ases, lo cual es malo para ti. Cuando el conteo es alto, los contadores apuestan más.',
+      'Positivo significa que han salido más cartas bajas que altas, así que las que quedan están cargadas de 10 y ases. Eso te favorece.',
+    negative: 'Negativo significa que han salido muchos 10 y ases, lo cual es malo para ti. Un conteo alto es buena noticia.',
     academyNote: 'La Academia de conteo te enseña a llevar este conteo de memoria.',
     startLessons: 'Empezar las lecciones',
     goFloor: 'Ir a la sala del casino',
@@ -98,7 +97,7 @@ const T = localized({
 });
 
 const ACTIONS: Action[] = ['hit', 'stand', 'double'];
-/** Practice chips for the walkthrough; your real stack isn't touched. */
+/** The walkthrough's hidden practice budget (nothing is shown or bet). */
 const PRACTICE_CHIPS = 100;
 
 type Stage = { kind: 'intro' } | { kind: 'hand'; index: number } | { kind: 'finish' };
@@ -148,7 +147,7 @@ export default function Welcome() {
 
   if (stage.kind === 'intro') {
     const choices = [
-      { icon: 'newPlayer' as const, title: T.newTitle, body: T.newBody(formatChips(STARTING_CHIPS)), onPress: () => deal(0) },
+      { icon: 'newPlayer' as const, title: T.newTitle, body: T.newBody, onPress: () => deal(0) },
       {
         icon: 'knowsPlay' as const,
         title: T.knowTitle,
@@ -258,7 +257,7 @@ export default function Welcome() {
               cards={game.hands[0].cards}
               label={T.you}
               active={game.phase === 'playing'}
-              result={game.hands[0].outcome === 'win' ? T.win : `$${TUTORIAL_BET}`}
+              result={game.hands[0].outcome === 'win' ? T.win : undefined}
               dealDelay={(c) => cardDelay(schedule, 0, c)}
               settling={!settled}
               instant={reduceMotion}

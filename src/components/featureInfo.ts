@@ -10,8 +10,8 @@ type Info = { title: string; body: string };
 
 const T = localized<Record<Exclude<Feature, 'tableCount'>, Info> & { countBody: (system: string) => string }>({
   en: {
-    lessons: { title: 'Lessons', body: 'From the rules to card counting, ten short lessons' },
-    tables: { title: 'Casino Floor', body: 'Play with a coach and win chips' },
+    lessons: { title: 'Lessons', body: 'From the rules to card counting, nine short lessons' },
+    tables: { title: 'Practice Tables', body: 'Play hands with a coach who grades every decision' },
     academy: { title: 'Counting Academy', body: 'Learn the count your way: see it, hear it, tap it, chunk it or read it' },
     strategyDrill: { title: 'Basic Strategy', body: 'Random hands: choose the best play and see why' },
     countDrill: { title: 'Running Count', body: '' },
@@ -21,14 +21,13 @@ const T = localized<Record<Exclude<Feature, 'tableCount'>, Info> & { countBody: 
     leaks: { title: 'Your Leaks', body: 'The decisions you miss most, and a drill aimed at them' },
     exam: { title: 'Casino Conditions', body: 'The final exam: a full shoe with no help on screen' },
     chart: { title: 'Strategy Chart', body: 'The best play for every hand, for your rules' },
-    simulator: { title: 'Bankroll Simulator', body: 'What a bet spread is worth, and the risk of going broke' },
     ready: { title: 'Road to the Casino', body: 'Your casino-ready score and what to practice next' },
     progress: { title: 'Your Progress', body: 'Accuracy and speed over time' },
     countBody: (system: string) => `Cards flash by: keep the ${system} count`,
   },
   es: {
-    lessons: { title: 'Lecciones', body: 'De las reglas a contar cartas, en diez lecciones cortas' },
-    tables: { title: 'Sala del casino', body: 'Juega con un coach y gana fichas' },
+    lessons: { title: 'Lecciones', body: 'De las reglas a contar cartas, en nueve lecciones cortas' },
+    tables: { title: 'Mesas de práctica', body: 'Juega manos con un coach que califica cada decisión' },
     academy: { title: 'Academia de conteo', body: 'Aprende el conteo a tu manera: míralo, escúchalo, tócalo, agrúpalo o léelo' },
     strategyDrill: { title: 'Estrategia básica', body: 'Manos al azar: elige la mejor jugada y descubre por qué' },
     countDrill: { title: 'Conteo continuo', body: '' },
@@ -38,7 +37,6 @@ const T = localized<Record<Exclude<Feature, 'tableCount'>, Info> & { countBody: 
     leaks: { title: 'Tus fugas', body: 'Las decisiones que más fallas y un ejercicio enfocado en ellas' },
     exam: { title: 'Condiciones de casino', body: 'El examen final: un zapato completo sin ayudas en pantalla' },
     chart: { title: 'Tabla de estrategia', body: 'La mejor jugada para cada mano, con tus reglas' },
-    simulator: { title: 'Simulador de banca', body: 'Cuánto vale un rango de apuestas y el riesgo de quiebra' },
     ready: { title: 'Camino al casino', body: 'Tu puntaje para el casino y qué practicar después' },
     progress: { title: 'Tu progreso', body: 'Precisión y velocidad a lo largo del tiempo' },
     countBody: (system: string) => `Las cartas pasan rápido: lleva el conteo ${system}`,
@@ -57,7 +55,6 @@ const ROUTES: Record<Exclude<Feature, 'tableCount'>, { href: Href; icon: IconNam
   leaks: { href: '/leaks', icon: 'leaks' },
   exam: { href: '/exam', icon: 'exam' },
   chart: { href: '/chart', icon: 'chart' },
-  simulator: { href: '/simulator', icon: 'simulator' },
   ready: { href: '/ready', icon: 'ready' },
   progress: { href: '/progress', icon: 'progress' },
 };

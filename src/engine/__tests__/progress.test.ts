@@ -42,7 +42,6 @@ function stats(over: Partial<ProgressStats> = {}): ProgressStats {
     decisions: 0,
     correctDecisions: 0,
     lessonsCompleted: [],
-    peakChips: 1000,
     leaks: emptyLeaks(),
     academy: {},
     countRecords: { bestDeckMs: null, perfectDecks: 0 },
@@ -205,10 +204,9 @@ describe('daily goals', () => {
     expect(goalProgress(w, { ...s, ...rolloverDay(s, day)! }, day)).toBe(1);
   });
 
-  it('rewards a few minimum bets at your best table', () => {
+  it('rewards XP only', () => {
     const hands = GOAL_POOL.find((g) => g.id === 'hands')!;
-    expect(goalReward(hands, 1000)).toEqual({ chips: 15, xp: 40 });
-    expect(goalReward(hands, 12000).chips).toBe(300); // The Strip, $100 minimum
+    expect(goalReward(hands)).toEqual({ xp: 40 });
   });
 
   it('builds a streak from one claim a day, and resets after a missed day', () => {

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LegalActions } from '../../engine/game';
-import { formatChips } from '../../engine/progression';
 import { ACTION_LABEL, Action, Recommendation } from '../../engine/strategy';
 import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
@@ -19,8 +18,6 @@ const T = localized({
     decline: 'No insurance',
     signals: 'Tap the felt to hit · Swipe sideways to stand',
     askCoach: 'Ask the coach',
-    need: (play: string, n: string) => `${play} · Need $${n}`,
-    needLabel: (play: string, n: string) => `${play}, not available: you need $${n} more in chips`,
   },
   es: {
     coachSeat: (seat: number, action: string) => `Asiento ${seat} · Coach: ${action}`,
@@ -31,8 +28,6 @@ const T = localized({
     decline: 'Sin seguro',
     signals: 'Toca el paño para pedir · Desliza de lado para plantarte',
     askCoach: 'Pregúntale al coach',
-    need: (play: string, n: string) => `${play} · Faltan $${n}`,
-    needLabel: (play: string, n: string) => `${play}, no disponible: te faltan $${n} en fichas`,
   },
 });
 
@@ -63,7 +58,6 @@ export function ActionBar({
   showHints,
   surrenderAllowed,
   handSignals = false,
-  shortfall = {},
   onAction,
 }: {
   seat: number;
@@ -72,8 +66,6 @@ export function ActionBar({
   showHints: boolean;
   surrenderAllowed: boolean;
   handSignals?: boolean;
-  /** Chips you're short to split or double: those buttons say so instead of just greying out. */
-  shortfall?: Partial<Record<'split' | 'double', number>>;
   onAction: (a: Action) => void;
 }) {
   const [asked, setAsked] = useState(false);
@@ -90,13 +82,10 @@ export function ActionBar({
       {handSignals && <Text style={styles.signals}>{T.signals}</Text>}
       <View style={styles.actions}>
         {ACTIONS.filter((a) => a !== 'surrender' || surrenderAllowed).map((a) => {
-          const missing = a === 'split' || a === 'double' ? (shortfall[a] ?? 0) : 0;
-          const short = !legal[a] && missing > 0 ? formatChips(missing) : null;
           return (
             <Button
               key={a}
-              title={short ? T.need(ACTION_LABEL[a], short) : ACTION_LABEL[a]}
-              accessibilityLabel={short ? T.needLabel(ACTION_LABEL[a], short) : undefined}
+              title={ACTION_LABEL[a]}
               variant="secondary"
               disabled={!legal[a]}
               highlighted={coach && advice?.action === a}

@@ -289,11 +289,11 @@ function explainEn(action: Action, ctx: DecisionContext): string {
       if (pair === 8) return 'Always split 8s. 16 is the worst total in blackjack; two hands starting at 8 do much better.';
       return `Split: the dealer shows ${dealer}, so two hands starting with a ${pair} are worth more than one hand of ${total}.`;
     case 'surrender':
-      return `Surrender: ${total} against ${dealer} loses so often that giving up half your bet costs less over time.`;
+      return `Surrender: ${total} against ${dealer} loses so often that giving up the hand early is the better result over time.`;
     case 'double':
       if (soft)
-        return `Double: soft ${total} can't bust with one card, and the dealer's ${dealer} is weak. Get more money out while you have the edge.`;
-      return `Double: ${total} is a strong starting total and the dealer shows ${dealer}. You're the favorite, so double your bet.`;
+        return `Double: soft ${total} can't bust with one card, and the dealer's ${dealer} is weak. Double down while the odds are on your side.`;
+      return `Double: ${total} is a strong starting total and the dealer shows ${dealer}. You're the favorite, so double down.`;
     case 'stand':
       if (total >= 17 && !soft) return `Stand: ${total} is strong enough. Hitting would bust you too often.`;
       if (soft) return `Stand: soft ${total} is a good hand against ${dealer}.`;
@@ -322,11 +322,11 @@ function explainEs(action: Action, ctx: DecisionContext): string {
       if (pair === 8) return 'Divide siempre los 8. El 16 es el peor total del blackjack; dos manos que empiezan en 8 rinden mucho más.';
       return `Dividir: el crupier muestra ${dealer}, así que dos manos que empiezan con un ${pair} valen más que una sola mano de ${total}.`;
     case 'surrender':
-      return `Rendirse: ${total} contra ${dealer} pierde tan seguido que entregar la mitad de tu apuesta te cuesta menos a la larga.`;
+      return `Rendirse: ${total} contra ${dealer} pierde tan seguido que rendirte a tiempo es el mejor resultado a la larga.`;
     case 'double':
       if (soft)
-        return `Doblar: un ${total} blando no se pasa con una carta, y el crupier muestra ${dealer}, una carta débil. Pon más dinero en la mesa mientras tienes la ventaja.`;
-      return `Doblar: ${total} es un buen total para empezar y el crupier muestra ${dealer}. Eres el favorito, así que dobla tu apuesta.`;
+        return `Doblar: un ${total} blando no se pasa con una carta, y el crupier muestra ${dealer}, una carta débil. Dobla mientras las probabilidades están de tu lado.`;
+      return `Doblar: ${total} es un buen total para empezar y el crupier muestra ${dealer}. Eres el favorito, así que dobla.`;
     case 'stand':
       if (total >= 17 && !soft) return `Plantarse: ${total} es suficiente. Si pides, te pasarás demasiadas veces.`;
       if (soft) return `Plantarse: un ${total} blando es buena mano contra ${dealer}.`;

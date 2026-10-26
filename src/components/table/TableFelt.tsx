@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { DealSchedule, cardDelay } from '../../engine/dealSchedule';
 import { GameState, Outcome, isYours } from '../../engine/game';
-import { CasinoTable, formatChips } from '../../engine/progression';
+import { CasinoTable } from '../../engine/progression';
 import { SEAT_COUNT, Table, isNpc } from '../../engine/table';
 import { localized } from '../../i18n/lang';
 import { colors, spacing } from '../../theme';
@@ -24,14 +24,12 @@ const T = localized({
     seat: (n: number) => `Seat ${n}`,
     decks: (n: number) => `${n} deck${n > 1 ? 's' : ''}`,
     dealerRule: (h17: boolean) => `Dealer ${h17 ? 'hits soft 17' : 'stands on all 17s'}`,
-    pays: (p: string) => `Blackjack pays ${p}`,
   },
   es: {
     dealer: 'Crupier',
     seat: (n: number) => `Asiento ${n}`,
     decks: (n: number) => `${n} baraja${n > 1 ? 's' : ''}`,
     dealerRule: (h17: boolean) => `El crupier ${h17 ? 'pide con 17 blando' : 'se planta con todo 17'}`,
-    pays: (p: string) => `Blackjack paga ${p}`,
   },
 });
 /** Seats from the player's point of view: seat 1 (first base) is on the right. */
@@ -89,10 +87,10 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
         ) : (
           <View style={styles.rules}>
             <Text style={[styles.rulesTitle, tablet && styles.rulesTitleTablet]}>
-              {casino.name} · ${formatChips(casino.minBet)}–${formatChips(casino.maxBet)}
+              {casino.name}
             </Text>
             <Text style={[styles.placeholder, tablet && styles.placeholderTablet]}>
-              {T.decks(rules.decks)} · {T.dealerRule(rules.dealerHitsSoft17)} · {T.pays(rules.blackjackPayout === 1.5 ? '3:2' : '6:5')}
+              {T.decks(rules.decks)} · {T.dealerRule(rules.dealerHitsSoft17)}
             </Text>
           </View>
         )}
@@ -129,7 +127,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
             active={game.phase === 'playing' && i === game.active}
             label={T.seat(h.seat + 1)}
             fromSplit={h.fromSplit}
-            result={h.outcome ? OUTCOME_LABEL[h.outcome] : `$${h.bet}`}
+            result={h.outcome ? OUTCOME_LABEL[h.outcome] : undefined}
             dealDelay={(c) => cardDelay(schedule, i, c)}
             settling={!settled}
             instant={instant}

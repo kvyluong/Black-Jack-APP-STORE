@@ -1,9 +1,9 @@
 // The casino table, shared by the practice table (/play) and the Casino
 // Conditions test (/exam). In 'exam' mode there are no hints, no count on screen,
-// no feedback during play, chips come from a separate practice stack, the
-// dealer deals faster, the other players chat, and a discard tray shows the
-// cards played. The exam screen gets every bet, decision and the end of the shoe
-// through `exam` callbacks.
+// no feedback during play, the dealer deals faster, the other players chat,
+// and a discard tray shows the cards played. The exam screen gets every
+// decision and the end of the shoe through `exam` callbacks.
+// Nothing is bet: every hand is played for practice with a fixed, hidden stake.
 import { Stack } from 'expo-router';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -11,15 +11,13 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useInterstitial } from '../../ads/useInterstitial';
 import { haptic } from '../../audio/haptics';
 import { playSound } from '../../audio/sounds';
-import { betUnitsForCount, decksRemaining, initialRunningCount, isBalanced, shouldTakeInsurance } from '../../engine/counting';
+import { decksRemaining, initialRunningCount, isBalanced, shouldTakeInsurance } from '../../engine/counting';
 import { DEAL_STEP_MS, SPEED_FACTOR } from '../../engine/dealSchedule';
 import { discardedCards } from '../../engine/decks';
-import { EXAM_STACK_UNITS, chatterLine } from '../../engine/exam';
+import { chatterLine } from '../../engine/exam';
 import {
   GameState,
-  YOU,
   act,
-  chipShortfall,
   currentTrueCount,
   hiLoTrueCount,
   decisionContext,
@@ -35,12 +33,10 @@ import { streakPitch } from '../../engine/juice';
 import { recordDecision, recordInsurance } from '../../engine/leaks';
 import {
   CasinoTable,
-  STARTING_CHIPS,
-  bestAffordableTable,
-  formatChips,
+  PRACTICE_BUDGET,
+  PRACTICE_STAKE,
   getTable,
   levelInfo,
-  needsRefill,
   newlyUnlocked,
   roundXp,
 } from '../../engine/progression';
@@ -62,7 +58,7 @@ import { useSettings } from '../../state/settings';
 import { colors, spacing } from '../../theme';
 import { LevelBar } from '../chips';
 import { useUnlocks } from '../useUnlocks';
-import { StreakBadge, useCountUp } from '../juice';
+import { StreakBadge } from '../juice';
 import { Button, Panel, Screen } from '../ui';
 import { useOutcomeColors } from '../useColors';
 import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
@@ -95,25 +91,25 @@ const T = localized({
     best: (a: string, reason: string) => `Best play: ${a}. ${reason}`,
     takeIns: (tc: string) =>
       `Take insurance: the true count is ${tc} (+3 or more), so over a third of the remaining cards are 10s.`,
-    declineIns: 'Decline insurance. It loses money in the long run unless the true count is +3 or higher.',
+    declineIns: 'Decline insurance. It’s the wrong call unless the true count is +3 or higher.',
     takesIns: 'Takes insurance',
     noIns: 'No insurance',
-    chips: (n: string) => `Chips $${n}`,
-    examChips: (n: string) => `Test chips $${n}`,
     count: (rc: string, decks: number, tc: string) => `RC ${rc} · Decks ${decks} · TC ${tc}`,
     countRc: (rc: string) => `RC ${rc}`,
     tapCount: 'Tap to check count',
     shuffled: 'New shoe shuffled · count resets to 0',
     shuffledKo: (start: string) => `New shoe shuffled · KO count starts at ${start}`,
-    goTo: (name: string, min: string, max: string) => `Go to ${name} ($${min}–$${max})`,
+    goTo: (name: string) => `Go to ${name}`,
     playing: (name: string) => `${name} is playing…`,
     hintTake: 'Take it (TC +3 or higher)',
     hintDecline: 'Decline',
-    won: (n: number) => `You won $${n}`,
-    lost: (n: number) => `You lost $${n}`,
+    won: 'You win',
+    blackjack: 'Blackjack! You win',
+    lost: 'Dealer wins',
+    surrendered: 'You surrendered',
     push: 'Push',
+    split: (w: number, l: number, p: number) => [w && `Won ${w}`, l && `Lost ${l}`, p && `Push ${p}`].filter(Boolean).join(' · '),
     nextHand: 'Next hand',
-    bonus: (n: string) => `+$${n} BONUS`,
     hand: (n: number) => `Round ${n}`,
   },
   es: {
@@ -126,25 +122,25 @@ const T = localized({
     best: (a: string, reason: string) => `Mejor jugada: ${a}. ${reason}`,
     takeIns: (tc: string) =>
       `Toma el seguro: el conteo real es ${tc} (+3 o más), así que más de un tercio de las cartas restantes son 10.`,
-    declineIns: 'Rechaza el seguro. A la larga pierde dinero, salvo que el conteo real sea +3 o más.',
+    declineIns: 'Rechaza el seguro. No conviene, salvo que el conteo real sea +3 o más.',
     takesIns: 'Toma seguro',
     noIns: 'Sin seguro',
-    chips: (n: string) => `Fichas $${n}`,
-    examChips: (n: string) => `Fichas de prueba $${n}`,
     count: (rc: string, decks: number, tc: string) => `CC ${rc} · Barajas ${decks} · CR ${tc}`,
     countRc: (rc: string) => `CC ${rc}`,
     tapCount: 'Toca para ver el conteo',
     shuffled: 'Zapato nuevo barajado · el conteo vuelve a 0',
     shuffledKo: (start: string) => `Zapato nuevo barajado · el conteo KO empieza en ${start}`,
-    goTo: (name: string, min: string, max: string) => `Ir a ${name} ($${min}–$${max})`,
+    goTo: (name: string) => `Ir a ${name}`,
     playing: (name: string) => `${name} está jugando…`,
     hintTake: 'Tómalo (CR +3 o más)',
     hintDecline: 'Recházalo',
-    won: (n: number) => `Ganaste $${n}`,
-    lost: (n: number) => `Perdiste $${n}`,
+    won: 'Ganas',
+    blackjack: '¡Blackjack! Ganas',
+    lost: 'Gana el crupier',
+    surrendered: 'Te rendiste',
     push: 'Empate',
+    split: (w: number, l: number, p: number) => [w && `Ganadas ${w}`, l && `Perdidas ${l}`, p && `Empates ${p}`].filter(Boolean).join(' · '),
     nextHand: 'Siguiente mano',
-    bonus: (n: string) => `+$${n} EXTRA`,
     hand: (n: number) => `Ronda ${n}`,
   },
 });
@@ -153,15 +149,13 @@ export type TableMode = 'practice' | 'exam';
 
 /** What the Casino Conditions test hears from the table. */
 export interface ExamHooks {
-  /** A round was dealt: your bet per hand in units and what the count called for (betUnitsForCount). */
-  onBet: (units: number, ideal: number) => void;
   /** One of your decisions (plays and insurance), graded silently. */
   onDecision: (ok: boolean) => void;
   /** A round finished with this many hands of yours (split hands included). */
   onRoundEnd: (yourHands: number) => void;
-  /** The cut card came out (or the test chips ran out): `final` is the last finished round. */
+  /** The cut card came out: `final` is the last finished round. */
   onShoeEnd: (final: GameState) => void;
-  /** Between rounds, shown instead of the betting panel when it returns something (the decks-left question). */
+  /** Between rounds, shown instead of the deal panel when it returns something (the decks-left question). */
   gate?: (game: GameState) => ReactNode;
 }
 
@@ -180,8 +174,8 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   // Under casino conditions you're on your own: no hints, count or corrections.
   const showHints = !testing && settings.showHints;
   const correctMistakes = !testing && settings.correctMistakes;
-  // Beginners see just the cards, the coach and the buttons; the count bar, bet
-  // suggestion, level bar and count quizzes appear with the counting lessons.
+  // Beginners see just the cards, the coach and the buttons; the count bar,
+  // level bar and count quizzes appear with the counting lessons.
   const counting = useUnlocks().has('tableCount');
   const showCount = !testing && counting && settings.showCount;
   const countQuizzes = !testing && counting && settings.countQuizzes;
@@ -190,16 +184,14 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   const countPlays = countingSystem === 'hiLo' && (testing || settings.useDeviations);
   const otherPlayers = testing || settings.otherPlayers;
   const { good, bad } = useOutcomeColors();
-  // The casino table you're sitting at sets the bet limits.
+  // The table you're sitting at sets the room's look and name.
   const casino = getTable(settings.tableId);
-  const unit = casino.minBet;
-  const [game, setGame] = useState<GameState>(() => newGame(rules, testing ? EXAM_STACK_UNITS * unit : settings.bankroll));
-  // The last state whose cards have all landed: the count and chips on screen follow this.
+  const [game, setGame] = useState<GameState>(() => newGame(rules, PRACTICE_BUDGET));
+  // The last state whose cards have all landed: the count on screen follows this.
   const [countSource, setCountSource] = useState<GameState>(game);
-  const [table, setTable] = useState<Table>(() => createTable(settings.yourHands, unit, otherPlayers));
+  const [table, setTable] = useState<Table>(() => createTable(settings.yourHands, PRACTICE_STAKE, otherPlayers));
   const [events, setEvents] = useState<TableEvent[]>([]);
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
-  const [bet, setBet] = useState(unit);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [streak, setStreak] = useState(0);
@@ -230,10 +222,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     const t = setYourHands(table, settings.yourHands);
     return otherPlayers ? t : { ...t, seats: t.seats.map((o) => (isNpc(o) ? null : o)) };
   }, [betting, table, settings.yourHands, otherPlayers]);
-  // Chips can change off the table (a bonus, a refill), so between rounds the saved balance is the truth.
-  // The test plays from its own stack.
-  const bankroll = betting && !testing ? settings.bankroll : game.bankroll;
-
   const activeHand = game.phase === 'playing' ? game.hands[game.active] : undefined;
   const yourTurn = isYours(activeHand);
   const legal = legalActions(game);
@@ -249,9 +237,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   /** `correct`: right calls so far this round, passed in when this move just changed it. */
   const commit = (prev: GameState, next: GameState, correct = roundCorrect) => {
     setGame(next);
-    // Bets come out of your saved chips as soon as they're placed, so leaving mid-round forfeits
-    // them like walking away from a real table (instead of undoing the hand).
-    if (!testing && next.bankroll !== prev.bankroll && next.phase !== 'roundOver') updateSettings({ bankroll: next.bankroll });
     anim.play(prev, next, () => setCountSource(next));
     recordRoundEnd(next, correct);
   };
@@ -263,23 +248,20 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       exam?.onRoundEnd(g.hands.filter(isYours).length);
       return;
     }
-    updateSettings({ bankroll: g.bankroll });
-    // XP for each of your seats played and each correct call; new peaks unlock tables.
+    // XP for each of your seats played and each correct call; new levels unlock tables.
     const seatsPlayed = new Set(g.hands.filter(isYours).map((h) => h.seat)).size;
     const xp = stats.xp + roundXp(seatsPlayed, correct);
     const before = levelInfo(stats.xp);
     const after = levelInfo(xp);
     const found: { text: string; table?: CasinoTable }[] = [];
     if (after.level > before.level) found.push({ text: T.level(after.level, after.title) });
-    for (const t of newlyUnlocked(stats.peakChips, g.bankroll)) found.push({ text: T.unlocked(t.name), table: t });
+    for (const t of newlyUnlocked(before.level, after.level)) found.push({ text: T.unlocked(t.name), table: t });
     if (found.length) setMilestones(found);
     if (after.level > before.level) askForReview();
     updateStats((s) => ({
       ...s,
       handsPlayed: s.handsPlayed + 1,
       xp,
-      peakChips: Math.max(s.peakChips, g.bankroll),
-      biggestWin: Math.max(s.biggestWin, g.lastNet),
     }));
     if (countQuizzes && Math.random() < QUIZ_CHANCE) {
       setQuiz({ guess: 0, revealed: false });
@@ -362,17 +344,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     commit(game, resolveInsurance(game, take), roundCorrect + graded);
   };
 
-  // You play as many of your seats as your chips cover.
-  const yourSeatCount = seated.seats.filter((o) => o === YOU).length;
-  const affordableSeats = bet >= unit ? Math.min(yourSeatCount, Math.floor(bankroll / bet)) : 0;
-  // The most you can put on each hand: the table max, or what your chips cover.
-  // With chips for fewer hands than seats, size bets for the hands you can actually play.
-  const coverableSeats = Math.max(1, Math.min(yourSeatCount, Math.floor(bankroll / unit)));
-  const maxPerHand = Math.min(casino.maxBet, Math.floor(bankroll / coverableSeats));
-  // When your chips no longer cover this table's minimum, suggest one that fits.
-  const moveTo =
-    !testing && bankroll < unit && !needsRefill(bankroll) ? bestAffordableTable(bankroll, stats.peakChips) : undefined;
-
   const deal = () => {
     setFeedback(null);
     setQuiz(null);
@@ -380,12 +351,10 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     setMilestones([]);
     setRoundCorrect(0);
     setRounds((n) => n + 1);
-    const base = { ...game, bankroll };
+    // The hidden practice budget is topped up every round, so it can never run out.
+    const base = { ...game, bankroll: PRACTICE_BUDGET };
     setTable(seated);
-    let skip = yourSeatCount - affordableSeats;
-    const bets = roundBets(seated, bet, hiLoTrueCount(game), unit, casino.maxBet).filter((b) => b.owner !== YOU || skip-- <= 0);
-    // The test scores your bet against the count's (KO: its estimated true count).
-    if (testing) exam?.onBet(bet / unit, betUnitsForCount(game.runningCount, game.shoe.length, rules.decks));
+    const bets = roundBets(seated, PRACTICE_STAKE, PRACTICE_STAKE);
     const next = startRound(base, bets);
     if (next.phase === 'insurance' && !testing) {
       // Card counters at the table take insurance when the count is high.
@@ -398,11 +367,11 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
   };
 
   const nextHand = () => {
-    const { table: t, events: e } = betweenRounds(table, unit, otherPlayers);
+    const { table: t, events: e } = betweenRounds(table, PRACTICE_STAKE, otherPlayers);
     const handsNext = t.seats.filter((o) => o !== null).length;
     const cleared: GameState = { ...game, phase: 'betting', hands: [], dealer: [] };
-    // The test is one shoe: it ends when the cut card comes out (or the test chips run out).
-    if (testing && (needsShuffle(cleared, handsNext) || game.bankroll < unit)) {
+    // The test is one shoe: it ends when the cut card comes out.
+    if (testing && needsShuffle(cleared, handsNext)) {
       exam?.onShoeEnd(game);
       return;
     }
@@ -414,22 +383,15 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
     anim.clear();
     setTable(t);
     if (e.length) setEvents((prev) => [...e, ...prev].slice(0, 3));
-    // Shuffle now (not at the deal) when the cut card is out, so bet advice uses the new shoe.
+    // Shuffle now (not at the deal) when the cut card is out, so the count shown is the new shoe's.
     const fresh = shuffleIfNeeded(cleared, handsNext);
     setGame(fresh);
     setCountSource(fresh);
   };
 
-  /** Free refill back to the starting stack once you can't cover the smallest table. */
-  const refill = () => {
-    updateSettings({ bankroll: STARTING_CHIPS, tableId: 'floor' });
-    updateStats((s) => ({ ...s, refills: s.refills + 1 }));
-    setBet(getTable('floor').minBet);
-  };
-
-  // Between rounds the test may ask a question (decks left) before the next bet.
+  // Between rounds the test may ask a question (decks left) before the next deal.
   const gate = betting && testing ? exam?.gate?.(game) : null;
-  const canDeal = betting && !gate && !needsRefill(bankroll) && !moveTo && bet >= unit && affordableSeats >= 1;
+  const canDeal = betting && !gate;
   useKeyboardShortcuts({
     ...Object.fromEntries(
       Object.entries(KEY_ACTIONS).map(([k, a]) => [k, settled && yourTurn && legal[a] ? () => onAction(a) : undefined]),
@@ -461,7 +423,6 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
         showHints={showHints}
         surrenderAllowed={rules.lateSurrender}
         handSignals={settings.handSignals}
-        shortfall={{ split: chipShortfall(game, 'split'), double: chipShortfall(game, 'double') }}
         onAction={(a) => settled && onAction(a)}
       />
     </View>
@@ -474,11 +435,10 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       onChoose={onInsurance}
     />
   );
+  const result = roundResult(game);
   const resultPanel = settled && game.phase === 'roundOver' && (
     <Panel>
-      <Text style={[styles.prompt, { color: game.lastNet > 0 ? good : game.lastNet < 0 ? bad : colors.text }]}>
-        {game.lastNet > 0 ? T.won(game.lastNet) : game.lastNet < 0 ? T.lost(-game.lastNet) : T.push}
-      </Text>
+      <Text style={[styles.prompt, { color: result.tone > 0 ? good : result.tone < 0 ? bad : colors.text }]}>{result.text}</Text>
       {quiz && <CountQuiz quiz={quiz} setQuiz={setQuiz} actual={game.runningCount} />}
       <Button title={T.nextHand} onPress={nextHand} />
     </Panel>
@@ -494,17 +454,9 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       scrollToEndOn={pinActions && settled && (yourTurn ? `${game.active}` : game.phase === 'roundOver' && 'over')}
     >
       {!testing && <Stack.Screen options={headerOptions} />}
-      {/* Status bar: chips, level and count (the test shows the discard tray instead of the count) */}
+      {/* Status bar: level or round, and the count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
-        <View style={{ gap: 2 }}>
-          <ChipCount
-            value={betting && !testing ? settings.bankroll : countSource.bankroll}
-            testing={testing}
-            sound={settings.soundEffects}
-            animate={!anim.reduceMotion}
-          />
-          {testing && <Text style={styles.count}>{T.hand(Math.max(1, rounds))}</Text>}
-        </View>
+        <Text style={styles.level}>{testing ? T.hand(Math.max(1, rounds)) : T.level(levelInfo(stats.xp).level, levelInfo(stats.xp).title)}</Text>
         {testing ? (
           <DiscardTray cards={discardedCards(countSource)} decks={rules.decks} deckPx={9} caption={false} />
         ) : counting ? (
@@ -560,7 +512,7 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
               <Text style={styles.milestoneText}>★ {m.text}</Text>
               {m.table && (
                 <Button
-                  title={T.goTo(m.table.name, formatChips(m.table.minBet), formatChips(m.table.maxBet))}
+                  title={T.goTo(m.table.name)}
                   variant="secondary"
                   onPress={() => updateSettings({ tableId: m.table!.id })}
                 />
@@ -586,45 +538,30 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       {gate}
 
       {betting && !gate && (
-        <BettingPanel
-          casino={casino}
-          bet={bet}
-          setBet={setBet}
-          yourSeatCount={yourSeatCount}
-          affordableSeats={affordableSeats}
-          maxPerHand={maxPerHand}
-          suggestedUnits={countVisible ? betUnitsForCount(game.runningCount, game.shoe.length, rules.decks) : null}
-          outOfChips={!testing && needsRefill(bankroll)}
-          moveTo={moveTo}
-          extras={!testing}
-          onDeal={deal}
-          onRefill={refill}
-          onBonus={(amount) => {
-            // Bonus chips land in your stack with the usual count-up and a chip burst.
-            anim.setFanfare({ tier: 'bigWin', label: T.bonus(formatChips(amount)), net: amount, shake: 0, particles: 18, key: Date.now() });
-            if (settings.soundEffects) playSound('chips');
-            if (settings.haptics) haptic('bigWin');
-          }}
-        />
+        <BettingPanel extras={!testing} onDeal={deal} />
       )}
     </Screen>
   );
 }
 
-/**
- * Your chips. Winnings count up with rising ticks; it's its own component so each
- * tick redraws this line, not the whole table.
- */
-function ChipCount({ value, testing, sound, animate }: { value: number; testing: boolean; sound: boolean; animate: boolean }) {
-  const shown = useCountUp(value, (step) => sound && playSound('tick', 1 + step * 0.06), animate);
-  return <Text style={styles.bankroll}>{testing ? T.examChips(formatChips(shown)) : T.chips(formatChips(shown))}</Text>;
+/** The round's result in words, from your hands' outcomes (nothing is bet, so no amounts). */
+function roundResult(g: GameState): { text: string; tone: number } {
+  const yours = g.hands.filter(isYours);
+  const won = yours.filter((h) => h.outcome === 'win' || h.outcome === 'blackjack').length;
+  const lost = yours.filter((h) => h.outcome === 'lose' || h.outcome === 'surrender').length;
+  const pushed = yours.length - won - lost;
+  const tone = won - lost;
+  if (yours.length !== 1) return { text: T.split(won, lost, pushed) || T.push, tone };
+  const o = yours[0].outcome;
+  const text = o === 'blackjack' ? T.blackjack : o === 'win' ? T.won : o === 'surrender' ? T.surrendered : o === 'lose' ? T.lost : T.push;
+  return { text, tone };
 }
 
 const styles = StyleSheet.create({
   milestone: { backgroundColor: colors.feltDark },
   milestoneText: { color: colors.gold, fontSize: 17, fontWeight: '900', textAlign: 'center' },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
-  bankroll: { color: colors.gold, fontWeight: '800', fontSize: 16 },
+  level: { color: colors.gold, fontWeight: '800', fontSize: 16 },
   count: { color: colors.text, fontSize: 14, fontVariant: ['tabular-nums'] },
   notice: { minHeight: 32, alignItems: 'center', justifyContent: 'center' },
   shuffle: { color: colors.warn, textAlign: 'center', fontSize: 13 },

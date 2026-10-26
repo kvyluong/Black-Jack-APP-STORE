@@ -13,7 +13,6 @@ const SHUFFLE_MS = 700;
 export type SoundName =
   | 'card'
   | 'flip'
-  | 'chips'
   | 'win'
   | 'blackjack'
   | 'lose'
@@ -79,7 +78,6 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
       sounds.push({ name: 'shuffle', at: 0 });
       t += SHUFFLE_MS;
     }
-    sounds.push({ name: 'chips', at: t });
     // Real dealing order: a card to each seat, dealer upcard, a second card to each seat, hole card.
     const seats = next.hands.map((_, i) => i);
     const order: [Seat, number][] = [
@@ -94,11 +92,6 @@ export function dealSchedule(prev: GameState, next: GameState, step = DEAL_STEP_
       t += step;
     }
   } else {
-    // Match hands by id: a split inserts a hand, shifting the positions of the ones after it.
-    const prevHand = (id: number) => prev.hands.find((h) => h.id === id);
-    if (next.hands.length > prev.hands.length || next.hands.some((h) => h.bet > (prevHand(h.id)?.bet ?? h.bet))) {
-      sounds.push({ name: 'chips', at: 0 }); // split or double puts out another bet
-    }
     // A card is new if it wasn't on the table before (a split moves a card, it doesn't deal one).
     const seen = new Set(prev.hands.flatMap((h) => h.cards));
     next.hands.forEach((hand, seat) => {

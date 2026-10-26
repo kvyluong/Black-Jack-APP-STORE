@@ -37,7 +37,7 @@ const SECTIONS: { title: () => string; items: ListedFeature[] }[] = [
   { title: () => T.learn, items: ['lessons', 'academy'] },
   { title: () => T.drill, items: ['strategyDrill', 'leaks', 'countDrill', 'trueCountDrill', 'decksDrill', 'deviations'] },
   { title: () => T.test, items: ['exam'] },
-  { title: () => T.tools, items: ['chart', 'simulator'] },
+  { title: () => T.tools, items: ['chart'] },
 ];
 
 export default function Practice() {

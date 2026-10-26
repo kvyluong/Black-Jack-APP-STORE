@@ -1,4 +1,4 @@
-// The four tabs: Home (your next step), Play (the casino floor), Practice and Me.
+// The four tabs: Home (your next step), Play (the practice tables), Practice and Me.
 import { Tabs } from 'expo-router';
 import { useMemo } from 'react';
 import { ColorValue, Platform } from 'react-native';
@@ -11,8 +11,8 @@ import { usePrefs } from '../../state/settings';
 import { colors } from '../../theme';
 
 const T = localized({
-  en: { home: 'Home', play: 'Play', practice: 'Practice', me: 'Me', floor: 'Casino Floor' },
-  es: { home: 'Inicio', play: 'Jugar', practice: 'Práctica', me: 'Perfil', floor: 'Sala del casino' },
+  en: { home: 'Home', play: 'Play', practice: 'Practice', me: 'Me', floor: 'Practice Tables' },
+  es: { home: 'Inicio', play: 'Jugar', practice: 'Práctica', me: 'Perfil', floor: 'Mesas de práctica' },
 });
 
 const icon = (name: IconName) =>
