@@ -461,7 +461,10 @@ export function TableScreen({ mode, exam }: { mode: TableMode; exam?: ExamHooks 
       {!testing && <Stack.Screen options={headerOptions} />}
       {/* Status bar: level or round, and the count (the test shows the discard tray instead of the count) */}
       <View style={styles.topBar}>
-        <Text style={styles.level}>{testing ? T.hand(Math.max(1, rounds)) : T.level(levelInfo(stats.xp).level, levelInfo(stats.xp).title)}</Text>
+        {/* The level bar below already shows your level once the count is unlocked. */}
+        <Text style={styles.level}>
+          {testing ? T.hand(Math.max(1, rounds)) : counting && !short ? '' : T.level(levelInfo(stats.xp).level, levelInfo(stats.xp).title)}
+        </Text>
         {testing ? (
           <DiscardTray cards={discardedCards(countSource)} decks={rules.decks} deckPx={9} caption={false} />
         ) : counting ? (

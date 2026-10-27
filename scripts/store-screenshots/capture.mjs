@@ -20,7 +20,6 @@ for (const dev of Object.keys(DEVICES)) for (const lang of ['en', 'es']) {
   // Table: deal until the coach's advice is showing at your turn.
   for (let tries = 0; tries < 6; tries++) {
     await go('play');
-    await p.getByText('25', { exact: true }).first().click(); await p.waitForTimeout(200);
     await p.getByText(L[lang].deal, { exact: true }).click();
     // An insurance offer is declined first: the shot should show the coach on a normal decision.
     try { await p.getByText(L[lang].coach).or(p.getByText(L[lang].noIns, { exact: true })).first().waitFor({ timeout: 20000 });
