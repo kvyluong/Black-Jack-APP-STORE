@@ -67,6 +67,7 @@
         }
       ],
       "expo-font",
+      "./plugins/withoutPushEntitlement",
       "expo-notifications"
     ],
     "extra": {
