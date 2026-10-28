@@ -71,7 +71,7 @@ available. To reach it: Me tab → Settings → Remove ads. Restore purchase is 
 
 Apple rejected 1.0.0 under guideline 2.3.6: the age rating declared Simulated Gambling (betting
 or wagering without real money), and apps with simulated gambling must come from an
-organization account. Build 12 removes all betting. Before replying: attach build 12 to the
+organization account. Build 13 removes all betting (build 12 failed to compile). Before replying: attach build 13 to the
 version, change the age rating to **Simulated Gambling: None** (APP_STORE_CONNECT.md §5),
 update the description, IAP description and review notes, then paste the text below into the
 reply and resubmit.
@@ -81,7 +81,7 @@ reply and resubmit.
 Hello App Review team, thank you for explaining the issue. We have resolved it by removing all
 betting and wagering from the app rather than changing the account type.
 
-**What changed in build 12:** ShoeSharp no longer contains any form of betting or wagering, real
+**What changed in build 13:** ShoeSharp no longer contains any form of betting or wagering, real
 or simulated. We removed:
 
 - the virtual chips, the bankroll and every bet (there is nothing to stake on any hand);
@@ -100,7 +100,10 @@ There are no chips, no bets, no prizes and nothing of value to win or lose; prog
 only in lessons completed, accuracy, experience points and levels.
 
 **Age rating:** we have updated the age rating questionnaire to Simulated Gambling: None and
-Gambling: No.
+Gambling: No, and we chose to keep the app rated 18+.
+
+**Also new in build 13:** an optional daily practice reminder (a local notification, offered once
+after the player claims their first daily goal) and daily goal streaks.
 
 **In-App Purchase:** the only purchase, "Remove ads" (non-consumable, USD 2.99), removes the
 full-screen ads shown between hands. It does not unlock content, currency or any advantage. It

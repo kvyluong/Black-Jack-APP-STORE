@@ -41,7 +41,7 @@ ShoeSharp takes you from your first hand to counting a six-deck shoe under real 
 PLAY PERFECT BASIC STRATEGY
 • A full seven-seat casino table with players who come and go
 • Ask the coach for the best play anytime, and see why you were wrong
-• Strategy chart that follows your table rules (decks, soft 17, surrender, 3:2 or 6:5)
+• Strategy chart that follows your table rules (decks, soft 17, surrender)
 • "Your Leaks" finds the decisions you miss most and drills them
 
 LEARN TO COUNT CARDS
@@ -63,7 +63,7 @@ MADE FOR YOU
 • No account needed: your progress stays on your device
 • Every feature free: ads keep it that way, and one optional purchase removes them
 
-For entertainment and education only. No betting, chips or prizes: every hand is practice. Card counting is legal, but casinos may ask counters to stop playing.
+For entertainment and education only. No betting, chips or prizes: every hand is practice.
 ```
 
 ### Screenshot captions (the first 3 matter most; most people never scroll past them)
@@ -98,7 +98,7 @@ ShoeSharp te lleva desde tu primera mano hasta contar un zapato de seis barajas 
 JUEGA CON ESTRATEGIA BÁSICA PERFECTA
 • Una mesa de casino de siete asientos con jugadores que llegan y se van
 • Pregúntale al coach la mejor jugada cuando quieras y entiende por qué fallaste
-• Tabla de estrategia que sigue las reglas de tu mesa (barajas, 17 blando, rendición, 3:2 o 6:5)
+• Tabla de estrategia que sigue las reglas de tu mesa (barajas, 17 blando, rendición)
 • "Tus fugas" encuentra las decisiones que más fallas y las entrena
 
 APRENDE A CONTAR CARTAS
@@ -120,7 +120,7 @@ HECHO PARA TI
 • Sin cuenta: tu progreso se guarda en tu dispositivo
 • Todas las funciones gratis: los anuncios lo mantienen así y una compra opcional los quita
 
-Solo para entretenimiento y aprendizaje. Sin apuestas, fichas ni premios: cada mano es práctica. Contar cartas es legal, pero los casinos pueden pedir a quien cuenta que deje de jugar.
+Solo para entretenimiento y aprendizaje. Sin apuestas, fichas ni premios: cada mano es práctica.
 ```
 
 Screenshot captions (ES): 1 **Cuenta cartas como un pro** · 2 **Un coach en cada decisión** ·
