@@ -110,3 +110,21 @@ full-screen ads shown between hands. It does not unlock content, currency or any
 is in Me tab → Settings → Remove ads, with Restore purchase on the same screen.
 
 Thank you for your time. We are happy to provide anything else you need.
+
+## Fallbacks if 1.0.0 (13) is rejected again
+
+**Casino framing.** Branch `fallback/no-casino-wording` renames the features (Road to the
+Casino → Road to Mastery, Casino Conditions → Full Shoe Test, casino-ready score → mastery
+score) in English and Spanish. Merge it, build 14, and say so in the reply.
+
+**Guideline 5.3.4 (card counters).** Reply draft:
+
+> ShoeSharp is not a tool for use in a casino. It is an educational trainer that runs only
+> on simulated hands it deals itself: it has no camera input, no manual card entry, no
+> live-game mode and no way to track a real shoe. It teaches the math of blackjack (basic
+> strategy, probability and how counting systems work) the same way books and courses do.
+> There is no wagering of any kind and no real-money link. Bringing a phone app to a
+> casino table to count is not possible with ShoeSharp, because it cannot be fed real cards.
+
+If Apple insists, the next fallback is to reframe counting as "card tracking practice" in
+the listing and screenshots, keeping the features.
