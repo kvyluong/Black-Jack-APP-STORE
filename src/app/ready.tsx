@@ -1,4 +1,4 @@
-// Road to the Casino: "Am I ready for a real casino?" as a score and a checklist of benchmarks.
+// Road to Mastery: "Have I mastered blackjack?" as a score and a checklist of benchmarks.
 import { Href, router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -13,9 +13,9 @@ import { colors, radius, spacing } from '../theme';
 
 const T = localized({
   en: {
-    question: 'Am I ready for a real casino?',
-    score: 'Casino-ready score',
-    scoreA11y: (n: number, headline: string) => `Casino-ready score ${n} out of 100. ${headline}`,
+    question: 'Have I mastered blackjack?',
+    score: 'Mastery score',
+    scoreA11y: (n: number, headline: string) => `Mastery score ${n} out of 100. ${headline}`,
     nextLabel: 'NEXT STEP',
     readyBody: 'Every benchmark is done. Keep your skills sharp with a daily workout, and always play within your means.',
     practice: 'Practice',
@@ -29,9 +29,9 @@ const T = localized({
     cardA11y: (title: string, status: string, p: number, detail: string) => `${title}. ${status}. ${p} percent. ${detail}`,
   },
   es: {
-    question: '¿Estoy listo para un casino de verdad?',
-    score: 'Puntaje para el casino',
-    scoreA11y: (n: number, headline: string) => `Puntaje para el casino: ${n} de 100. ${headline}`,
+    question: '¿Ya domino el blackjack?',
+    score: 'Puntaje de dominio',
+    scoreA11y: (n: number, headline: string) => `Puntaje de dominio: ${n} de 100. ${headline}`,
     nextLabel: 'SIGUIENTE PASO',
     readyBody: 'Cumpliste todas las metas. Mantén tus habilidades con un entrenamiento diario y juega siempre dentro de tus posibilidades.',
     practice: 'Practicar',

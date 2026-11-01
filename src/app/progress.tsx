@@ -52,9 +52,9 @@ const T = localized({
     deckSummaryOne: (t: string) => `Best full-deck time: ${t}.`,
     deckSummary: (a: string, b: string, n: number) => `Best full-deck time improved from ${a} to ${b} over ${n} records.`,
     goal30: '30 s goal',
-    examTitle: 'Casino conditions grades',
+    examTitle: 'Full Shoe Test grades',
     examSub: 'Your last 10 tests · ✓ passed, ✗ not passed',
-    examEmpty: 'Take the casino conditions test to see your grades here.',
+    examEmpty: 'Take the Full Shoe Test to see your grades here.',
     exam: 'Take the test',
     examReadout: (g: number, passed: boolean) => `Grade ${g} · ${passed ? '✓ passed' : '✗ not passed'}`,
     examSummary: (n: number, last: number, best: number, passed: number) =>
@@ -90,9 +90,9 @@ const T = localized({
     deckSummaryOne: (t: string) => `Mejor tiempo con baraja completa: ${t}.`,
     deckSummary: (a: string, b: string, n: number) => `Tu mejor tiempo con baraja completa mejoró de ${a} a ${b} en ${n} récords.`,
     goal30: 'meta 30 s',
-    examTitle: 'Calificaciones en condiciones de casino',
+    examTitle: 'Calificaciones de la Prueba de zapato completo',
     examSub: 'Tus últimas 10 pruebas · ✓ aprobada, ✗ no aprobada',
-    examEmpty: 'Haz la prueba en condiciones de casino para ver aquí tus calificaciones.',
+    examEmpty: 'Haz la Prueba de zapato completo para ver aquí tus calificaciones.',
     exam: 'Hacer la prueba',
     examReadout: (g: number, passed: boolean) => `Calificación ${g} · ${passed ? '✓ aprobada' : '✗ no aprobada'}`,
     examSummary: (n: number, last: number, best: number, passed: number) =>

@@ -1,4 +1,4 @@
-// Road to the Casino: the casino-ready score, daily goals with a streak, and
+// Road to Mastery: the casino-ready score, daily goals with a streak, and
 // the day-by-day history behind the progress charts. Pure logic, no React.
 import { LESSONS } from '../content/lessons';
 import { localized, tr } from '../i18n/lang';
@@ -434,7 +434,7 @@ export function shortDay(day: string): string {
 /** "27.4 s". */
 export const formatSeconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
-// ---------- Casino-ready score ----------
+// ---------- Mastery score ----------
 
 export type BenchmarkId = 'lessons' | 'strategy' | 'countDeck' | 'trueCount' | 'decks' | 'deviations' | 'exam';
 
@@ -511,7 +511,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
       why: 'Index plays like 16 vs 10 and insurance are where the count changes the right play.',
     },
     exam: {
-      title: 'Casino conditions',
+      title: 'Full Shoe Test',
       goal: 'Pass the test: a full shoe, no hints, no count on screen',
       why: 'Putting it all together, under pressure, is the real test.',
     },
@@ -544,7 +544,7 @@ export const BENCHMARK_TEXT: Record<BenchmarkId, { title: string; goal: string; 
       why: 'Jugadas como 16 contra 10 y el seguro son donde el conteo cambia la jugada correcta.',
     },
     exam: {
-      title: 'Condiciones de casino',
+      title: 'Prueba de zapato completo',
       goal: 'Aprueba la prueba: un zapato completo, sin pistas ni conteo en pantalla',
       why: 'Juntarlo todo, bajo presión, es la verdadera prueba.',
     },
@@ -656,7 +656,7 @@ export function benchmarks(s: ProgressStats): Benchmark[] {
     route: '/drills/deviations',
   });
 
-  // Casino conditions: a pass is full marks; otherwise the best grade, capped below full.
+  // Full Shoe Test: a pass is full marks; otherwise the best grade, capped below full.
   const exams = s.exams ?? [];
   const passed = exams.some((e) => e.passed);
   const bestGrade = exams.length ? Math.max(...exams.map((e) => e.grade)) : 0;
@@ -689,11 +689,11 @@ export const nextStep = (list: Benchmark[], skipLessons = false) =>
 /** "Ready for the casino", or what to do next. */
 export function readyHeadline(list: Benchmark[], skipLessons = false): string {
   const next = nextStep(list, skipLessons);
-  if (!next) return tr('Ready for the casino', 'Listo para el casino');
+  if (!next) return tr('Blackjack mastered', 'Blackjack dominado');
   return tr(`Next step: ${BENCHMARK_TEXT[next.id].title}`, `Siguiente paso: ${BENCHMARK_TEXT[next.id].title}`);
 }
 
-/** "Basic strategy 25%, Casino conditions 20%, …" for explaining the score. */
+/** "Basic strategy 25%, Full Shoe Test 20%, …" for explaining the score. */
 export function weightsText(): string {
   return (Object.entries(READY_WEIGHTS) as [BenchmarkId, number][])
     .map(([id, w]) => `${BENCHMARK_TEXT[id].title} ${w}%`)

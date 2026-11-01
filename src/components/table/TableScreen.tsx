@@ -152,7 +152,7 @@ const T = localized({
 
 export type TableMode = 'practice' | 'exam';
 
-/** What the Casino Conditions test hears from the table. */
+/** What the Full Shoe Test hears from the table. */
 export interface ExamHooks {
   /** One of your decisions (plays and insurance), graded silently. */
   onDecision: (ok: boolean) => void;

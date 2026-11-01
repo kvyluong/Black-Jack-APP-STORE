@@ -1,4 +1,4 @@
-// Casino Conditions test: one full shoe with no hints, no count on screen and no
+// Full Shoe Test: one full shoe with no hints, no count on screen and no
 // feedback, then a report card. Pure grading logic (no React).
 import { localized } from '../i18n/lang';
 import { Rng } from './cards';

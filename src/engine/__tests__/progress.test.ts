@@ -103,7 +103,7 @@ describe('casino-ready score', () => {
     const list = benchmarks(readyStats());
     expect(list.every((b) => b.done)).toBe(true);
     expect(readyScore(list)).toBe(100);
-    expect(readyHeadline(list)).toBe('Ready for the casino');
+    expect(readyHeadline(list)).toBe('Blackjack mastered');
   });
 
   it('holds basic strategy to 99% over 200 decisions', () => {

@@ -1,4 +1,4 @@
-// Casino Conditions test: one full shoe with no help, then a report card.
+// Full Shoe Test test: one full shoe with no help, then a report card.
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -32,7 +32,7 @@ const T = localized({
     decimal: '.',
     title: 'The final exam',
     intro:
-      'Play one full shoe, until the cut card comes out, the way you would in a casino. No hints, no count on screen, and no corrections until the end.',
+      'Play one full shoe, until the cut card comes out, like a real game. No hints, no count on screen, and no corrections until the end.',
     rules: [
       'Every hand is graded silently: make the right play each time.',
       'Twice during the shoe you’ll be asked how many decks are left. Read the discard tray.',
@@ -76,13 +76,13 @@ const T = localized({
     atLeast: (n: string) => `${n} or more`,
     again: 'Try again',
     leaks: 'See Your Leaks',
-    back: 'Back to Road to the Casino',
+    back: 'Back to Road to Mastery',
   },
   es: {
     decimal: ',',
     title: 'El examen final',
     intro:
-      'Juega un zapato completo, hasta que salga la carta de corte, como lo harías en un casino. Sin pistas, sin conteo en pantalla y sin correcciones hasta el final.',
+      'Juega un zapato completo, hasta que salga la carta de corte, como en un juego real. Sin pistas, sin conteo en pantalla y sin correcciones hasta el final.',
     rules: [
       'Cada mano se califica en silencio: haz la jugada correcta cada vez.',
       'Dos veces durante el zapato te preguntaremos cuántas barajas quedan. Mira la bandeja de descartes.',
@@ -127,7 +127,7 @@ const T = localized({
     atLeast: (n: string) => `${n} o más`,
     again: 'Intentar de nuevo',
     leaks: 'Ver tus fugas',
-    back: 'Volver a Camino al casino',
+    back: 'Volver a Camino al dominio',
   },
 });
 
