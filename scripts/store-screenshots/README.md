@@ -1,7 +1,7 @@
 # Store screenshots
 
 Rebuilds `store-assets/screenshots/` and `store-assets/play/`: six captioned frames per
-device (6.9" iPhone, 13" iPad, 1080×1920 Android phone) and language (English, Spanish), from the web build with demo progress loaded
+device (6.9" iPhone, 13" iPad, 1080×1920 Android phone, 1440×2560 Android tablet) and language (English, Spanish), from the web build with demo progress loaded
 (`seed.mjs`). Uses the Google Chrome already installed on the Mac.
 
 ```bash
@@ -10,7 +10,7 @@ cd scripts/store-screenshots
 npm i --no-save playwright-core@1.56.1
 node serve.mjs "$PWD/../../dist"  # leave running; serves on 127.0.0.1:8765
 node capture.mjs                   # raw screens into raw/ (deals until the coach shows)
-node compose.mjs ../../store-assets/screenshots
+node compose.mjs ../../store-assets/screenshots          # add a device key (e.g. tablet) to compose just one set
 node feature.mjs ../../store-assets/play     # Play icon (512) and feature graphics
 ```
 
