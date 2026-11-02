@@ -4,7 +4,7 @@ import { ReactNode, createContext, useContext, useEffect, useRef, useState } fro
 
 import { localized } from '../i18n/lang';
 import { usePrefs } from '../state/settings';
-import { REMOVE_ADS_SKU, getIap, iapSupported } from './iap';
+import { REMOVE_ADS_SKU, getIap, iapSupported, ownsRemoveAds } from './iap';
 
 type Status = 'idle' | 'buying' | 'restoring';
 
@@ -112,8 +112,7 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
       try {
         if (!(await connectRef.current!())) return;
         // Already bought on this account (new phone, reinstall)? Turn ads off quietly.
-        const purchases = await iap.getAvailablePurchases();
-        if (purchases.some((p) => p.productId === REMOVE_ADS_SKU)) unlock();
+        if (await ownsRemoveAds(iap)) unlock();
       } catch {
         // No store connection (offline, no Play account): Buy and Restore try again when tapped.
       }
@@ -154,8 +153,7 @@ export function RemoveAdsProvider({ children }: { children: ReactNode }) {
     try {
       if (!(await ensureConnected())) throw new Error('offline');
       await iap.restorePurchases();
-      const purchases = await iap.getAvailablePurchases();
-      const found = purchases.some((p) => p.productId === REMOVE_ADS_SKU);
+      const found = await ownsRemoveAds(iap);
       if (found) updateSettings({ adsRemoved: true });
       setMessage(found ? 'restored' : 'notFound');
     } catch {

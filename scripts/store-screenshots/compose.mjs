@@ -1,6 +1,6 @@
 // Captioned App Store frames: felt background, caption on top, the app screen below.
 import { chromium } from 'playwright-core'; import fs from 'node:fs'; import path from 'node:path';
-const OUT = process.argv[2];
+const OUT = process.argv[2]; const ONLY = process.argv[3]; // optional: one device key
 const CAP = {
   en: ['Count cards like a pro', 'A coach at every decision', 'Pass the casino test', 'Find your leaks', "Know when you're ready", 'Start at your level'],
   es: ['Cuenta cartas como un pro', 'Un coach en cada decisión', 'Aprueba el examen de casino', 'Encuentra tus fugas', 'Sabe cuándo estás listo', 'Empieza a tu nivel'],
@@ -11,10 +11,13 @@ const DEV = {
   iphone: { w: 1320, h: 2868, dir: 'iphone-6.9', shotW: 1040, top: 470, font: 104, radius: 72 },
   ipad: { w: 2064, h: 2752, dir: 'ipad-13', shotW: 1640, top: 430, font: 112, radius: 48 },
   android: { w: 1080, h: 1920, dir: '../play/phone', src: 'iphone', shotW: 820, boxH: 1580, top: 300, font: 80, radius: 44, es: 'es-419' },
+  // Play's large-screen slots want 9:16 at 1080px or more; the iPad frames are 3:4.
+  tablet: { w: 1440, h: 2560, dir: '../play/tablet', src: 'ipad', shotW: 1340, top: 420, font: 100, radius: 40, es: 'es-419' },
 };
 const LOC = { en: 'en-US', es: 'es-MX' };
 const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
 for (const [dev, d] of Object.entries(DEV)) {
+  if (ONLY && dev !== ONLY) continue;
   const p = await b.newPage({ viewport: { width: d.w, height: d.h } });
   for (const lang of ['en', 'es']) {
     const dir = path.join(OUT, d.dir, d[lang] ?? LOC[lang]); fs.mkdirSync(dir, { recursive: true });
