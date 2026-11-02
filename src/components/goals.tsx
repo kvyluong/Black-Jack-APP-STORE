@@ -6,7 +6,12 @@ import { Alert, AppState, Pressable, StyleSheet, Text, View } from 'react-native
 import { playSound } from '../audio/sounds';
 import { localDay } from '../engine/progression';
 import { DEFAULT_REMINDER_HOUR, formatHour, reminderText, reminderTimes } from '../engine/reminders';
-import { remindersSupported, requestReminderPermission, scheduleReminders } from '../notifications/reminders';
+import {
+  openNotificationSettings,
+  remindersSupported,
+  requestReminderPermission,
+  scheduleReminders,
+} from '../notifications/reminders';
 import {
   GoalDef,
   MAX_FREEZES,
@@ -32,57 +37,67 @@ const T = localized({
   en: {
     title: 'Today’s goals',
     streak: (n: number) => `${n}-day streak`,
-    noStreak: 'Claim one goal to start a streak',
-    keepStreak: (n: number) => `Claim one goal to make it ${n} days`,
-    earnFreeze: 'Streak kept for today. Claim all three to earn a streak freeze',
-    freezeFull: 'Streak kept for today. Your freezes are full',
+    noStreak: 'Finish any goal and claim it to start a streak',
+    keepStreak: (n: number) => `Claim one goal today to make it ${n} days`,
+    earnFreeze: 'Streak safe for today. Claim all three to earn a streak freeze: it covers a day you miss',
+    freezeFull: 'Streak safe for today. You have the most streak freezes you can keep',
     allDone: 'All done for today. Come back tomorrow!',
     freezes: (n: number) => `${n}`,
     freezesA11y: (n: number) => `${n} streak ${n === 1 ? 'freeze' : 'freezes'}: each covers one missed day`,
     frozeNote: (n: number) => `A streak freeze covered ${n === 1 ? 'the day you missed' : `the ${n} days you missed`}. Your streak is safe`,
     askTitle: 'Streak started!',
     askBody: (time: string) =>
-      `Want one reminder a day at ${time} to keep it going? Only when you haven't practiced yet. Change it anytime in Settings.`,
+      `Want one reminder a day at ${time} to keep it going? It only comes on days you haven't claimed a goal yet. You can change the time or turn it off in Settings.`,
     remindMe: 'Remind me',
     notNow: 'Not now',
+    deniedTitle: 'Notifications are off',
+    deniedBody: 'To get the daily reminder, allow notifications for ShoeSharp in your phone’s Settings.',
+    openSettings: 'Open Settings',
     claim: 'Claim',
     claimed: '✓ Claimed',
+    claimedA11y: (goal: string) => `${goal}: claimed`,
     reward: (xp: number) => `+${xp} XP`,
     claimA11y: (goal: string, reward: string) => `Claim ${goal}: ${reward}`,
-    goalA11y: (goal: string, done: number, target: number, reward: string) => `${goal}. ${done} of ${target}. Reward ${reward}. Opens practice`,
-    streakA11y: (n: number) => `Daily goal streak: ${n} days`,
+    goalA11y: (goal: string, done: number, target: number, reward: string, claimed: boolean) =>
+      `${goal}. ${done} of ${target}${claimed ? ', claimed' : `. Reward ${reward}`}. Opens practice`,
+    streakA11y: (n: number) => `Daily goal streak: ${n} ${n === 1 ? 'day' : 'days'}`,
     today: 'Today',
     ready: 'Reward ready',
-    summaryA11y: (done: number, total: number, streak: number) => `Today’s goals: ${done} of ${total} done, ${streak}-day streak. Show goals`,
+    summaryA11y: (done: number, total: number, streak: number, ready: boolean) =>
+      `Today’s goals: ${done} of ${total} done${ready ? ', a reward is ready to claim' : ''}. ${streak}-day streak. Show goals`,
   },
   es: {
     title: 'Metas de hoy',
     streak: (n: number) => `Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
-    noStreak: 'Cobra una meta para empezar una racha',
-    keepStreak: (n: number) => `Cobra una meta para llegar a ${n} días`,
-    earnFreeze: 'Racha asegurada por hoy. Cobra las tres para ganar un congelador de racha',
-    freezeFull: 'Racha asegurada por hoy. Tus congeladores están llenos',
+    noStreak: 'Completa cualquier meta y reclámala para empezar una racha',
+    keepStreak: (n: number) => `Reclama una meta hoy para llegar a ${n} días`,
+    earnFreeze: 'Racha asegurada por hoy. Reclama las tres para ganar un protector de racha: cubre un día que faltes',
+    freezeFull: 'Racha asegurada por hoy. Ya tienes el máximo de protectores de racha',
     allDone: '¡Todo listo por hoy! Vuelve mañana.',
     freezes: (n: number) => `${n}`,
-    freezesA11y: (n: number) => `${n} ${n === 1 ? 'congelador' : 'congeladores'} de racha: cada uno cubre un día perdido`,
+    freezesA11y: (n: number) => `${n} ${n === 1 ? 'protector' : 'protectores'} de racha: cada uno cubre un día perdido`,
     frozeNote: (n: number) =>
-      `Un congelador cubrió ${n === 1 ? 'el día que faltaste' : `los ${n} días que faltaste`}. Tu racha sigue`,
+      `Un protector de racha cubrió ${n === 1 ? 'el día que faltaste' : `los ${n} días que faltaste`}. Tu racha sigue`,
     askTitle: '¡Racha iniciada!',
     askBody: (time: string) =>
-      `¿Quieres un recordatorio al día a las ${time} para mantenerla? Solo si aún no has practicado. Puedes cambiarlo en Ajustes.`,
+      `¿Quieres un recordatorio al día a las ${time} para mantenerla? Solo llega los días que aún no hayas reclamado una meta. Puedes cambiar la hora o desactivarlo en Ajustes.`,
     remindMe: 'Recuérdame',
     notNow: 'Ahora no',
-    claim: 'Cobrar',
-    claimed: '✓ Cobrado',
+    deniedTitle: 'Las notificaciones están desactivadas',
+    deniedBody: 'Para recibir el recordatorio diario, permite las notificaciones de ShoeSharp en los Ajustes del teléfono.',
+    openSettings: 'Abrir Ajustes',
+    claim: 'Reclamar',
+    claimed: '✓ Reclamada',
+    claimedA11y: (goal: string) => `${goal}: reclamada`,
     reward: (xp: number) => `+${xp} XP`,
-    claimA11y: (goal: string, reward: string) => `Cobrar ${goal}: ${reward}`,
-    goalA11y: (goal: string, done: number, target: number, reward: string) =>
-      `${goal}. ${done} de ${target}. Premio ${reward}. Abre la práctica`,
-    streakA11y: (n: number) => `Racha de metas diarias: ${n} días`,
+    claimA11y: (goal: string, reward: string) => `Reclamar ${goal}: ${reward}`,
+    goalA11y: (goal: string, done: number, target: number, reward: string, claimed: boolean) =>
+      `${goal}. ${done} de ${target}${claimed ? ', reclamada' : `. Recompensa ${reward}`}. Abre la práctica`,
+    streakA11y: (n: number) => `Racha de metas diarias: ${n} ${n === 1 ? 'día' : 'días'}`,
     today: 'Hoy',
-    ready: 'Premio listo',
-    summaryA11y: (done: number, total: number, streak: number) =>
-      `Metas de hoy: ${done} de ${total} listas, racha de ${streak} días. Ver metas`,
+    ready: 'Recompensa lista',
+    summaryA11y: (done: number, total: number, streak: number, ready: boolean) =>
+      `Metas de hoy: ${done} de ${total} listas${ready ? ', hay una recompensa por reclamar' : ''}. Racha de ${streak} ${streak === 1 ? 'día' : 'días'}. Ver metas`,
   },
 });
 
@@ -180,6 +195,11 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
             text: T.remindMe,
             onPress: async () => {
               if (await requestReminderPermission()) updateSettings({ reminders: true, reminderHour: hour });
+              else
+                Alert.alert(T.deniedTitle, T.deniedBody, [
+                  { text: T.notNow, style: 'cancel' },
+                  { text: T.openSettings, onPress: openNotificationSettings },
+                ]);
             },
           },
         ]);
@@ -194,7 +214,8 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
       <Pressable
         style={({ pressed }) => [styles.summary, pressed && { opacity: 0.8 }]}
         accessibilityRole="button"
-        accessibilityLabel={T.summaryA11y(doneCount, goals.length, streak)}
+        accessibilityLabel={T.summaryA11y(doneCount, goals.length, streak, rewardReady)}
+        accessibilityState={{ expanded: false }}
         onPress={() => setOpen(true)}
       >
         <Text style={styles.summaryTitle}>{T.today}</Text>
@@ -203,7 +224,11 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
             <View key={g.id} style={[styles.dot, goalProgress(g, stats, today) >= g.target && styles.dotDone]} />
           ))}
         </View>
-        {rewardReady && <Text style={styles.readyBadge}>{T.ready}</Text>}
+        {rewardReady && (
+          <Text style={styles.readyBadge} numberOfLines={1}>
+            {T.ready}
+          </Text>
+        )}
         <View style={styles.summaryStreakRow}>
           <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
           <Text style={[styles.summaryStreak, streak === 0 && { color: colors.muted }]}>{streak}</Text>
@@ -286,7 +311,7 @@ function GoalRow({
       <Pressable
         style={({ pressed }) => [styles.rowMain, pressed && { opacity: 0.75 }]}
         accessibilityRole="button"
-        accessibilityLabel={T.goalA11y(title, done, goal.target, rewardText)}
+        accessibilityLabel={T.goalA11y(title, done, goal.target, rewardText, claimed)}
         onPress={() => router.push(goal.route as Href)}
       >
         <View style={styles.rowHead}>
@@ -299,7 +324,9 @@ function GoalRow({
         <Text style={styles.reward}>{rewardText}</Text>
       </Pressable>
       {claimed ? (
-        <Text style={[styles.claimed, { color: good }]}>{T.claimed}</Text>
+        <Text style={[styles.claimed, { color: good }]} accessibilityLabel={T.claimedA11y(title)}>
+          {T.claimed}
+        </Text>
       ) : complete ? (
         <Pressable
           accessibilityRole="button"
@@ -327,10 +354,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing(2),
   },
   summaryTitle: { color: colors.text, fontWeight: '800', fontSize: 16 },
-  dots: { flexDirection: 'row', gap: 6, flex: 1 },
+  dots: { flexDirection: 'row', gap: 6, flex: 1, minWidth: 48 },
   dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: colors.gold },
   dotDone: { backgroundColor: colors.gold },
-  readyBadge: { color: colors.black, backgroundColor: colors.gold, fontWeight: '800', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  readyBadge: { flexShrink: 1, color: colors.black, backgroundColor: colors.gold, fontWeight: '800', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
   summaryStreakRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   summaryStreak: { color: colors.gold, fontWeight: '800' },
   chev: { color: colors.muted, fontSize: 22 },

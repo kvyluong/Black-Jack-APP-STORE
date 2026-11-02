@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { Alert, Linking, Platform, StyleSheet, Text } from 'react-native';
+import { Alert, AppState, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { privacyOptionsRequired, showPrivacyOptions } from '../ads/init';
 import { Button, H2, P, Panel, Screen, Segmented, ToggleRow } from '../components/ui';
 import { useRemoveAds } from '../purchases/RemoveAds';
 import { COUNTING_SYSTEMS, CountingSystem, SYSTEM_NAME } from '../engine/counting';
 import type { GameSpeed } from '../engine/dealSchedule';
-import { formatHour } from '../engine/reminders';
+import { EARLIEST_REMINDER_HOUR, LATEST_REMINDER_HOUR, formatHour, stepReminderHour } from '../engine/reminders';
 import { LANGUAGE_NAME, LanguageSetting, localized } from '../i18n/lang';
-import { remindersSupported, requestReminderPermission } from '../notifications/reminders';
+import {
+  openNotificationSettings,
+  reminderPermissionGranted,
+  remindersSupported,
+  requestReminderPermission,
+} from '../notifications/reminders';
 import { usePrefs } from '../state/settings';
-import { colors } from '../theme';
+import { colors, radius, spacing } from '../theme';
 
 const T = localized({
   en: {
@@ -41,10 +46,17 @@ const T = localized({
     hapticsHint: 'A light tap as your cards land, a buzz on a great hand',
     effects: 'Big effects',
     effectsHint: 'Screen shake, confetti and score pop-ups',
+    remindersSection: 'Reminders',
     reminders: 'Daily reminder',
-    remindersHint: (time: string) => `One nudge at ${time}, only on days you haven't claimed a goal yet`,
+    remindersHint: (time: string) => `One notification at ${time}, only on days you haven't claimed a goal yet`,
+    reminderTime: 'Reminder time',
+    earlier: 'Earlier',
+    later: 'Later',
+    reminderTimeA11y: (time: string) => `Reminder time, ${time}`,
     remindersOffTitle: 'Notifications are off',
-    remindersOff: 'Allow notifications for ShoeSharp in your phone’s Settings to get the daily reminder.',
+    remindersOff: 'To get the daily reminder, allow notifications for ShoeSharp in your phone’s Settings.',
+    remindersBlocked: 'Notifications are off for ShoeSharp, so no reminder will arrive.',
+    openSettings: 'Open Settings',
     accessibility: 'Accessibility',
     colorblind: 'Color-blind mode',
     colorblindHint: 'Blue and orange instead of green and red. Count tags always show ▲ ● ▼ too.',
@@ -114,10 +126,17 @@ const T = localized({
     hapticsHint: 'Un toque suave al caer tus cartas y una vibración cuando ganas',
     effects: 'Efectos grandes',
     effectsHint: 'Sacudidas de pantalla, confeti y puntos emergentes',
+    remindersSection: 'Recordatorios',
     reminders: 'Recordatorio diario',
-    remindersHint: (time: string) => `Un aviso a las ${time}, solo los días que aún no hayas cobrado una meta`,
+    remindersHint: (time: string) => `Una notificación a las ${time}, solo los días que aún no hayas reclamado una meta`,
+    reminderTime: 'Hora del recordatorio',
+    earlier: 'Más temprano',
+    later: 'Más tarde',
+    reminderTimeA11y: (time: string) => `Hora del recordatorio, ${time}`,
     remindersOffTitle: 'Las notificaciones están desactivadas',
-    remindersOff: 'Permite las notificaciones de ShoeSharp en los Ajustes del teléfono para recibir el recordatorio diario.',
+    remindersOff: 'Para recibir el recordatorio diario, permite las notificaciones de ShoeSharp en los Ajustes del teléfono.',
+    remindersBlocked: 'Las notificaciones de ShoeSharp están desactivadas, así que no llegará ningún recordatorio.',
+    openSettings: 'Abrir Ajustes',
     accessibility: 'Accesibilidad',
     colorblind: 'Modo daltónico',
     colorblindHint: 'Azul y naranja en lugar de verde y rojo. Las etiquetas del conteo siempre muestran ▲ ● ▼ también.',
@@ -177,6 +196,19 @@ export default function SettingsScreen() {
   useEffect(() => {
     privacyOptionsRequired().then(setShowPrivacy);
   }, []);
+
+  // Notifications can be turned off in the phone's Settings while the switch here stays on:
+  // check on open and whenever the app comes back, so the screen can say why nothing arrives.
+  const [notificationsBlocked, setNotificationsBlocked] = useState(false);
+  useEffect(() => {
+    if (!settings.reminders) return;
+    const check = () => reminderPermissionGranted().then((granted) => setNotificationsBlocked(!granted));
+    check();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') check();
+    });
+    return () => sub.remove();
+  }, [settings.reminders]);
 
   const confirmReset = () => {
     // react-native-web's Alert.alert does nothing, so the browser asks instead.
@@ -255,19 +287,41 @@ export default function SettingsScreen() {
           value={settings.bigEffects}
           onChange={(v) => updateSettings({ bigEffects: v })}
         />
-        {remindersSupported() && (
-          <ToggleRow
-            label={T.reminders}
-            hint={T.remindersHint(formatHour(settings.reminderHour))}
-            value={settings.reminders}
-            onChange={async (v) => {
-              if (!v) return updateSettings({ reminders: false });
-              if (await requestReminderPermission()) updateSettings({ reminders: true });
-              else Alert.alert(T.remindersOffTitle, T.remindersOff);
-            }}
-          />
-        )}
       </Panel>
+
+      {remindersSupported() && (
+        <>
+          <H2>{T.remindersSection}</H2>
+          <Panel>
+            <ToggleRow
+              label={T.reminders}
+              hint={T.remindersHint(formatHour(settings.reminderHour))}
+              value={settings.reminders}
+              onChange={async (v) => {
+                if (!v) return updateSettings({ reminders: false });
+                if (await requestReminderPermission()) {
+                  updateSettings({ reminders: true });
+                  setNotificationsBlocked(false);
+                } else {
+                  Alert.alert(T.remindersOffTitle, T.remindersOff, [
+                    { text: T.cancel, style: 'cancel' },
+                    { text: T.openSettings, onPress: openNotificationSettings },
+                  ]);
+                }
+              }}
+            />
+            {settings.reminders && (
+              <ReminderTime hour={settings.reminderHour} onChange={(h) => updateSettings({ reminderHour: h })} />
+            )}
+            {settings.reminders && notificationsBlocked && (
+              <View style={styles.blocked}>
+                <P muted style={{ fontSize: 13 }}>{T.remindersBlocked}</P>
+                <Button title={T.openSettings} variant="secondary" onPress={openNotificationSettings} />
+              </View>
+            )}
+          </Panel>
+        </>
+      )}
 
       <H2>{T.accessibility}</H2>
       <Panel>
@@ -428,4 +482,61 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   // Spaced out so each link is an easy tap target.
   link: { color: colors.gold, textDecorationLine: 'underline', paddingVertical: 6 },
+  blocked: { gap: spacing(1) },
+  timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(1) },
+  timeLabel: { color: colors.text, fontWeight: '600', fontSize: 16 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5) },
+  step: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.feltDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: { color: colors.gold, fontSize: 24, fontWeight: '800' },
+  timeValue: { color: colors.text, fontSize: 17, fontWeight: '800', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });
+
+/** The reminder hour, moved an hour at a time within the daytime range. */
+function ReminderTime({ hour, onChange }: { hour: number; onChange: (hour: number) => void }) {
+  const time = formatHour(hour);
+  const step = (delta: number) => {
+    const next = stepReminderHour(hour, delta);
+    if (next !== hour) onChange(next);
+  };
+  return (
+    <View
+      style={styles.timeRow}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={T.reminderTimeA11y(time)}
+      accessibilityValue={{ text: time }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
+    >
+      <Text style={styles.timeLabel}>{T.reminderTime}</Text>
+      <View style={styles.stepper}>
+        <StepButton label="−" a11y={T.earlier} disabled={hour <= EARLIEST_REMINDER_HOUR} onPress={() => step(-1)} />
+        <Text style={styles.timeValue}>{time}</Text>
+        <StepButton label="+" a11y={T.later} disabled={hour >= LATEST_REMINDER_HOUR} onPress={() => step(1)} />
+      </View>
+    </View>
+  );
+}
+
+function StepButton({ label, a11y, disabled, onPress }: { label: string; a11y: string; disabled: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.step, disabled && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
+    >
+      <Text style={styles.stepText}>{label}</Text>
+    </Pressable>
+  );
+}
