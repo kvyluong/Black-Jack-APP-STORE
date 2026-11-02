@@ -146,3 +146,74 @@ describe('round banner ignores the insurance side stake (audit fix)', () => {
     expect(roundFanfare(g)!.tier).toBe('win');
   });
 });
+
+describe('basic strategy chart, cell by cell (6 decks, DAS, late surrender)', () => {
+  const UPS: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
+  // H hit, S stand, D double, R surrender, P split; columns are dealer 2–A.
+  const S17_HARD: Record<number, string> = {
+    8: 'HHHHHHHHHH',
+    9: 'HDDDDHHHHH',
+    10: 'DDDDDDDDHH',
+    11: 'DDDDDDDDDH',
+    12: 'HHSSSHHHHH',
+    13: 'SSSSSHHHHH',
+    14: 'SSSSSHHHHH',
+    15: 'SSSSSHHHRH',
+    16: 'SSSSSHHRRR',
+    17: 'SSSSSSSSSS',
+  };
+  const S17_SOFT: Record<string, string> = {
+    '2': 'HHHDDHHHHH',
+    '3': 'HHHDDHHHHH',
+    '4': 'HHDDDHHHHH',
+    '5': 'HHDDDHHHHH',
+    '6': 'HDDDDHHHHH',
+    '7': 'SDDDDSSHHH',
+    '8': 'SSSSSSSSSS',
+    '9': 'SSSSSSSSSS',
+  };
+  const S17_PAIRS: Record<string, string> = {
+    A: 'PPPPPPPPPP',
+    '10': 'SSSSSSSSSS',
+    '9': 'PPPPPSPPSS',
+    '8': 'PPPPPPPPPP',
+    '7': 'PPPPPPHHHH',
+    '6': 'PPPPPHHHHH',
+    '5': 'DDDDDDDDHH',
+    '4': 'HHHPPHHHHH',
+    '3': 'PPPPPPHHHH',
+    '2': 'PPPPPPHHHH',
+  };
+  const CODE: Record<string, string> = { hit: 'H', stand: 'S', double: 'D', surrender: 'R', split: 'P' };
+  const row = (cards: Card[], rules: Rules) =>
+    UPS.map((up) => CODE[basicAction({ cards, dealerUp: up, rules, canDouble: true, canSplit: true, canSurrender: true })]).join('');
+  // Two different cards making a hard total (no pairs, no aces).
+  const hard = (t: number): Card[] => (t <= 11 ? [c('2'), c(String(t - 2) as Rank)] : [c('10'), c(String(t - 10) as Rank)]);
+
+  it('S17', () => {
+    for (const [t, want] of Object.entries(S17_HARD)) expect([t, row(hard(Number(t)), DEFAULT_RULES)]).toEqual([t, want]);
+    for (const [r, want] of Object.entries(S17_SOFT)) expect([`A,${r}`, row([c('A'), c(r as Rank)], DEFAULT_RULES)]).toEqual([`A,${r}`, want]);
+    for (const [r, want] of Object.entries(S17_PAIRS)) expect([`${r},${r}`, row([c(r as Rank), c(r as Rank)], DEFAULT_RULES)]).toEqual([`${r},${r}`, want]);
+  });
+
+  it('H17 changes only 11, 15 and 17 vs A, soft 18 vs 2, soft 19 vs 6 and 8,8 vs A', () => {
+    const changed: Record<string, [Card[], string]> = {
+      '11': [hard(11), 'DDDDDDDDDD'],
+      '15': [hard(15), 'SSSSSHHHRR'],
+      '17': [hard(17), 'SSSSSSSSSR'],
+      'A,7': [[c('A'), c('7')], 'DDDDDSSHHH'],
+      'A,8': [[c('A'), c('8')], 'SSSSDSSSSS'],
+      '8,8': [[c('8'), c('8')], 'PPPPPPPPPR'],
+    };
+    for (const [name, [cards, want]] of Object.entries(changed)) expect([name, row(cards, H17)]).toEqual([name, want]);
+    for (const t of [9, 10, 12, 13, 14, 16]) expect(row(hard(t), H17)).toBe(S17_HARD[t]);
+  });
+
+  it('without DAS: 4,4 plays as hard 8 (hit), 2,2 / 3,3 / 6,6 split only against 4–7 / 3–6', () => {
+    const noDas = { ...DEFAULT_RULES, doubleAfterSplit: false };
+    expect(row([c('4'), c('4')], noDas)).toBe('HHHHHHHHHH');
+    expect(row([c('2'), c('2')], noDas)).toBe('HHPPPPHHHH');
+    expect(row([c('3'), c('3')], noDas)).toBe('HHPPPPHHHH');
+    expect(row([c('6'), c('6')], noDas)).toBe('HPPPPHHHHH');
+  });
+});
