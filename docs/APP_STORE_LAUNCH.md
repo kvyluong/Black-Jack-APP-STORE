@@ -99,7 +99,7 @@ All listing text, search-optimized and length-checked, is in **docs/APP_STORE_LI
   - required: iPhone 6.9" (1320×2868) and, because `ios.supportsTablet` is true, iPad 13" (2064×2752);
   - 3–6 each, of Home, the table with the coach, Practice, the count drill, Road to the Casino, and the Casino Conditions report;
   - capture them from the web build at those sizes, or from the simulator or TestFlight build.
-- [ ] **App Previews** (optional, autoplay above the screenshots): `store-assets/video/` has 24 s captioned previews for iPhone 6.9" (886×1920) and iPad 13" (1200×1600) in English and Spanish, recorded on the simulator. Rebuild with `scripts/store-video/` (see its README).
+- [ ] **App Previews** (optional): none for now. **Outdated: don't use.** Every video in `store-assets/video/` was cut before the no-betting rebuild and shows chip counts and bets. They were removed from App Store Connect before build 13 was resubmitted. Re-shoot with `scripts/store-video/` on the current build before using any.
 - [x] **Support URL:** the website.
 - [ ] **Age rating questionnaire:** "Simulated Gambling" = **None**, "Gambling" = **No**, everything else None (Advertising: Yes, if asked). 1.0.0 was submitted as Frequent/Intense (17+) and rejected under guideline 2.3.6 (simulated gambling requires an organization account); build 12 removes all betting, so update the answers before resubmitting. See APP_STORE_CONNECT.md §5.
 - [ ] **App Privacy (nutrition labels):**

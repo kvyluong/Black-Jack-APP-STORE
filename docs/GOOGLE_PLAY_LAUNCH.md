@@ -178,7 +178,7 @@ Solo para entretenimiento y aprendizaje. No hay nada que ganar ni perder: cada m
 - [ ] **Feature graphic** 1024×500, no alpha: `store-assets/play/feature-graphic-en.png` / `-es.png` (icon and title only, no chips).
 - [ ] **Phone screenshots** 1080×1920 (9:16): `store-assets/play/phone/en-US` and `es-419`, 01–06 in order.
 - [ ] **Tablet screenshots** 1440×2560 (9:16, Play's large-screen rule): `store-assets/play/tablet/en-US` and `es-419`, 01–06, for both the 7-inch and 10-inch slots. (The iPad frames are 3:4 and don't qualify.)
-- [ ] **Preview video: skip for launch.** `store-assets/video/trailer-16x9-*.mp4` (and the iOS previews) were cut before the no-betting rebuild and show chip counts and "$30" bets. Re-shoot with `scripts/store-video/` on the current build first; Play then takes it as a YouTube link (public or unlisted, ads off).
+- [ ] **Preview video: none for launch.** **Outdated: don't use.** Every video in `store-assets/video/` was cut before the no-betting rebuild and shows chip counts and bets. They were removed from App Store Connect before build 13 was resubmitted. Re-shoot with `scripts/store-video/` on the current build before using any. Play then takes a re-shot video as a YouTube link (public or unlisted, ads off).
 - [ ] **👤 Store settings:** app category **Card**; tags **Card**, **Educational** (and **Single player** if offered). Don't pick "Casino" tags: they steer Play towards treating it as a gambling app. Contact email, website `https://kvyluong.github.io/Black-Jack-APP-STORE/`.
 
 To rebuild the graphics: `scripts/store-screenshots/README.md` (`node compose.mjs ../../store-assets/screenshots tablet` composes just the tablet set).
