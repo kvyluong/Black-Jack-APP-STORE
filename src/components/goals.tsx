@@ -37,6 +37,7 @@ const T = localized({
   en: {
     title: 'Today’s goals',
     streak: (n: number) => `${n}-day streak`,
+    noStreakYet: 'No streak yet',
     noStreak: 'Finish any goal and claim it to start a streak',
     keepStreak: (n: number) => `Claim one goal today to make it ${n} days`,
     earnFreeze: 'Streak safe for today. Claim all three to earn a streak freeze: it covers a day you miss',
@@ -69,6 +70,7 @@ const T = localized({
   es: {
     title: 'Metas de hoy',
     streak: (n: number) => `Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
+    noStreakYet: 'Sin racha aún',
     noStreak: 'Completa cualquier meta y reclámala para empezar una racha',
     keepStreak: (n: number) => `Reclama una meta hoy para llegar a ${n} días`,
     earnFreeze: 'Racha asegurada por hoy. Reclama las tres para ganar un protector de racha: cubre un día que faltes',
@@ -264,9 +266,13 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
               <Text style={styles.freezeText}>{T.freezes(freezes)}</Text>
             </View>
           )}
-          <View style={[styles.flame, streak === 0 && styles.flameOff]} accessible accessibilityLabel={T.streakA11y(streak)}>
+          <View
+            style={[styles.flame, streak === 0 && styles.flameOff]}
+            accessible
+            accessibilityLabel={streak > 0 ? T.streakA11y(streak) : T.noStreakYet}
+          >
             <Icon name="streak" size={16} color={streak === 0 ? colors.muted : colors.gold} />
-            <Text style={[styles.flameText, streak === 0 && { color: colors.muted }]}>{T.streak(streak)}</Text>
+            <Text style={[styles.flameText, streak === 0 && { color: colors.muted }]}>{streak > 0 ? T.streak(streak) : T.noStreakYet}</Text>
           </View>
         </View>
       </View>
