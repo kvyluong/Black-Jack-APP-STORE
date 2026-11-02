@@ -1,5 +1,5 @@
 import { setLang } from '../../i18n/lang';
-import { formatHour, reminderText, reminderTimes } from '../reminders';
+import { formatHour, reminderText, reminderTimes, stepReminderHour } from '../reminders';
 
 const at = (d: Date) => [d.getDate(), d.getHours(), d.getMinutes()];
 
@@ -38,5 +38,11 @@ describe('reminders', () => {
     expect(reminderText(1).title).toBe('Mantén tu racha de 1 día');
     expect(formatHour(19)).toBe('19:00');
     setLang('en');
+  });
+
+  it('keeps the picked hour in the daytime range', () => {
+    expect(stepReminderHour(19, 1)).toBe(20);
+    expect(stepReminderHour(21, 1)).toBe(21);
+    expect(stepReminderHour(8, -1)).toBe(8);
   });
 });

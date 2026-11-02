@@ -5,6 +5,13 @@ import { tr } from '../i18n/lang';
 export const DEFAULT_REMINDER_HOUR = 19;
 /** Reminders queued ahead. If the player stops opening the app, they go quiet after these. */
 export const REMINDERS_AHEAD = 2;
+/** Reminder hours players can pick: 8 AM to 9 PM, nothing at night. */
+export const EARLIEST_REMINDER_HOUR = 8;
+export const LATEST_REMINDER_HOUR = 21;
+
+/** Moves the reminder hour by `delta`, kept within the daytime range. */
+export const stepReminderHour = (hour: number, delta: number) =>
+  Math.min(LATEST_REMINDER_HOUR, Math.max(EARLIEST_REMINDER_HOUR, hour + delta));
 
 /**
  * The next reminder times: one a day at `hour`, starting today unless today's goal is

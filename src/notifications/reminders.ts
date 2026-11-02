@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 type NotificationsModule = typeof import('expo-notifications');
 
@@ -29,6 +29,22 @@ function getNotifications(): NotificationsModule | null {
 }
 
 export const remindersSupported = () => getNotifications() !== null;
+
+/** Whether notifications are currently allowed, without asking. */
+export async function reminderPermissionGranted(): Promise<boolean> {
+  const N = getNotifications();
+  if (!N) return false;
+  try {
+    return (await N.getPermissionsAsync()).granted;
+  } catch {
+    return false;
+  }
+}
+
+/** Opens this app's page in the system Settings, where notifications can be turned back on. */
+export function openNotificationSettings() {
+  void Linking.openSettings().catch(() => {});
+}
 
 /** Asks the system for permission (Android needs a channel first). Resolves to whether it was granted. */
 export async function requestReminderPermission(): Promise<boolean> {
