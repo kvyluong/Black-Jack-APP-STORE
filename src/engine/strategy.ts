@@ -210,11 +210,12 @@ function isAllowed(action: Action, ctx: DecisionContext): boolean {
 
 /**
  * Index for the table's rules. When the dealer hits soft 17, 10 vs A doubles at +3
- * (S17: +4) and 11 vs A doubles down to −1 (S17: +1), per the published H17 indices.
+ * (S17: +4), 11 vs A doubles down to −1 (S17: +1) and 15 vs A surrenders down to −1
+ * (S17: +1), per the published H17 indices.
  */
 function indexFor(dev: Deviation, rules: Rules): number {
   if (rules.dealerHitsSoft17 && dev.id === '10vA') return 3;
-  if (rules.dealerHitsSoft17 && dev.id === '11vA') return -1;
+  if (rules.dealerHitsSoft17 && (dev.id === '11vA' || dev.id === 's15vA')) return -1;
   return dev.index;
 }
 
@@ -243,10 +244,11 @@ export function recommend(ctx: DecisionContext): Recommendation {
   const splitting = basic === 'split';
   const sur = ctx.canSurrender && !splitting ? SURRENDER_DEVIATIONS.find((d) => d.match(ctx.cards, up)) : undefined;
   if (sur) {
-    if (tc >= sur.index && basic !== 'surrender') return countPlay(sur, sur.index, tc, 'surrender', basic);
-    if (tc < sur.index && basic === 'surrender') {
+    const index = indexFor(sur, ctx.rules);
+    if (tc >= index && basic !== 'surrender') return countPlay(sur, index, tc, 'surrender', basic);
+    if (tc < index && basic === 'surrender') {
       const instead = recommend({ ...ctx, canSurrender: false });
-      return instead.deviation ? instead : countPlay(sur, sur.index, tc, instead.action, basic);
+      return instead.deviation ? instead : countPlay(sur, index, tc, instead.action, basic);
     }
   }
 

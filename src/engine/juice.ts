@@ -42,7 +42,8 @@ const T = localized({
 export function roundFanfare(g: GameState): Fanfare | null {
   const yours = g.hands.filter(isYours);
   if (g.phase !== 'roundOver' || yours.length === 0) return null;
-  const net = g.lastNet;
+  // From your hands only: the insurance side stake isn't part of a hand's result.
+  const net = yours.reduce((sum, h) => sum + (h.payout ?? 0) - h.bet, 0);
   // Your stake before doubling or splitting: the first hand at each of your seats (a big win beats it).
   const originalBet = yours
     .filter((h, i) => yours.findIndex((x) => x.seat === h.seat) === i)
