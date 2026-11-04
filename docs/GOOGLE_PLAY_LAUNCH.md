@@ -4,6 +4,11 @@ The Android counterpart of [APP_STORE_LAUNCH.md](APP_STORE_LAUNCH.md): from this
 ShoeSharp live on Google Play with ads and the same "Remove ads" purchase, as the same
 **no-betting** app as iOS 1.0.0 (build 13): no chips, bets, bankroll or prizes anywhere.
 
+> **On hold (2026-11-03):** the owner has no Android phone, which Play needs for account
+> verification (Play Console app sign-in) and in practice for the 12-tester closed test.
+> iOS ships alone for now. Resume here once an Android phone is available (a borrowed one
+> is enough for verification).
+
 **Who does what.** Every remaining step happens in Play Console or on the owner's
 accounts, so each is marked:
 - **🛑 OWNER**: payments, identity checks, legal agreements and the final rollout button.
