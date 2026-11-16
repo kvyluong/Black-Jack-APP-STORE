@@ -2,10 +2,13 @@
 import { Href, Redirect, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '../../components/Icon';
+import { PlayingCard } from '../../components/PlayingCard';
+
 import { ListedFeature, featureInfo } from '../../components/featureInfo';
 import { DailyGoalsCard } from '../../components/goals';
 import { Meter } from '../../components/progress/Meter';
-import { Button, P, Screen } from '../../components/ui';
+import { Button, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
 import { getLessons } from '../../content/lessons';
 import { levelInfo } from '../../engine/progression';
@@ -25,6 +28,7 @@ const T = localized({
     takeSeat: 'Take a seat',
     score: (n: number) => `Casino-ready ${n}%`,
     quickPlay: 'Play a hand',
+    quickPlaySub: 'Sit down at a practice table',
     newFor: (names: string, more: number) => `New for you: ${names}${more ? ` and ${more} more` : ''}`,
     level: (n: number, title: string) => `Lv ${n} · ${title}`,
     hands: 'Hands played',
@@ -41,6 +45,7 @@ const T = localized({
     takeSeat: 'Siéntate a jugar',
     score: (n: number) => `Listo para el casino: ${n}%`,
     quickPlay: 'Jugar una mano',
+    quickPlaySub: 'Siéntate en una mesa de práctica',
     newFor: (names: string, more: number) => `Nuevo para ti: ${names}${more ? ` y ${more} más` : ''}`,
     level: (n: number, title: string) => `Nv ${n} · ${title}`,
     hands: 'Manos jugadas',
@@ -86,19 +91,23 @@ export default function Home() {
   return (
     <Screen>
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.logo}>♠ ♥ ♣ ♦</Text>
-          <P muted style={{ fontSize: 14 }}>
-            {T.tagline}
-          </P>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.tagline}>{T.tagline}</Text>
+        <View style={styles.levelPill}>
           <Text style={styles.levelBig}>{T.level(lvl.level, lvl.title)}</Text>
         </View>
       </View>
 
       <View style={styles.next}>
-        <Text style={styles.eyebrow}>{T.nextStep}</Text>
+        {/* A fanned blackjack, just for looks. */}
+        <View style={styles.fan} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          <View style={[styles.fanCard, { transform: [{ rotate: '-12deg' }] }]}>
+            <PlayingCard card={{ rank: 'A', suit: '♠' }} size="sm" />
+          </View>
+          <View style={[styles.fanCard, { left: 22, top: 4, transform: [{ rotate: '10deg' }] }]}>
+            <PlayingCard card={{ rank: 'K', suit: '♥' }} size="sm" />
+          </View>
+        </View>
+        <Text style={styles.eyebrow}>{T.nextStep.toUpperCase()}</Text>
         <Text style={styles.nextTitle}>{title}</Text>
         <Text style={styles.nextBody}>{body}</Text>
         {unlocks.has('ready') && (
@@ -109,7 +118,7 @@ export default function Home() {
             <Text style={styles.scoreText}>{T.score(score)}</Text>
           </View>
         )}
-        <Button title={cta} onPress={() => router.push(href)} />
+        <Button title={cta} onPress={() => router.push(href)} style={styles.cta} />
       </View>
 
       <DailyGoalsCard collapsible />
@@ -137,7 +146,26 @@ export default function Home() {
         </Pressable>
       )}
 
-      <Button title={T.quickPlay} variant="secondary" onPress={() => router.push('/play')} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={T.quickPlay}
+        onPress={() => router.push('/play')}
+        style={({ pressed }) => [styles.quick, pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 }]}
+      >
+        <View style={styles.quickFelt}>
+          <View style={styles.quickCards} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+            <PlayingCard faceDown size="xs" />
+            <View style={{ marginLeft: -16 }}>
+              <PlayingCard card={{ rank: '10', suit: '♦' }} size="xs" />
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.quickTitle}>{T.quickPlay}</Text>
+            <Text style={styles.quickSub}>{T.quickPlaySub}</Text>
+          </View>
+          <Icon name="tables" size={22} color={colors.gold} />
+        </View>
+      </Pressable>
     </Screen>
   );
 }
@@ -156,20 +184,67 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing(2) },
-  logo: { color: colors.gold, fontSize: 18, letterSpacing: 4 },
-  levelBig: { color: colors.gold, fontSize: 16, fontWeight: '900' },
-  next: { backgroundColor: colors.feltDark, borderRadius: radius.lg, padding: spacing(2.5), gap: spacing(1.25) },
-  eyebrow: { color: colors.muted, fontSize: 13, fontWeight: '700' },
-  nextTitle: { color: colors.text, fontSize: 22, fontWeight: '800' },
-  nextBody: { color: colors.muted, fontSize: 15 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing(1.5) },
+  tagline: { flex: 1, color: colors.muted, fontSize: 14, lineHeight: 19 },
+  levelPill: {
+    backgroundColor: 'rgba(232,197,71,0.14)',
+    borderColor: 'rgba(232,197,71,0.45)',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  levelBig: { color: colors.gold, fontSize: 14, fontWeight: '900' },
+  next: {
+    backgroundColor: colors.feltDark,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(232,197,71,0.3)',
+    padding: spacing(2.5),
+    gap: spacing(1.25),
+    overflow: 'hidden',
+  },
+  fan: { position: 'absolute', top: 14, right: 18, width: 70, height: 72, opacity: 0.9 },
+  fanCard: { position: 'absolute', left: 0, top: 0 },
+  eyebrow: { color: colors.gold, fontSize: 12, fontWeight: '800', letterSpacing: 1.4 },
+  nextTitle: { color: colors.text, fontSize: 24, fontWeight: '900', marginRight: 76 },
+  nextBody: { color: colors.muted, fontSize: 15, marginRight: 76 },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing(1) },
-  scoreText: { color: colors.gold, fontWeight: '700', fontSize: 13 },
+  scoreText: { color: colors.gold, fontWeight: '700', fontSize: 13, fontVariant: ['tabular-nums'] },
+  cta: { borderBottomWidth: 4, borderBottomColor: '#B8962B', marginTop: spacing(0.5) },
   newBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(232,197,71,0.12)', borderRadius: radius.md, padding: spacing(1.5) },
   newText: { color: colors.gold, fontWeight: '700', flex: 1 },
   chev: { color: colors.gold, fontSize: 22 },
   stats: { flexDirection: 'row', gap: spacing(1) },
-  stat: { flex: 1, backgroundColor: colors.feltDark, borderRadius: radius.md, paddingVertical: spacing(1.5), paddingHorizontal: spacing(1), alignItems: 'center', gap: 2 },
-  statValue: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  stat: {
+    flex: 1,
+    backgroundColor: colors.feltDark,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    paddingVertical: spacing(1.5),
+    paddingHorizontal: spacing(1),
+    alignItems: 'center',
+    gap: 2,
+  },
+  statValue: { color: colors.text, fontSize: 22, fontWeight: '900', fontVariant: ['tabular-nums'] },
   statLabel: { color: colors.muted, fontSize: 12, textAlign: 'center' },
+  // A little table: wood rail around the felt, rounded at the bottom like the real thing.
+  quick: { backgroundColor: colors.rail, borderRadius: 18, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, padding: 5 },
+  quickFelt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(1.5),
+    backgroundColor: colors.felt,
+    borderRadius: 14,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.35)',
+    paddingVertical: spacing(1.75),
+    paddingHorizontal: spacing(2.5),
+  },
+  quickCards: { flexDirection: 'row', transform: [{ rotate: '-6deg' }] },
+  quickTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  quickSub: { color: colors.muted, fontSize: 13 },
 });
