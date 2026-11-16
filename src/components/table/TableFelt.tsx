@@ -24,12 +24,14 @@ const T = localized({
     seat: (n: number) => `Seat ${n}`,
     decks: (n: number) => `${n} deck${n > 1 ? 's' : ''}`,
     dealerRule: (h17: boolean) => `Dealer ${h17 ? 'hits soft 17' : 'stands on all 17s'}`,
+    printed: (h17: boolean) => `BLACKJACK PAYS 3 TO 2 · DEALER ${h17 ? 'HITS SOFT 17' : 'STANDS ON ALL 17s'}`,
   },
   es: {
     dealer: 'Crupier',
     seat: (n: number) => `Asiento ${n}`,
     decks: (n: number) => `${n} baraja${n > 1 ? 's' : ''}`,
     dealerRule: (h17: boolean) => `El crupier ${h17 ? 'pide con 17 blando' : 'se planta con todo 17'}`,
+    printed: (h17: boolean) => `BLACKJACK PAGA 3 A 2 · CRUPIER ${h17 ? 'PIDE CON 17 BLANDO' : 'SE PLANTA CON 17'}`,
   },
 });
 /** Seats from the player's point of view: seat 1 (first base) is on the right. */
@@ -71,7 +73,10 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
   const dealt = game.dealer.length > 0;
 
   return (
-    <Animated.View style={[shakeStyle, styles.felt, { backgroundColor: casino.felt }]}>
+    // A real table top: a padded rail around the felt, straight on the dealer's side and
+    // curved on the players' side.
+    <Animated.View style={[shakeStyle, styles.rail, tablet && styles.railTablet]}>
+     <View style={[styles.felt, tablet && styles.feltTablet, { backgroundColor: casino.felt }]}>
       <View style={[styles.dealer, dealt && (tablet ? styles.dealerDealtTablet : styles.dealerDealt)]}>
         {game.dealer.length > 0 ? (
           <HandView
@@ -90,11 +95,18 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
               {casino.name}
             </Text>
             <Text style={[styles.placeholder, tablet && styles.placeholderTablet]}>
-              {T.decks(rules.decks)} · {T.dealerRule(rules.dealerHitsSoft17)}
+              {T.decks(rules.decks)}{short ? ` · ${T.dealerRule(rules.dealerHitsSoft17)}` : ''}
             </Text>
           </View>
         )}
       </View>
+
+      {/* The rule printed on the felt, as on a real layout. */}
+      {!short && (
+        <Text style={[styles.printed, tablet && styles.printedTablet]} numberOfLines={1}>
+          {T.printed(rules.dealerHitsSoft17)}
+        </Text>
+      )}
 
       {/* The seats, on an arc; seat 1 is on the right and is dealt first. */}
       <View style={[styles.seats, dealt && (tablet ? styles.seatsDealtTablet : short ? styles.seatsDealtShort : styles.seatsDealt)]}>
@@ -135,12 +147,45 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
         ))}
       </View>
       <FanfareOverlay fanfare={fanfare} effects={effects} />
+     </View>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
-  felt: { borderRadius: 18, paddingVertical: spacing(1), paddingHorizontal: 4 },
+  rail: {
+    backgroundColor: colors.rail,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderBottomLeftRadius: 96,
+    borderBottomRightRadius: 96,
+    padding: 7,
+    borderWidth: 1,
+    borderColor: colors.railLight,
+  },
+  railTablet: { borderBottomLeftRadius: 320, borderBottomRightRadius: 320, padding: 10 },
+  felt: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomLeftRadius: 89,
+    borderBottomRightRadius: 89,
+    paddingTop: spacing(1),
+    paddingBottom: spacing(3),
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.35)',
+  },
+  feltTablet: { borderBottomLeftRadius: 310, borderBottomRightRadius: 310, paddingBottom: spacing(5) },
+  printed: {
+    color: colors.gold,
+    opacity: 0.55,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  printedTablet: { fontSize: 12, letterSpacing: 2, marginBottom: 10 },
   dealer: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing(1) },
   // Tall enough for the dealer's hand and its label, so drawing cards doesn't grow the table.
   dealerDealt: { minHeight: 108, paddingVertical: 0 },

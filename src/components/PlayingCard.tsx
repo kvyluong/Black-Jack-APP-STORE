@@ -33,7 +33,12 @@ const T = localized({
   },
 });
 
-const SIZES = { xs: { w: 30, h: 42, f: 12 }, sm: { w: 44, h: 64, f: 16 }, md: { w: 60, h: 88, f: 22 }, lg: { w: 96, h: 140, f: 36 } };
+const SIZES = {
+  xs: { w: 30, h: 42, f: 12, r: 4 },
+  sm: { w: 44, h: 64, f: 16, r: 5 },
+  md: { w: 60, h: 88, f: 22, r: 7 },
+  lg: { w: 96, h: 140, f: 36, r: 10 },
+};
 
 /** Memoized: cards re-render only when what they show changes, not on every chip or stat update. */
 export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
@@ -41,8 +46,10 @@ export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'm
   const s = SIZES[size];
   if (faceDown || !card) {
     return (
-      <View style={[styles.card, styles.back, { width: s.w, height: s.h }]}>
-        <View style={styles.backInner} />
+      <View style={[styles.card, styles.back, { width: s.w, height: s.h, borderRadius: s.r }]}>
+        <View style={[styles.backInner, { borderRadius: Math.max(2, s.r - 3) }]}>
+          {size !== 'xs' && <Text style={[styles.backMark, { fontSize: s.f * 0.9 }]}>♠</Text>}
+        </View>
       </View>
     );
   }
@@ -52,7 +59,7 @@ export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'm
     // Tiny cards for other players' seats: just rank over suit.
     const tiny = (
       <View
-        style={[styles.card, styles.xs, { width: s.w, height: s.h }]}
+        style={[styles.card, styles.xs, { width: s.w, height: s.h, borderRadius: s.r }]}
         accessible
         accessibilityLabel={T.card(card.rank, suitName(card.suit))}
       >
@@ -72,13 +79,20 @@ export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'm
   return (
     <View style={{ alignItems: 'center' }}>
       <View
-        style={[styles.card, { width: s.w, height: s.h }]}
+        style={[styles.card, { width: s.w, height: s.h, borderRadius: s.r }]}
         accessible
         accessibilityLabel={T.card(card.rank, suitName(card.suit))}
       >
-        <Text style={[styles.corner, { color, fontSize: s.f * 0.6 }]}>{card.rank}</Text>
-        <Text style={[styles.center, { color, fontSize: s.f * 1.2 }]}>{card.suit}</Text>
-        <Text style={[styles.rank, { color, fontSize: s.f }]}>{card.rank}</Text>
+        {/* A corner index (rank over suit) at both corners, like a real deck, so a tucked card still reads. */}
+        <View style={[styles.index, { top: s.f * 0.12, left: s.f * 0.2 }]}>
+          <Text style={[styles.indexRank, { color, fontSize: s.f * 0.72, lineHeight: s.f * 0.8 }]}>{card.rank}</Text>
+          <Text style={{ color, fontSize: s.f * 0.5, lineHeight: s.f * 0.6 }}>{card.suit}</Text>
+        </View>
+        <Text style={[styles.center, { color, fontSize: s.f * 1.35 }]}>{card.suit}</Text>
+        <View style={[styles.index, styles.flipped, { bottom: s.f * 0.12, right: s.f * 0.2 }]}>
+          <Text style={[styles.indexRank, { color, fontSize: s.f * 0.72, lineHeight: s.f * 0.8 }]}>{card.rank}</Text>
+          <Text style={{ color, fontSize: s.f * 0.5, lineHeight: s.f * 0.6 }}>{card.suit}</Text>
+        </View>
       </View>
       {tagLabel}
     </View>
@@ -104,6 +118,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0,0,0,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     // A darker bottom edge instead of a drop shadow: real shadows on cards that move are drawn
@@ -113,11 +129,21 @@ const styles = StyleSheet.create({
   },
   // Rank in the corner so it stays readable when cards are stacked.
   xs: { alignItems: 'flex-start', justifyContent: 'flex-start', paddingHorizontal: 3, paddingTop: 1 },
-  back: { backgroundColor: colors.cardBack, padding: 4 },
-  backInner: { flex: 1, alignSelf: 'stretch', borderRadius: 4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
-  corner: { position: 'absolute', top: 3, left: 5, fontWeight: '700' },
+  back: { backgroundColor: colors.cardBack, padding: 3, borderColor: 'rgba(255,255,255,0.9)', borderWidth: 2 },
+  backInner: {
+    flex: 1,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(232,197,71,0.55)',
+    backgroundColor: colors.cardBackDark,
+  },
+  backMark: { color: colors.gold, opacity: 0.8 },
+  index: { position: 'absolute', alignItems: 'center' },
+  indexRank: { fontWeight: '800', letterSpacing: -0.5 },
+  flipped: { transform: [{ rotate: '180deg' }] },
   center: { lineHeight: undefined },
-  rank: { position: 'absolute', bottom: 2, right: 5, fontWeight: '700', transform: [{ rotate: '180deg' }] },
   tag: { marginTop: 4, fontWeight: '700', fontSize: 14 },
   tagXs: { fontSize: 10, marginTop: 2 },
 });

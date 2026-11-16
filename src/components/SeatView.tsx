@@ -71,7 +71,12 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
     [styles[k], big && tabletStyles[k as keyof typeof tabletStyles]] as StyleProp<ViewStyle & TextStyle>;
   const stack = big ? STACK.tablet : STACK.phone;
   const stackBox = { width: stack.w + stack.dx * STACK_ROOM, height: stack.h + stack.dy * STACK_ROOM };
-  const label = <Text style={st('seatNo')}>{seat + 1}</Text>;
+  // The seat's betting circle, printed on the felt with its number.
+  const label = (
+    <View style={[st('spot'), occupant === YOU && styles.spotYou]}>
+      <Text style={[st('seatNo'), occupant === YOU && styles.seatNoYou]}>{seat + 1}</Text>
+    </View>
+  );
   if (occupant === null) {
     return (
       <View style={styles.seat} accessible accessibilityLabel={T.openSeat(seat + 1)}>
@@ -163,7 +168,15 @@ export function SeatView({ seat, occupant, game, schedule, settled, instant, bub
 
 const styles = StyleSheet.create({
   seat: { flex: 1, alignItems: 'center', gap: 2, minWidth: 0 },
-  avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
   empty: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.muted, opacity: 0.5 },
   you: { borderWidth: 2, borderColor: colors.gold, backgroundColor: colors.feltDark },
   youText: { color: colors.gold, fontSize: 9, fontWeight: '900' },
@@ -195,7 +208,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bubbleMistake: { backgroundColor: '#FFD6D6' },
-  seatNo: { color: colors.muted, fontSize: 10, opacity: 0.7, marginTop: 'auto' },
+  spot: {
+    marginTop: 'auto',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: 'rgba(232,197,71,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spotYou: { borderColor: colors.gold, borderWidth: 1.5, backgroundColor: 'rgba(232,197,71,0.12)' },
+  seatNo: { color: colors.muted, fontSize: 10, fontWeight: '700', opacity: 0.8 },
+  seatNoYou: { color: colors.gold, opacity: 1 },
 });
 
 /** Tablet sizes: everything about a third bigger. */
@@ -209,5 +234,6 @@ const tabletStyles = StyleSheet.create({
   bet: { fontSize: 14 },
   total: { fontSize: 15 },
   bubble: { top: 9, fontSize: 13, borderRadius: 8, paddingHorizontal: 5, paddingVertical: 2 },
+  spot: { width: 30, height: 30, borderRadius: 15 },
   seatNo: { fontSize: 13 },
 });

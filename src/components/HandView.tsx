@@ -72,8 +72,9 @@ const OVERLAP = { sm: -12, md: -16, lg: -26 };
 const MAKE_ROOM = LinearTransition.duration(240).easing(Easing.out(Easing.quad));
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', padding: 6, borderRadius: 10, borderWidth: 2, borderColor: 'transparent' },
-  active: { borderColor: colors.gold },
+  wrap: { alignItems: 'center', padding: 6, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
+  // Your hand in play: a gold outline and a faint gold wash on the felt beneath it.
+  active: { borderColor: colors.gold, backgroundColor: 'rgba(232,197,71,0.10)' },
   row: { flexDirection: 'row' },
   // The total sits in a small dark badge under the cards, readable on any felt color.
   label: {
@@ -82,10 +83,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     maxWidth: 230,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontVariant: ['tabular-nums'],
     overflow: 'hidden',
   },
 });
