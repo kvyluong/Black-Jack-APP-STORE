@@ -69,10 +69,11 @@ export function Icon({
 }
 
 /** A list row's icon: the symbol in a round, gold-tinted well, the same size everywhere. */
-export function IconWell({ name, dim = false }: { name: IconName; dim?: boolean }) {
+/** `tint` gives the well a section color: a rounded square washed in that color, icon to match. */
+export function IconWell({ name, dim = false, tint }: { name: IconName; dim?: boolean; tint?: string }) {
   return (
-    <View style={[wellStyles.well, dim && { opacity: 0.6 }]}>
-      <Icon name={name} size={22} />
+    <View style={[wellStyles.well, tint && { borderRadius: 12, backgroundColor: `${tint}26` }, dim && { opacity: 0.6 }]}>
+      <Icon name={name} size={22} {...(tint ? { color: tint } : {})} />
     </View>
   );
 }
