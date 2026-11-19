@@ -12,6 +12,7 @@ import { HandView } from '../HandView';
 import { FanfareOverlay } from '../juice';
 import { SeatView } from '../SeatView';
 import { ShownFanfare } from '../useDealAnimation';
+import { ZoomToFit } from './ZoomToFit';
 
 const OUTCOME_LABEL: Record<Outcome, string> = localized<Record<Outcome, string>>({
   en: { win: 'Win', lose: 'Lose', push: 'Push', blackjack: 'Blackjack!', surrender: 'Surrendered' },
@@ -71,6 +72,10 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
   // Before the deal the table is compact, so the Deal button fits on small phones. The room
   // for cards opens up as the hand starts, before any card is in the air.
   const dealt = game.dealer.length > 0;
+  // A split adds hands under a seat. Rather than let the table grow off the screen (pushing
+  // the dealer up and your cards down), the seats and your hands zoom out to keep their room.
+  const npcSplit = game.hands.some((h) => !isYours(h) && h.fromSplit);
+  const youSplit = yourHands.length > 1;
 
   return (
     // A real table top: a padded rail around the felt, straight on the dealer's side and
@@ -109,7 +114,10 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
       )}
 
       {/* The seats, on an arc; seat 1 is on the right and is dealt first. */}
-      <View style={[styles.seats, dealt && (tablet ? styles.seatsDealtTablet : short ? styles.seatsDealtShort : styles.seatsDealt)]}>
+      <ZoomToFit
+        baseline={dealt && !npcSplit}
+        style={[styles.seats, dealt && (tablet ? styles.seatsDealtTablet : short ? styles.seatsDealtShort : styles.seatsDealt)]}
+      >
         {SEAT_ORDER.map((seat, pos) => {
           const occupant = table.seats[seat];
           return (
@@ -128,9 +136,13 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
             </View>
           );
         })}
-      </View>
+      </ZoomToFit>
 
-      <View style={[styles.yours, dealt && (tablet ? styles.yoursDealtTablet : short ? styles.yoursDealtShort : styles.yoursDealt)]}>
+      <ZoomToFit
+        baseline={dealt && !youSplit}
+        min={0.6}
+        style={[styles.yours, dealt && (tablet ? styles.yoursDealtTablet : short ? styles.yoursDealtShort : styles.yoursDealt)]}
+      >
         {yourHands.map(({ h, i }) => (
           <HandView
             key={h.id}
@@ -145,7 +157,7 @@ export const TableFelt = memo(function TableFelt({ game, table, casino, schedule
             instant={instant}
           />
         ))}
-      </View>
+      </ZoomToFit>
       <FanfareOverlay fanfare={fanfare} effects={effects} />
      </View>
     </Animated.View>

@@ -190,12 +190,13 @@ const styles = StyleSheet.create({
   bet: { color: colors.gold, fontSize: 11, fontWeight: '800' },
   total: { color: colors.text, fontSize: 12, fontWeight: '700' },
   // Floats over the avatar (a long one also over the name), so a new bubble doesn't make the
-  // seat taller. A little wider than the seat; the text shrinks to fit rather than break a word.
+  // seat taller. As wide as the seat, so two neighbors' bubbles never overlap; the text shrinks
+  // to fit rather than break a word.
   bubble: {
     position: 'absolute',
     top: 6,
-    left: -4,
-    right: -4,
+    left: 0,
+    right: 0,
     zIndex: 1,
     color: colors.black,
     backgroundColor: colors.text,

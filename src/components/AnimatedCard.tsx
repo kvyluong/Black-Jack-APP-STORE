@@ -23,6 +23,8 @@ interface Props {
   /** Delay before a face-down card turns over once `faceDown` becomes false. */
   flipDelay: number;
   instant: boolean;
+  /** Another card lies over this one's right edge. */
+  tucked?: boolean;
 }
 
 /**
@@ -40,7 +42,8 @@ export const AnimatedCard = memo(AnimatedCardView, (a, b) =>
   a.card.suit === b.card.suit &&
   a.faceDown === b.faceDown &&
   a.size === b.size &&
-  a.instant === b.instant,
+  a.instant === b.instant &&
+  a.tucked === b.tucked,
 );
 
 // A smooth throw that slows into place. It starts at about 2x average speed: an overshooting
@@ -49,7 +52,7 @@ export const AnimatedCard = memo(AnimatedCardView, (a, b) =>
 const DEAL_EASING = Easing.bezier(0.3, 0.7, 0.3, 1);
 const FLIP_EASING = Easing.inOut(Easing.quad);
 
-function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant }: Props) {
+function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant, tucked }: Props) {
   const deal = useSharedValue(instant ? 1 : 0);
   // 0 = showing the back, 1 = showing the face.
   const reveal = useSharedValue(faceDown ? 0 : 1);
@@ -100,7 +103,7 @@ function AnimatedCardView({ card, faceDown, size, dealDelay, flipDelay, instant 
     <Animated.View style={cardStyle}>
       {/* Screen readers don't get the face while it's still hidden. */}
       <View aria-hidden={faceDown} importantForAccessibility={faceDown ? 'no-hide-descendants' : 'auto'}>
-        <PlayingCard card={card} size={size} />
+        <PlayingCard card={card} size={size} tucked={tucked} />
       </View>
       {hasBack && (
         <Animated.View style={[styles.back, backStyle]}>

@@ -50,6 +50,7 @@ export function HandView({
               dealDelay={dealDelay?.(i) ?? 0}
               flipDelay={flipDelay}
               instant={instant}
+              tucked={i < cards.length - 1}
             />
           </View>
         ))}

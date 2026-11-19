@@ -15,6 +15,8 @@ interface Props {
   showTag?: boolean;
   /** Which system's tag to show; defaults to the player's chosen counting system. */
   tagSystem?: CountingSystem;
+  /** Another card lies over its right edge: drop the bottom corner index, which would peek out. */
+  tucked?: boolean;
 }
 
 const NUM_EN: Record<number, string> = { 1: 'one', 2: 'two' };
@@ -41,7 +43,7 @@ const SIZES = {
 };
 
 /** Memoized: cards re-render only when what they show changes, not on every chip or stat update. */
-export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem }: Props) {
+export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'md', showTag, tagSystem, tucked }: Props) {
   useLang(); // the screen-reader name ("K of spades") follows the language
   const s = SIZES[size];
   if (faceDown || !card) {
@@ -63,8 +65,13 @@ export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'm
         accessible
         accessibilityLabel={T.card(card.rank, suitName(card.suit))}
       >
-        <Text style={{ color, fontSize: s.f, fontWeight: '800', lineHeight: s.f + 2 }}>{card.rank}</Text>
-        <Text style={{ color, fontSize: s.f, lineHeight: s.f + 2 }}>{card.suit}</Text>
+        {/* Rank and a small suit on one line: in a seat's stack only the top strip of a card
+            shows, and a suit on its own line would peek out as a sliver beside the next card. */}
+        <View style={styles.xsIndex}>
+          <Text style={{ color, fontSize: s.f, fontWeight: '800', lineHeight: s.f + 1 }}>{card.rank}</Text>
+          <Text style={{ color, fontSize: s.f * 0.7, lineHeight: s.f + 1 }}>{card.suit}</Text>
+        </View>
+        <Text style={[styles.xsPip, { color, fontSize: s.f }]}>{card.suit}</Text>
       </View>
     );
     return tagLabel ? (
@@ -89,10 +96,12 @@ export const PlayingCard = memo(function PlayingCard({ card, faceDown, size = 'm
           <Text style={{ color, fontSize: s.f * 0.5, lineHeight: s.f * 0.6 }}>{card.suit}</Text>
         </View>
         <Text style={[styles.center, { color, fontSize: s.f * 1.35 }]}>{card.suit}</Text>
-        <View style={[styles.index, styles.flipped, { bottom: s.f * 0.12, right: s.f * 0.2 }]}>
-          <Text style={[styles.indexRank, { color, fontSize: s.f * 0.72, lineHeight: s.f * 0.8 }]}>{card.rank}</Text>
-          <Text style={{ color, fontSize: s.f * 0.5, lineHeight: s.f * 0.6 }}>{card.suit}</Text>
-        </View>
+        {!tucked && (
+          <View style={[styles.index, styles.flipped, { bottom: s.f * 0.12, right: s.f * 0.2 }]}>
+            <Text style={[styles.indexRank, { color, fontSize: s.f * 0.72, lineHeight: s.f * 0.8 }]}>{card.rank}</Text>
+            <Text style={{ color, fontSize: s.f * 0.5, lineHeight: s.f * 0.6 }}>{card.suit}</Text>
+          </View>
+        )}
       </View>
       {tagLabel}
     </View>
@@ -128,7 +137,10 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.28)',
   },
   // Rank in the corner so it stays readable when cards are stacked.
-  xs: { alignItems: 'flex-start', justifyContent: 'flex-start', paddingHorizontal: 3, paddingTop: 1 },
+  xs: { alignItems: 'flex-start', justifyContent: 'flex-start', paddingHorizontal: 3, paddingTop: 0 },
+  xsIndex: { flexDirection: 'row', alignItems: 'baseline', gap: 1 },
+  // The big suit sits mid-card, where the next card in a stack covers it completely.
+  xsPip: { alignSelf: 'center', marginTop: 2 },
   back: { backgroundColor: colors.cardBack, padding: 3, borderColor: 'rgba(255,255,255,0.9)', borderWidth: 2 },
   backInner: {
     flex: 1,
