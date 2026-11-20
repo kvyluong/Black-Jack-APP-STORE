@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.2 (draft, not submitted)
+## 1.0.2
 
 **App Store "What's New" (English):**
 
@@ -33,7 +33,7 @@ Práctica que vuelve a ti:
 - Reminder text from nextStep() and the top leak, one line per queued reminder (0163596)
 - Welcome-back checkpoint and /warmup after 7+ days away (6095bdd)
 - New save fields are all optional (academy.workoutDays, leakReview, weeklySeen, goals.returned); old saves load unchanged
-- No native changes or new dependencies. app.json version and build number are not bumped yet
+- No native changes or new dependencies
 
 ## 1.0.1
 
