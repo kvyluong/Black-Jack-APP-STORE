@@ -68,14 +68,20 @@ export async function requestReminderPermission(): Promise<boolean> {
 let latest = 0;
 let queue: Promise<void> = Promise.resolve();
 
-/** Replaces any queued reminders with these. An empty list just clears them. */
-export function scheduleReminders(times: Date[], text: { title: string; body: string }): Promise<void> {
+type ReminderText = { title: string; body: string };
+
+/**
+ * Replaces any queued reminders with these. An empty list just clears them. `texts`: one per
+ * time (the last is reused if there are fewer), or one for all.
+ */
+export function scheduleReminders(times: Date[], texts: ReminderText | ReminderText[]): Promise<void> {
   const mine = ++latest;
-  queue = queue.then(() => (mine === latest ? replaceReminders(times, text) : undefined));
+  const list = Array.isArray(texts) ? texts : [texts];
+  queue = queue.then(() => (mine === latest ? replaceReminders(times, list) : undefined));
   return queue;
 }
 
-async function replaceReminders(times: Date[], text: { title: string; body: string }): Promise<void> {
+async function replaceReminders(times: Date[], texts: ReminderText[]): Promise<void> {
   const N = getNotifications();
   if (!N) return;
   try {
@@ -83,7 +89,9 @@ async function replaceReminders(times: Date[], text: { title: string; body: stri
     if (!times.length) return;
     const { granted } = await N.getPermissionsAsync();
     if (!granted) return;
-    for (const date of times) {
+    for (const [i, date] of times.entries()) {
+      const text = texts[Math.min(i, texts.length - 1)];
+      if (!text) continue;
       await N.scheduleNotificationAsync({
         content: { title: text.title, body: text.body },
         trigger: { type: N.SchedulableTriggerInputTypes.DATE, date, channelId: Platform.OS === 'android' ? 'reminders' : undefined },
