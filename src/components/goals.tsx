@@ -43,6 +43,7 @@ const T = localized({
     earnFreeze: 'Streak safe for today. Claim all three to earn a streak freeze: it covers a day you miss',
     freezeFull: 'Streak safe for today. You have the most streak freezes you can keep',
     allDone: 'All done for today. Come back tomorrow!',
+    workoutKept: 'Your Academy workout kept your streak today. Claim all three to earn a streak freeze',
     freezes: (n: number) => `${n}`,
     freezesA11y: (n: number) => `${n} streak ${n === 1 ? 'freeze' : 'freezes'}: each covers one missed day`,
     frozeNote: (n: number) => `A streak freeze covered ${n === 1 ? 'the day you missed' : `the ${n} days you missed`}. Your streak is safe`,
@@ -76,6 +77,7 @@ const T = localized({
     earnFreeze: 'Racha asegurada por hoy. Reclama las tres para ganar un protector de racha: cubre un día que faltes',
     freezeFull: 'Racha asegurada por hoy. Ya tienes el máximo de protectores de racha',
     allDone: '¡Todo listo por hoy! Vuelve mañana.',
+    workoutKept: 'Tu entrenamiento de la Academia mantuvo tu racha hoy. Reclama las tres para ganar un protector de racha',
     freezes: (n: number) => `${n}`,
     freezesA11y: (n: number) => `${n} ${n === 1 ? 'protector' : 'protectores'} de racha: cada uno cubre un día perdido`,
     frozeNote: (n: number) =>
@@ -242,13 +244,16 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
 
   const freezes = stats.goals.freezes ?? 0;
   const frozen = stats.goals.frozen?.day === today ? stats.goals.frozen.count : 0;
-  const keptToday = stats.goals.lastCompleteDay === today && claimed.length > 0;
+  // Kept by a claimed goal or, before any claim, by a finished Academy workout.
+  const keptToday = stats.goals.lastCompleteDay === today;
   const streakNote = allClaimed
     ? T.allDone
     : keptToday
       ? freezes >= MAX_FREEZES
         ? T.freezeFull
-        : T.earnFreeze
+        : claimed.length === 0
+          ? T.workoutKept
+          : T.earnFreeze
       : streak > 0
         ? T.keepStreak(streak + 1)
         : T.noStreak;

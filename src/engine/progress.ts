@@ -287,16 +287,29 @@ export const MAX_FREEZES = 2;
 export function claimGoal(goals: GoalsState, id: string, today: string, dayGoalIds: string[]): GoalsState {
   if (goals.claimed.includes(id)) return goals;
   const claimed = [...goals.claimed, id];
-  const next = { ...goals, claimed };
-  if (goals.lastCompleteDay !== today) {
-    next.streak = goals.lastCompleteDay === previousDay(today) ? goals.streak + 1 : 1;
-    next.lastCompleteDay = today;
-  }
+  const next = { ...keepStreak(goals, today), claimed };
   if (goals.lastPerfectDay !== today && dayGoalIds.every((g) => claimed.includes(g))) {
     next.freezes = Math.min(MAX_FREEZES, (goals.freezes ?? 0) + 1);
     next.lastPerfectDay = today;
   }
   return next;
+}
+
+/**
+ * Counts today toward the one daily streak: extends it after yesterday, or restarts it
+ * after a missed day. Done by the day's first claimed goal or a finished Academy workout;
+ * a second one the same day changes nothing.
+ */
+export function keepStreak(goals: GoalsState, today: string): GoalsState {
+  if (goals.lastCompleteDay === today) return goals;
+  return { ...goals, streak: goals.lastCompleteDay === previousDay(today) ? goals.streak + 1 : 1, lastCompleteDay: today };
+}
+
+/** The Monday that starts the week a local day falls in. */
+export function weekStart(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const weekday = new Date(y, m - 1, d).getDay(); // 0 = Sunday
+  return addDays(day, -((weekday + 6) % 7));
 }
 
 /**

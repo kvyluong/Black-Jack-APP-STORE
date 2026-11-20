@@ -4,8 +4,8 @@ import { StyleSheet, Text } from 'react-native';
 
 import { ColorCount, PairCancel, ReadCount, RoundResult, SoundCount, SystemBadge, TagTap } from '../../components/academy';
 import { Button, P, Panel, Screen } from '../../components/ui';
-import { AcademyMode, MAX_LEVEL, MODES, academyXp, newProgress, recordRound } from '../../engine/academy';
-import { previousDay } from '../../engine/progress';
+import { AcademyMode, MAX_LEVEL, MODES, academyXp, newProgress, recordRound, recordWorkoutDay } from '../../engine/academy';
+import { keepStreak } from '../../engine/progress';
 import { levelInfo, localDay } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -22,7 +22,7 @@ const T = localized({
     xp: (xp: number, newLevel?: number) => `+${xp} XP${newLevel ? ` · You’re now player level ${newLevel}!` : ''}`,
     nextReview: (due: string | null) => `Next review: ${due ?? 'today'}`,
     next: (title: string) => `Next: ${title}`,
-    workoutDone: 'Workout complete! See you tomorrow.',
+    workoutDone: 'Workout complete! Your daily streak is safe for today.',
     again: 'Again',
     back: 'Back to the Academy',
   },
@@ -36,7 +36,7 @@ const T = localized({
     xp: (xp: number, newLevel?: number) => `+${xp} XP${newLevel ? ` · ¡Ya eres jugador nivel ${newLevel}!` : ''}`,
     nextReview: (due: string | null) => `Próximo repaso: ${due ?? 'hoy'}`,
     next: (title: string) => `Siguiente: ${title}`,
-    workoutDone: '¡Entrenamiento completo! Nos vemos mañana.',
+    workoutDone: '¡Entrenamiento completo! Tu racha diaria está asegurada por hoy.',
     again: 'Otra vez',
     back: 'Volver a la Academia',
   },
@@ -70,10 +70,10 @@ export default function AcademyExercise() {
         academy: {
           ...s.academy,
           progress: { ...s.academy.progress, [mode.id]: next },
-          ...(finishedWorkout
-            ? { lastWorkoutDay: today, streak: s.academy.lastWorkoutDay === previousDay(today) ? s.academy.streak + 1 : 1 }
-            : {}),
+          ...(finishedWorkout ? { lastWorkoutDay: today, workoutDays: recordWorkoutDay(s.academy.workoutDays, today) } : {}),
         },
+        // A finished workout keeps the one daily streak, same as claiming a goal.
+        goals: finishedWorkout ? keepStreak(s.goals, today) : s.goals,
       };
     });
     const after = levelInfo(stats.xp + xp).level;

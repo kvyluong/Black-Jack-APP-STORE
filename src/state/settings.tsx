@@ -42,9 +42,11 @@ export interface Stats {
   academy: {
     pref?: LearningPreference;
     progress: Partial<Record<AcademyMode, ModeProgress>>;
-    /** Days in a row with a finished daily workout. */
+    /** Old Academy-only streak. No longer shown or updated (a workout now keeps the daily goal streak); kept so old saves load as-is. */
     streak: number;
     lastWorkoutDay?: string;
+    /** Days a workout was finished, newest last (the last two weeks). Missing in saves from before 1.0.2. */
+    workoutDays?: string[];
   };
   /** Running count drill records (full decks counted exactly, best time). */
   countRecords: CountRecords;

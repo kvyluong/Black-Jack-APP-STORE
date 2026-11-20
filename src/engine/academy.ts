@@ -5,6 +5,7 @@
 import { Card, Rank, Rng, createShoe } from './cards';
 import { CountingSystem, SYSTEM_NAME, cardTag, getCountingSystem, maxTag, signedTag, tagValues } from './counting';
 import { localDay } from './progression';
+import { weekStart } from './progress';
 import { localized, tr } from '../i18n/lang';
 
 export type LearningPreference = 'see' | 'hear' | 'do' | 'read' | 'mix';
@@ -204,6 +205,25 @@ export function recordRound(p: ModeProgress, accuracy: number, today: string): {
       due: addDays(today, REVIEW_INTERVALS[box]),
     },
   };
+}
+
+/** Workout days kept (two weeks covers "this week"). */
+export const WORKOUT_DAYS_KEPT = 14;
+
+/** Adds today to the finished-workout days, newest last, without repeats. */
+export function recordWorkoutDay(days: string[] | undefined, today: string): string[] {
+  const list = (days ?? []).filter((d) => d !== today && d < today);
+  return [...list, today].slice(-WORKOUT_DAYS_KEPT);
+}
+
+/**
+ * Workouts finished this week (Monday to today). Saves from before the list existed
+ * only know the last workout day, so that one is counted.
+ */
+export function workoutsThisWeek(days: string[] | undefined, lastWorkoutDay: string | undefined, today: string): number {
+  const all = new Set([...(days ?? []), ...(lastWorkoutDay ? [lastWorkoutDay] : [])]);
+  const start = weekStart(today);
+  return [...all].filter((d) => d >= start && d <= today).length;
 }
 
 export const isDue = (p: ModeProgress | undefined, today: string) => !p || p.due <= today;
