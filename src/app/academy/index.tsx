@@ -30,7 +30,6 @@ const T = localized({
     workoutTitle: 'Today’s workout',
     thisWeek: (n: number) => `${n} this week`,
     thisWeekA11y: (n: number) => `${n} ${n === 1 ? 'workout' : 'workouts'} finished this week`,
-    noneThisWeek: 'None yet this week',
     workoutNote: 'Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.',
     keepsStreak: 'Finishing it keeps your daily streak, just like claiming a goal.',
     goAgain: 'Done for today. Go again',
@@ -49,7 +48,6 @@ const T = localized({
     workoutTitle: 'Entrenamiento de hoy',
     thisWeek: (n: number) => `${n} esta semana`,
     thisWeekA11y: (n: number) => `${n} ${n === 1 ? 'entrenamiento terminado' : 'entrenamientos terminados'} esta semana`,
-    noneThisWeek: 'Ninguno aún esta semana',
     keepsStreak: 'Terminarlo mantiene tu racha diaria, igual que reclamar una meta.',
     workoutNote: 'Tres ejercicios cortos, mezclados. Unos minutos al día valen más que una sesión larga: espaciar la práctica ayuda a recordar.',
     goAgain: 'Listo por hoy. Otra vez',
@@ -106,7 +104,7 @@ export default function Academy() {
         <View style={styles.row}>
           <Text style={styles.workoutTitle}>{T.workoutTitle}</Text>
           <Text style={styles.streak} accessibilityLabel={T.thisWeekA11y(week)}>
-            {week > 0 ? T.thisWeek(week) : T.noneThisWeek}
+            {T.thisWeek(week)}
           </Text>
         </View>
         <Text style={styles.small}>

@@ -23,7 +23,7 @@ Práctica que vuelve a ti:
 • Una sola racha: terminar tu entrenamiento de la Academia ahora también mantiene tu racha diaria
 • Tu semana: un vistazo a las manos, la precisión y el mejor tiempo con baraja de la semana pasada al empezar una nueva
 • Recordatorios más útiles que te señalan tu siguiente lección o la jugada que más fallas (como máximo uno al día)
-• Bienvenido de nuevo: tras una semana sin practicar, un calentamiento de 5 preguntas y un botón para seguir donde lo dejaste
+• Al volver: tras una semana sin practicar, un calentamiento de 5 preguntas y un botón para seguir donde lo dejaste
 ```
 
 ### Developer notes

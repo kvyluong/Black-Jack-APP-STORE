@@ -24,7 +24,7 @@ const T = localized({
     dismissA11y: 'Dismiss the welcome back card',
   },
   es: {
-    eyebrow: 'BIENVENIDO DE NUEVO',
+    eyebrow: '¡QUÉ BUENO VERTE DE NUEVO!',
     title: (days: number) => `Han pasado ${days} días`,
     body: (n: number, lesson: string) =>
       `Calienta con ${n} ${n === 1 ? 'pregunta rápida' : 'preguntas rápidas'} de «${lesson}» y las lecciones anteriores, y luego sigue donde lo dejaste.`,

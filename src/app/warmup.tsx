@@ -39,7 +39,7 @@ const T = localized({
     next: 'Siguiente pregunta',
     finish: 'Ver resultados',
     none: 'Termina primero una lección y el calentamiento te preguntará sobre ella cuando vuelvas.',
-    doneTitle: 'Listo para seguir',
+    doneTitle: 'Calentamiento terminado',
     doneBody: (right: number, total: number) => `${right} de ${total} correctas.`,
     doneGood: 'Todo sigue ahí. Sigue donde lo dejaste:',
     doneReview: (lesson: string) => `Vale la pena releer «${lesson}» antes de seguir. O sigue donde lo dejaste:`,
