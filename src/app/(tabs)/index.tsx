@@ -7,6 +7,7 @@ import { PlayingCard } from '../../components/PlayingCard';
 
 import { ListedFeature, featureInfo } from '../../components/featureInfo';
 import { DailyGoalsCard, useToday } from '../../components/goals';
+import { WeeklySummaryCard } from '../../components/WeeklySummaryCard';
 import { Meter } from '../../components/progress/Meter';
 import { Button, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
@@ -102,6 +103,8 @@ export default function Home() {
           <Text style={styles.levelBig}>{T.level(lvl.level, lvl.title)}</Text>
         </View>
       </View>
+
+      <WeeklySummaryCard />
 
       <View style={styles.next}>
         {/* A fanned blackjack, just for looks. */}

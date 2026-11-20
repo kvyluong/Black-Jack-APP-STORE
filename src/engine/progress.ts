@@ -435,6 +435,58 @@ export function bestDeckTimeline(points: HistoryPoint[]): { day: string; ms: num
   return out;
 }
 
+// ---------- Weekly summary ----------
+
+export interface WeeklySummary {
+  /** The Monday of the week summarized (last week). */
+  week: string;
+  hands: number;
+  /** Strategy decisions last week, and the share right (0–100); null with no decisions. */
+  decisions: number;
+  accuracy: number | null;
+  /** The same for the week before, to show the change; null with no decisions then. */
+  accuracyBefore: number | null;
+  /** A new best full-deck time set last week, in ms. */
+  newBestDeckMs: number | null;
+  /** Days last week with any practice. */
+  daysPracticed: number;
+}
+
+/** Totals over the 7 days ending `end`: hands, decisions and right decisions, and active days. */
+function weekTotals(points: HistoryPoint[], end: string) {
+  const acc = accuracyByDay(points, end, 7);
+  const hands = handsByDay(points, end, 7);
+  const right = acc.reduce((a, d) => a + (d.right ?? 0), 0);
+  const total = acc.reduce((a, d) => a + (d.total ?? 0), 0);
+  const active = hands.filter((d, i) => (d.value ?? 0) > 0 || (acc[i].total ?? 0) > 0).length;
+  return { hands: hands.reduce((a, d) => a + (d.value ?? 0), 0), right, total, active };
+}
+
+/**
+ * Last week (Monday to Sunday) at a glance, for the card on the first open of a new week.
+ * Null when there was no practice last week, so there's nothing to show.
+ * `points`: historyWithToday (today itself isn't counted).
+ */
+export function weeklySummary(points: HistoryPoint[], today: string): WeeklySummary | null {
+  const week = addDays(weekStart(today), -7);
+  const lastSunday = addDays(week, 6);
+  const last = weekTotals(points, lastSunday);
+  const before = weekTotals(points, addDays(week, -1));
+  const records = bestDeckTimeline(points.filter((p) => p.day <= lastSunday));
+  const record = records.length && records[records.length - 1].day >= week ? records[records.length - 1].ms : null;
+  if (last.hands === 0 && last.total === 0 && record === null) return null;
+  const pctOf = (r: number, t: number) => (t > 0 ? Math.round((100 * r) / t) : null);
+  return {
+    week,
+    hands: last.hands,
+    decisions: last.total,
+    accuracy: pctOf(last.right, last.total),
+    accuracyBefore: pctOf(before.right, before.total),
+    newBestDeckMs: record,
+    daysPracticed: Math.max(last.active, record !== null ? 1 : 0),
+  };
+}
+
 /** "Rose from 82% to 95% over 14 days" style summary, for screen readers. */
 export function trendSummary(first: number, last: number, days: number, unit: (v: number) => string, lowerIsBetter = false): string {
   const better = lowerIsBetter ? last < first : last > first;

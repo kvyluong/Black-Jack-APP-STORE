@@ -71,6 +71,8 @@ export interface Stats {
   remindersAsked?: boolean;
   /** Spaced review of the spots you miss (1.0.2; missing in older saves, read as empty). */
   leakReview?: LeakReviewState;
+  /** The week (its Monday) whose "your week" card was dismissed. */
+  weeklySeen?: string;
 }
 
 export interface Settings {
