@@ -27,6 +27,8 @@ export interface GoalsState {
   lastPerfectDay?: string | null;
   /** Freezes spent at the last rollover, so the home screen can say so that day. */
   frozen?: { day: string; count: number } | null;
+  /** Set when the app opens after RETURNING_AFTER_DAYS or more away, for the welcome-back checkpoint. Cleared when dismissed. */
+  returned?: { day: string; away: number } | null;
 }
 
 export const emptyGoals = (): GoalsState => ({ day: null, start: null, claimed: [], streak: 0, lastCompleteDay: null });
@@ -352,6 +354,9 @@ export function currentStreak(goals: GoalsState, today: string): number {
 /** Days of history kept (a little over a year). */
 export const HISTORY_CAP = 400;
 
+/** Days away after which opening the app offers the welcome-back checkpoint. */
+export const RETURNING_AFTER_DAYS = 7;
+
 /**
  * The start-of-day update: snapshots today's counters and goals, and files the last
  * day you used the app into the history. Returns null when today is already set up.
@@ -371,10 +376,13 @@ export function rolloverDay(s: ProgressStats, today: string): { goals: GoalsStat
     const point: HistoryPoint = { day: goals.day, start: goals.start, values: counters(s, goals.day) };
     history = [...history.filter((p) => p.day !== goals.day), point].slice(-HISTORY_CAP);
   }
+  // Days since the app was last opened (the last snapshot), for the welcome-back checkpoint.
+  const away = goals.day ? daysBetween(goals.day, today) : 0;
   return {
     history,
     goals: {
       ...applyFreezes({ ...goals, frozen: null }, today),
+      returned: away >= RETURNING_AFTER_DAYS ? { day: today, away } : null,
       day: today,
       start: counters(s, today),
       claimed: [],
