@@ -7,6 +7,7 @@ import { getLocales } from 'expo-localization';
 import { AcademyMode, LearningPreference, ModeProgress } from '../engine/academy';
 import { CountingSystem, setCountingSystem } from '../engine/counting';
 import type { GameSpeed } from '../engine/dealSchedule';
+import { LeakReviewState } from '../engine/leakReview';
 import { LeakStats, emptyLeaks } from '../engine/leaks';
 import { GoalsState, HistoryPoint, emptyGoals } from '../engine/progress';
 import {
@@ -42,9 +43,11 @@ export interface Stats {
   academy: {
     pref?: LearningPreference;
     progress: Partial<Record<AcademyMode, ModeProgress>>;
-    /** Days in a row with a finished daily workout. */
+    /** Old Academy-only streak. No longer shown or updated (a workout now keeps the daily goal streak); kept so old saves load as-is. */
     streak: number;
     lastWorkoutDay?: string;
+    /** Days a workout was finished, newest last (the last two weeks). Missing in saves from before 1.0.2. */
+    workoutDays?: string[];
   };
   /** Running count drill records (full decks counted exactly, best time). */
   countRecords: CountRecords;
@@ -66,6 +69,10 @@ export interface Stats {
   review?: ReviewState;
   /** Offered the daily reminder (asked once, after the first claimed goal). */
   remindersAsked?: boolean;
+  /** Spaced review of the spots you miss (1.0.2; missing in older saves, read as empty). */
+  leakReview?: LeakReviewState;
+  /** The week (its Monday) whose "your week" card was dismissed. */
+  weeklySeen?: string;
 }
 
 export interface Settings {

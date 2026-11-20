@@ -5,7 +5,11 @@ import { Alert, AppState, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { playSound } from '../audio/sounds';
 import { localDay } from '../engine/progression';
-import { DEFAULT_REMINDER_HOUR, formatHour, reminderText, reminderTimes } from '../engine/reminders';
+import { LESSONS } from '../content/lessons';
+import { dueSpots } from '../engine/leakReview';
+import { accuracy, weakestDrillable } from '../engine/leaks';
+import { DEFAULT_REMINDER_HOUR, ReminderContext, formatHour, reminderTexts, reminderTimes } from '../engine/reminders';
+import { isUnlocked } from '../engine/unlocks';
 import {
   openNotificationSettings,
   remindersSupported,
@@ -15,16 +19,18 @@ import {
 import {
   GoalDef,
   MAX_FREEZES,
+  benchmarks,
   claimGoal,
   currentStreak,
   goalProgress,
   goalReward,
   goalTitle,
+  nextStep,
   rolloverDay,
   todaysGoals,
 } from '../engine/progress';
 import { localized } from '../i18n/lang';
-import { useSettings } from '../state/settings';
+import { Stats, useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
 import { Icon } from './Icon';
 import { Meter } from './progress/Meter';
@@ -43,6 +49,7 @@ const T = localized({
     earnFreeze: 'Streak safe for today. Claim all three to earn a streak freeze: it covers a day you miss',
     freezeFull: 'Streak safe for today. You have the most streak freezes you can keep',
     allDone: 'All done for today. Come back tomorrow!',
+    workoutKept: 'Your Academy workout kept your streak today. Claim all three to earn a streak freeze',
     freezes: (n: number) => `${n}`,
     freezesA11y: (n: number) => `${n} streak ${n === 1 ? 'freeze' : 'freezes'}: each covers one missed day`,
     frozeNote: (n: number) => `A streak freeze covered ${n === 1 ? 'the day you missed' : `the ${n} days you missed`}. Your streak is safe`,
@@ -76,6 +83,7 @@ const T = localized({
     earnFreeze: 'Racha asegurada por hoy. Reclama las tres para ganar un protector de racha: cubre un día que faltes',
     freezeFull: 'Racha asegurada por hoy. Ya tienes el máximo de protectores de racha',
     allDone: '¡Todo listo por hoy! Vuelve mañana.',
+    workoutKept: 'Tu entrenamiento de la Academia mantuvo tu racha hoy. Reclama las tres para ganar un protector de racha',
     freezes: (n: number) => `${n}`,
     freezesA11y: (n: number) => `${n} ${n === 1 ? 'protector' : 'protectores'} de racha: cada uno cubre un día perdido`,
     frozeNote: (n: number) =>
@@ -147,10 +155,33 @@ export function useReminders() {
   const hour = settings.reminderHour;
   const kept = stats.goals.lastCompleteDay === today;
   const streak = currentStreak(stats.goals, today);
+  // The text points at the real next step and weakest spot. Joined into a key so the queue is only
+  // rewritten when the words change (lang: they're rewritten in the new language too).
+  const key = on ? JSON.stringify(reminderTexts(reminderContext(stats, today, settings.experienced, streak))) : '';
   useEffect(() => {
-    void scheduleReminders(on ? reminderTimes(new Date(), hour, kept) : [], reminderText(streak));
-    // lang: the queued text is rewritten in the new language.
-  }, [on, hour, kept, streak, today, lang]);
+    if (!on) {
+      void scheduleReminders([], []);
+      return;
+    }
+    // Stats change with every decision at the table; wait for a quiet moment before rescheduling.
+    const id = setTimeout(() => void scheduleReminders(reminderTimes(new Date(), hour, kept), JSON.parse(key)), 1500);
+    return () => clearTimeout(id);
+  }, [on, hour, kept, key, today, lang]);
+}
+
+/** What the reminder text can point to, from the saved stats. */
+function reminderContext(stats: Stats, today: string, experienced: boolean, streak: number): ReminderContext {
+  const next = nextStep(benchmarks(stats), experienced);
+  const weakest = weakestDrillable(stats.leaks);
+  const tally = weakest ? stats.leaks.byCategory[weakest] : undefined;
+  return {
+    streak,
+    next: next?.id,
+    nextLesson: next?.id === 'lessons' ? LESSONS.find((l) => !stats.lessonsCompleted.includes(l.id))?.id : undefined,
+    // Floored so 99.6% never reads as 100%.
+    leak: weakest && tally ? { category: weakest, pct: Math.floor(accuracy(tally) * 100) } : undefined,
+    reviewDue: isUnlocked('leaks', stats) ? dueSpots(stats.leaks, stats.leakReview, today).length : 0,
+  };
 }
 
 /** The local hour you're practicing at, as the reminder time (evening if it's very early or late). */
@@ -242,13 +273,16 @@ export function DailyGoalsCard({ collapsible = false }: { collapsible?: boolean 
 
   const freezes = stats.goals.freezes ?? 0;
   const frozen = stats.goals.frozen?.day === today ? stats.goals.frozen.count : 0;
-  const keptToday = stats.goals.lastCompleteDay === today && claimed.length > 0;
+  // Kept by a claimed goal or, before any claim, by a finished Academy workout.
+  const keptToday = stats.goals.lastCompleteDay === today;
   const streakNote = allClaimed
     ? T.allDone
     : keptToday
       ? freezes >= MAX_FREEZES
         ? T.freezeFull
-        : T.earnFreeze
+        : claimed.length === 0
+          ? T.workoutKept
+          : T.earnFreeze
       : streak > 0
         ? T.keepStreak(streak + 1)
         : T.noStreak;

@@ -1,18 +1,21 @@
 // Home: one clear next step, today's goals in a line, and a quick way to play.
-import { Href, Redirect, router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '../../components/Icon';
 import { PlayingCard } from '../../components/PlayingCard';
 
 import { ListedFeature, featureInfo } from '../../components/featureInfo';
-import { DailyGoalsCard } from '../../components/goals';
+import { nextStepTarget } from '../../components/nextStepTarget';
+import { DailyGoalsCard, useToday } from '../../components/goals';
+import { WelcomeBackCard } from '../../components/WelcomeBack';
+import { WeeklySummaryCard } from '../../components/WeeklySummaryCard';
 import { Meter } from '../../components/progress/Meter';
 import { Button, Screen } from '../../components/ui';
 import { useUnlocks } from '../../components/useUnlocks';
-import { getLessons } from '../../content/lessons';
+import { dueSpots } from '../../engine/leakReview';
 import { levelInfo } from '../../engine/progression';
-import { BENCHMARK_TEXT, benchmarks, nextStep, readyScore } from '../../engine/progress';
+import { benchmarks, readyScore } from '../../engine/progress';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
 import { colors, radius, spacing } from '../../theme';
@@ -21,10 +24,7 @@ const T = localized({
   en: {
     tagline: 'Learn to play perfectly and count cards',
     nextStep: 'Next step',
-    lesson: (n: number, title: string) => `Lesson ${n}: ${title}`,
     continue: 'Continue',
-    readyTitle: 'You’re casino-ready',
-    readyBody: 'Every benchmark done. Keep sharp at the table.',
     takeSeat: 'Take a seat',
     score: (n: number) => `Casino-ready ${n}%`,
     quickPlay: 'Play a hand',
@@ -34,14 +34,12 @@ const T = localized({
     hands: 'Hands played',
     rightCalls: 'Right calls',
     levelStat: 'Level',
+    review: (n: number) => `Daily review: ${n} ${n === 1 ? 'spot' : 'spots'} you missed`,
   },
   es: {
     tagline: 'Aprende a jugar perfecto y a contar cartas',
     nextStep: 'Siguiente paso',
-    lesson: (n: number, title: string) => `Lección ${n}: ${title}`,
     continue: 'Continuar',
-    readyTitle: 'Estás listo para el casino',
-    readyBody: 'Todas las metas cumplidas. Mantente en forma en la mesa.',
     takeSeat: 'Siéntate a jugar',
     score: (n: number) => `Listo para el casino: ${n}%`,
     quickPlay: 'Jugar una mano',
@@ -51,40 +49,26 @@ const T = localized({
     hands: 'Manos jugadas',
     rightCalls: 'Decisiones correctas',
     levelStat: 'Nivel',
+    review: (n: number) => `Repaso diario: ${n} ${n === 1 ? 'jugada que fallaste' : 'jugadas que fallaste'}`,
   },
 });
 
 export default function Home() {
   const { ready, stats, settings } = useSettings();
   const unlocks = useUnlocks();
+  const today = useToday();
 
   // Brand-new players get the guided first hands before anything else.
   if (ready && !stats.onboarded && stats.handsPlayed === 0) return <Redirect href="/welcome" />;
 
-  const list = benchmarks(stats);
-  const score = readyScore(list);
-  const next = nextStep(list, settings.experienced);
+  const score = readyScore(benchmarks(stats));
   const lvl = levelInfo(stats.xp);
 
   // The next step: the next lesson while there are lessons left, then the weakest benchmark.
-  let title = T.readyTitle;
-  let body = T.readyBody;
-  let href: Href = '/tables';
-  let cta = T.takeSeat;
-  if (next?.id === 'lessons') {
-    const lessons = getLessons();
-    const i = lessons.findIndex((l) => !stats.lessonsCompleted.includes(l.id));
-    const lesson = lessons[Math.max(0, i)];
-    title = T.lesson(Math.max(0, i) + 1, lesson.title);
-    body = lesson.summary;
-    href = `/learn/${lesson.id}` as Href;
-    cta = T.continue;
-  } else if (next) {
-    title = BENCHMARK_TEXT[next.id].title;
-    body = next.detail;
-    href = next.route as Href;
-    cta = T.continue;
-  }
+  const { title, body, href, pending } = nextStepTarget(stats, settings.experienced);
+  const cta = pending ? T.continue : T.takeSeat;
+
+  const reviewDue = dueSpots(stats.leaks, stats.leakReview, today).length;
 
   const fresh = unlocks.newOnes.filter((f): f is ListedFeature => f !== 'tables' && f !== 'lessons' && f !== 'tableCount');
 
@@ -96,6 +80,9 @@ export default function Home() {
           <Text style={styles.levelBig}>{T.level(lvl.level, lvl.title)}</Text>
         </View>
       </View>
+
+      <WelcomeBackCard />
+      <WeeklySummaryCard />
 
       <View style={styles.next}>
         {/* A fanned blackjack, just for looks. */}
@@ -133,6 +120,19 @@ export default function Home() {
           />
           <Stat value={String(lvl.level)} label={T.levelStat} />
         </View>
+      )}
+
+      {reviewDue > 0 && unlocks.has('leaks') && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={T.review(reviewDue)}
+          onPress={() => router.push('/drills/review')}
+          style={({ pressed }) => [styles.newBox, pressed && { opacity: 0.85 }]}
+        >
+          <Icon name="leaks" size={18} color={colors.gold} />
+          <Text style={[styles.newText, { marginLeft: spacing(1) }]}>{T.review(reviewDue)}</Text>
+          <Text style={styles.chev}>›</Text>
+        </Pressable>
       )}
 
       {fresh.length > 0 && (

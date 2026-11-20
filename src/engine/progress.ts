@@ -2,9 +2,11 @@
 // the day-by-day history behind the progress charts. Pure logic, no React.
 import { LESSONS } from '../content/lessons';
 import { localized, tr } from '../i18n/lang';
+import { LeakReviewState, REVIEW_SESSION, dueSpots } from './leakReview';
 import { LeakStats, weakestDrillable } from './leaks';
 import { CountRecords, DeckEstimateRecords, DeviationProgress, ExamResult, Tally } from './records';
 import { DEVIATIONS, SURRENDER_DEVIATIONS } from './strategy';
+import { isUnlocked } from './unlocks';
 
 /** Today's goals: progress is measured from a snapshot of your stats taken at the start of the day. */
 export interface GoalsState {
@@ -25,6 +27,8 @@ export interface GoalsState {
   lastPerfectDay?: string | null;
   /** Freezes spent at the last rollover, so the home screen can say so that day. */
   frozen?: { day: string; count: number } | null;
+  /** Set when the app opens after RETURNING_AFTER_DAYS or more away, for the welcome-back checkpoint. Cleared when dismissed. */
+  returned?: { day: string; away: number } | null;
 }
 
 export const emptyGoals = (): GoalsState => ({ day: null, start: null, claimed: [], streak: 0, lastCompleteDay: null });
@@ -53,6 +57,8 @@ export interface ProgressStats {
   deckEstimates: DeckEstimateRecords;
   goals: GoalsState;
   history: HistoryPoint[];
+  /** Spaced review of missed spots (optional: older saves don't have it). */
+  leakReview?: LeakReviewState;
 }
 
 // ---------- Days ----------
@@ -83,7 +89,8 @@ export type CounterId =
   | 'trueCount'
   | 'deckEstimates'
   | 'workout'
-  | 'bestDeckMs';
+  | 'bestDeckMs'
+  | 'reviewed';
 
 /** The stats counters goals and charts are measured from. bestDeckMs is 0 when there's no record yet. */
 export function counters(s: ProgressStats, today: string): Record<CounterId, number> {
@@ -98,6 +105,7 @@ export function counters(s: ProgressStats, today: string): Record<CounterId, num
     deckEstimates: s.deckEstimates?.total ?? 0,
     workout: s.academy?.lastWorkoutDay === today ? 1 : 0,
     bestDeckMs: s.countRecords?.bestDeckMs ?? 0,
+    reviewed: s.leakReview?.answered ?? 0,
   };
 }
 
@@ -137,7 +145,8 @@ export interface GoalDef {
   target: number;
   xp: number;
   route: string;
-  eligible: (s: ProgressStats) => boolean;
+  /** `day`: the day being picked for (goals that depend on what's due that day need it). */
+  eligible: (s: ProgressStats, day?: string) => boolean;
   /** Measured as today's value, not the change since the snapshot (e.g. "finished today's workout"). */
   absolute?: boolean;
 }
@@ -145,6 +154,15 @@ export interface GoalDef {
 export const GOAL_POOL: GoalDef[] = [
   { id: 'hands', counter: 'hands', target: 20, xp: 40, route: '/tables', eligible: () => true },
   { id: 'correct', counter: 'correct', target: 15, xp: 30, route: '/drills/strategy', eligible: () => true },
+  {
+    id: 'review',
+    counter: 'reviewed',
+    target: REVIEW_SESSION,
+    xp: 40,
+    route: '/drills/review',
+    // Offered once Your Leaks is open, on days some missed spots are due for review.
+    eligible: (s, day) => !!day && isUnlocked('leaks', s) && dueSpots(s.leaks, s.leakReview, day).length > 0,
+  },
   {
     id: 'lesson',
     counter: 'lessons',
@@ -209,6 +227,7 @@ const GOAL_TEXT = localized({
     trueCount: (n: number) => `Answer ${n} true count questions`,
     deckEstimates: (n: number) => `Make ${n} deck estimates`,
     devReviews: (n: number) => `Review ${n} count-play cards`,
+    review: (n: number) => `Review ${n} hands you missed`,
   } as Record<string, (n: number) => string>,
   es: {
     hands: (n: number) => `Juega ${n} manos`,
@@ -219,6 +238,7 @@ const GOAL_TEXT = localized({
     trueCount: (n: number) => `Responde ${n} preguntas de conteo real`,
     deckEstimates: (n: number) => `Haz ${n} estimaciones de barajas`,
     devReviews: (n: number) => `Repasa ${n} tarjetas de jugadas por conteo`,
+    review: (n: number) => `Repasa ${n} manos que fallaste`,
   },
 });
 
@@ -246,7 +266,7 @@ function seeded(seed: number): () => number {
 /** The day's goals: picked deterministically from the goals that suit your progress, seeded by the date. */
 export function pickGoals(s: ProgressStats, day: string): GoalDef[] {
   const rng = seeded(hash(day));
-  const pool = GOAL_POOL.filter((g) => g.eligible(s));
+  const pool = GOAL_POOL.filter((g) => g.eligible(s, day));
   // Fisher-Yates shuffle, then keep the pool order for display.
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -287,16 +307,29 @@ export const MAX_FREEZES = 2;
 export function claimGoal(goals: GoalsState, id: string, today: string, dayGoalIds: string[]): GoalsState {
   if (goals.claimed.includes(id)) return goals;
   const claimed = [...goals.claimed, id];
-  const next = { ...goals, claimed };
-  if (goals.lastCompleteDay !== today) {
-    next.streak = goals.lastCompleteDay === previousDay(today) ? goals.streak + 1 : 1;
-    next.lastCompleteDay = today;
-  }
+  const next = { ...keepStreak(goals, today), claimed };
   if (goals.lastPerfectDay !== today && dayGoalIds.every((g) => claimed.includes(g))) {
     next.freezes = Math.min(MAX_FREEZES, (goals.freezes ?? 0) + 1);
     next.lastPerfectDay = today;
   }
   return next;
+}
+
+/**
+ * Counts today toward the one daily streak: extends it after yesterday, or restarts it
+ * after a missed day. Done by the day's first claimed goal or a finished Academy workout;
+ * a second one the same day changes nothing.
+ */
+export function keepStreak(goals: GoalsState, today: string): GoalsState {
+  if (goals.lastCompleteDay === today) return goals;
+  return { ...goals, streak: goals.lastCompleteDay === previousDay(today) ? goals.streak + 1 : 1, lastCompleteDay: today };
+}
+
+/** The Monday that starts the week a local day falls in. */
+export function weekStart(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const weekday = new Date(y, m - 1, d).getDay(); // 0 = Sunday
+  return addDays(day, -((weekday + 6) % 7));
 }
 
 /**
@@ -321,6 +354,9 @@ export function currentStreak(goals: GoalsState, today: string): number {
 /** Days of history kept (a little over a year). */
 export const HISTORY_CAP = 400;
 
+/** Days away after which opening the app offers the welcome-back checkpoint. */
+export const RETURNING_AFTER_DAYS = 7;
+
 /**
  * The start-of-day update: snapshots today's counters and goals, and files the last
  * day you used the app into the history. Returns null when today is already set up.
@@ -340,10 +376,13 @@ export function rolloverDay(s: ProgressStats, today: string): { goals: GoalsStat
     const point: HistoryPoint = { day: goals.day, start: goals.start, values: counters(s, goals.day) };
     history = [...history.filter((p) => p.day !== goals.day), point].slice(-HISTORY_CAP);
   }
+  // Days since the app was last opened (the last snapshot), for the welcome-back checkpoint.
+  const away = goals.day ? daysBetween(goals.day, today) : 0;
   return {
     history,
     goals: {
       ...applyFreezes({ ...goals, frozen: null }, today),
+      returned: away >= RETURNING_AFTER_DAYS ? { day: today, away } : null,
       day: today,
       start: counters(s, today),
       claimed: [],
@@ -402,6 +441,58 @@ export function bestDeckTimeline(points: HistoryPoint[]): { day: string; ms: num
     if (ms > 0 && (out.length === 0 || ms < out[out.length - 1].ms)) out.push({ day: p.day, ms });
   }
   return out;
+}
+
+// ---------- Weekly summary ----------
+
+export interface WeeklySummary {
+  /** The Monday of the week summarized (last week). */
+  week: string;
+  hands: number;
+  /** Strategy decisions last week, and the share right (0–100); null with no decisions. */
+  decisions: number;
+  accuracy: number | null;
+  /** The same for the week before, to show the change; null with no decisions then. */
+  accuracyBefore: number | null;
+  /** A new best full-deck time set last week, in ms. */
+  newBestDeckMs: number | null;
+  /** Days last week with any practice. */
+  daysPracticed: number;
+}
+
+/** Totals over the 7 days ending `end`: hands, decisions and right decisions, and active days. */
+function weekTotals(points: HistoryPoint[], end: string) {
+  const acc = accuracyByDay(points, end, 7);
+  const hands = handsByDay(points, end, 7);
+  const right = acc.reduce((a, d) => a + (d.right ?? 0), 0);
+  const total = acc.reduce((a, d) => a + (d.total ?? 0), 0);
+  const active = hands.filter((d, i) => (d.value ?? 0) > 0 || (acc[i].total ?? 0) > 0).length;
+  return { hands: hands.reduce((a, d) => a + (d.value ?? 0), 0), right, total, active };
+}
+
+/**
+ * Last week (Monday to Sunday) at a glance, for the card on the first open of a new week.
+ * Null when there was no practice last week, so there's nothing to show.
+ * `points`: historyWithToday (today itself isn't counted).
+ */
+export function weeklySummary(points: HistoryPoint[], today: string): WeeklySummary | null {
+  const week = addDays(weekStart(today), -7);
+  const lastSunday = addDays(week, 6);
+  const last = weekTotals(points, lastSunday);
+  const before = weekTotals(points, addDays(week, -1));
+  const records = bestDeckTimeline(points.filter((p) => p.day <= lastSunday));
+  const record = records.length && records[records.length - 1].day >= week ? records[records.length - 1].ms : null;
+  if (last.hands === 0 && last.total === 0 && record === null) return null;
+  const pctOf = (r: number, t: number) => (t > 0 ? Math.round((100 * r) / t) : null);
+  return {
+    week,
+    hands: last.hands,
+    decisions: last.total,
+    accuracy: pctOf(last.right, last.total),
+    accuracyBefore: pctOf(before.right, before.total),
+    newBestDeckMs: record,
+    daysPracticed: Math.max(last.active, record !== null ? 1 : 0),
+  };
 }
 
 /** "Rose from 82% to 95% over 14 days" style summary, for screen readers. */

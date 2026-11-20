@@ -11,9 +11,9 @@ import {
   isDue,
   MODES,
   modesFor,
+  workoutsThisWeek,
 } from '../../engine/academy';
 import { SYSTEM_NAME, systemNote } from '../../engine/counting';
-import { previousDay } from '../../engine/progress';
 import { localDay } from '../../engine/progression';
 import { localized } from '../../i18n/lang';
 import { useSettings } from '../../state/settings';
@@ -28,9 +28,10 @@ const T = localized({
     prefNote:
       'Your choice only sets which exercises come first. Research finds that everyone learns best from a mix, which is why the daily workout uses several.',
     workoutTitle: 'Today’s workout',
-    streak: (n: number) => `${n}-day streak`,
-    startStreak: 'Start a streak',
+    thisWeek: (n: number) => `${n} this week`,
+    thisWeekA11y: (n: number) => `${n} ${n === 1 ? 'workout' : 'workouts'} finished this week`,
     workoutNote: 'Three short exercises, mixed up. A few minutes a day beats one long session: spacing practice out helps it stick.',
+    keepsStreak: 'Finishing it keeps your daily streak, just like claiming a goal.',
     goAgain: 'Done for today. Go again',
     startWorkout: 'Start workout',
     allExercises: 'All exercises',
@@ -45,8 +46,9 @@ const T = localized({
     prefNote:
       'Tu elección solo define qué ejercicios salen primero. Las investigaciones muestran que todos aprendemos mejor combinando, por eso el entrenamiento diario usa varios.',
     workoutTitle: 'Entrenamiento de hoy',
-    streak: (n: number) => `Racha de ${n} ${n === 1 ? 'día' : 'días'}`,
-    startStreak: 'Empieza una racha',
+    thisWeek: (n: number) => `${n} esta semana`,
+    thisWeekA11y: (n: number) => `${n} ${n === 1 ? 'entrenamiento terminado' : 'entrenamientos terminados'} esta semana`,
+    keepsStreak: 'Terminarlo mantiene tu racha diaria, igual que reclamar una meta.',
     workoutNote: 'Tres ejercicios cortos, mezclados. Unos minutos al día valen más que una sesión larga: espaciar la práctica ayuda a recordar.',
     goAgain: 'Listo por hoy. Otra vez',
     startWorkout: 'Empezar entrenamiento',
@@ -67,8 +69,8 @@ export default function Academy() {
   const today = localDay(new Date());
   const workout = dailyWorkout(academy.progress, today, pref);
   const doneToday = academy.lastWorkoutDay === today;
-  // The saved streak only updates when you finish a workout; a missed day means it's gone.
-  const streak = doneToday || academy.lastWorkoutDay === previousDay(today) ? academy.streak : 0;
+  // One streak in the app (the daily goals); here, just how many workouts this week.
+  const week = workoutsThisWeek(academy.workoutDays, academy.lastWorkoutDay, today);
 
   const setPref = (p: LearningPreference) => updateStats((s) => ({ ...s, academy: { ...s.academy, pref: p } }));
 
@@ -101,9 +103,13 @@ export default function Academy() {
       <Panel style={styles.workout}>
         <View style={styles.row}>
           <Text style={styles.workoutTitle}>{T.workoutTitle}</Text>
-          <Text style={styles.streak}>{streak > 0 ? T.streak(streak) : T.startStreak}</Text>
+          <Text style={styles.streak} accessibilityLabel={T.thisWeekA11y(week)}>
+            {T.thisWeek(week)}
+          </Text>
         </View>
-        <Text style={styles.small}>{T.workoutNote}</Text>
+        <Text style={styles.small}>
+          {T.workoutNote} {T.keepsStreak}
+        </Text>
         {workout.map((id, k) => (
           <Text key={id} style={styles.step}>
             {k + 1}. {MODES.find((m) => m.id === id)!.title}
@@ -157,7 +163,7 @@ const styles = StyleSheet.create({
   workout: { backgroundColor: colors.feltDark },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing(1) },
   workoutTitle: { color: colors.gold, fontSize: 18, fontWeight: '900' },
-  streak: { color: colors.text, fontWeight: '700' },
+  streak: { color: colors.text, fontWeight: '700', flexShrink: 1, textAlign: 'right' },
   step: { color: colors.text, fontSize: 15 },
   mode: { backgroundColor: colors.feltDark, borderRadius: radius.md, padding: spacing(2) },
   modeTitle: { color: colors.text, fontSize: 17, fontWeight: '800', flexShrink: 1 },

@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.2 (draft, not submitted)
+
+**App Store "What's New" (English):**
+
+```
+Practice that comes back to you:
+
+• Daily review: the hands you miss come back the next day, then 3 and 7 days after you get them right
+• One streak: finishing your Academy workout now keeps your daily streak too
+• Your week: a quick look at last week's hands, accuracy and best deck time when a new week starts
+• Smarter reminders that point to your next lesson or the spot you miss most (still one a day at most)
+• Welcome back: after a week away, a 5-question warm-up and a button to pick up where you left off
+```
+
+**App Store "Novedades" (Spanish, Mexico):**
+
+```
+Práctica que vuelve a ti:
+
+• Repaso diario: las manos que fallas vuelven al día siguiente, y luego 3 y 7 días después de acertarlas
+• Una sola racha: terminar tu entrenamiento de la Academia ahora también mantiene tu racha diaria
+• Tu semana: un vistazo a las manos, la precisión y el mejor tiempo con baraja de la semana pasada al empezar una nueva
+• Recordatorios más útiles que te señalan tu siguiente lección o la jugada que más fallas (como máximo uno al día)
+• Al volver: tras una semana sin practicar, un calentamiento de 5 preguntas y un botón para seguir donde lo dejaste
+```
+
+### Developer notes
+- One streak: an Academy workout keeps the daily goal streak; the Academy shows workouts this week (d2f79ce)
+- Spaced review of missed spots, engine/leakReview, new daily goal and /drills/review (f1af565)
+- Weekly summary card on Home (ec19040)
+- Reminder text from nextStep() and the top leak, one line per queued reminder (0163596)
+- Welcome-back checkpoint and /warmup after 7+ days away (6095bdd)
+- New save fields are all optional (academy.workoutDays, leakReview, weeklySeen, goals.returned); old saves load unchanged
+- No native changes or new dependencies. app.json version and build number are not bumped yet
+
 ## 1.0.1
 
 **App Store "What's New" (English):**
