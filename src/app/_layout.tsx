@@ -32,6 +32,7 @@ const T = localized({
     exam: 'Casino Conditions',
     deviationsDrill: 'Count Plays',
     decksDrill: 'Deck Estimation',
+    review: 'Daily Review',
   },
   es: {
     index: 'ShoeSharp',
@@ -54,6 +55,7 @@ const T = localized({
     exam: 'Condiciones de casino',
     deviationsDrill: 'Jugadas por conteo',
     decksDrill: 'Estimar barajas',
+    review: 'Repaso diario',
   },
 });
 
@@ -111,6 +113,7 @@ function AppStack() {
         <Stack.Screen name="exam" options={{ title: T.exam }} />
         <Stack.Screen name="drills/deviations" options={{ title: T.deviationsDrill }} />
         <Stack.Screen name="drills/decks" options={{ title: T.decksDrill }} />
+        <Stack.Screen name="drills/review" options={{ title: T.review }} />
       </Stack>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps

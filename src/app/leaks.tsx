@@ -2,6 +2,7 @@
 import { Href, router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useToday } from '../components/goals';
 import { Button, H2, P, Panel, Screen } from '../components/ui';
 import { useOutcomeColors } from '../components/useColors';
 import {
@@ -16,6 +17,7 @@ import {
   topMissedSpots,
   weakestDrillable,
 } from '../engine/leaks';
+import { REVIEW_SESSION, dueSpots } from '../engine/leakReview';
 import { localized } from '../i18n/lang';
 import { useSettings } from '../state/settings';
 import { colors, radius, spacing } from '../theme';
@@ -37,6 +39,10 @@ const T = localized({
     stillLearning: 'Still learning about you:',
     spots: 'Spots you miss most',
     spotA11y: (label: string, missed: number, total: number, best: string) => `${label}. Missed ${missed} of ${total}. ${best}`,
+    reviewTitle: 'Daily review',
+    reviewBody: (n: number) => `${n} ${n === 1 ? 'spot you missed is' : 'spots you missed are'} due today. Each comes back 1, 3 and 7 days after you get it right.`,
+    reviewCta: (n: number) => `Review ${n} hands`,
+    reviewNone: 'No spots due for review today. Hands you miss come back the next day.',
     footer: 'Graded against basic strategy for your table rules. Insurance is graded at the table only.',
   },
   es: {
@@ -55,6 +61,11 @@ const T = localized({
     stillLearning: 'Todavía te estamos conociendo:',
     spots: 'Las jugadas que más fallas',
     spotA11y: (label: string, missed: number, total: number, best: string) => `${label}. Fallaste ${missed} de ${total}. ${best}`,
+    reviewTitle: 'Repaso diario',
+    reviewBody: (n: number) =>
+      `${n === 1 ? 'Hoy toca repasar 1 jugada que fallaste' : `Hoy toca repasar ${n} jugadas que fallaste`}. Cada una vuelve 1, 3 y 7 días después de acertarla.`,
+    reviewCta: (n: number) => `Repasar ${n} manos`,
+    reviewNone: 'Hoy no toca repasar ninguna jugada. Las manos que fallas vuelven al día siguiente.',
     footer: 'Calificado con la estrategia básica para las reglas de tu mesa. El seguro solo se califica en la mesa.',
   },
 });
@@ -70,6 +81,8 @@ export default function Leaks() {
   // Categories still collecting data, so players know why they aren't ranked yet.
   const pending = (Object.entries(stats.leaks.byCategory) as [LeakCategory, Tally][]).filter(([, t]) => t.total < MIN_SAMPLE);
   const pct = (t: Tally) => Math.round(accuracy(t) * 100);
+  const today = useToday();
+  const due = dueSpots(stats.leaks, stats.leakReview, today).length;
 
   if (ranked.length === 0) {
     return (
@@ -99,6 +112,12 @@ export default function Leaks() {
           <P muted>{T.noLeaksBody}</P>
         </Panel>
       )}
+
+      <Panel>
+        <Text style={styles.label}>{T.reviewTitle.toUpperCase()}</Text>
+        <P muted>{due > 0 ? T.reviewBody(due) : T.reviewNone}</P>
+        {due > 0 && <Button title={T.reviewCta(REVIEW_SESSION)} onPress={() => router.push('/drills/review')} />}
+      </Panel>
 
       <H2>{T.byType}</H2>
       <Panel>

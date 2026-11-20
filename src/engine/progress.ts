@@ -2,9 +2,11 @@
 // the day-by-day history behind the progress charts. Pure logic, no React.
 import { LESSONS } from '../content/lessons';
 import { localized, tr } from '../i18n/lang';
+import { LeakReviewState, REVIEW_SESSION, dueSpots } from './leakReview';
 import { LeakStats, weakestDrillable } from './leaks';
 import { CountRecords, DeckEstimateRecords, DeviationProgress, ExamResult, Tally } from './records';
 import { DEVIATIONS, SURRENDER_DEVIATIONS } from './strategy';
+import { isUnlocked } from './unlocks';
 
 /** Today's goals: progress is measured from a snapshot of your stats taken at the start of the day. */
 export interface GoalsState {
@@ -53,6 +55,8 @@ export interface ProgressStats {
   deckEstimates: DeckEstimateRecords;
   goals: GoalsState;
   history: HistoryPoint[];
+  /** Spaced review of missed spots (optional: older saves don't have it). */
+  leakReview?: LeakReviewState;
 }
 
 // ---------- Days ----------
@@ -83,7 +87,8 @@ export type CounterId =
   | 'trueCount'
   | 'deckEstimates'
   | 'workout'
-  | 'bestDeckMs';
+  | 'bestDeckMs'
+  | 'reviewed';
 
 /** The stats counters goals and charts are measured from. bestDeckMs is 0 when there's no record yet. */
 export function counters(s: ProgressStats, today: string): Record<CounterId, number> {
@@ -98,6 +103,7 @@ export function counters(s: ProgressStats, today: string): Record<CounterId, num
     deckEstimates: s.deckEstimates?.total ?? 0,
     workout: s.academy?.lastWorkoutDay === today ? 1 : 0,
     bestDeckMs: s.countRecords?.bestDeckMs ?? 0,
+    reviewed: s.leakReview?.answered ?? 0,
   };
 }
 
@@ -137,7 +143,8 @@ export interface GoalDef {
   target: number;
   xp: number;
   route: string;
-  eligible: (s: ProgressStats) => boolean;
+  /** `day`: the day being picked for (goals that depend on what's due that day need it). */
+  eligible: (s: ProgressStats, day?: string) => boolean;
   /** Measured as today's value, not the change since the snapshot (e.g. "finished today's workout"). */
   absolute?: boolean;
 }
@@ -145,6 +152,15 @@ export interface GoalDef {
 export const GOAL_POOL: GoalDef[] = [
   { id: 'hands', counter: 'hands', target: 20, xp: 40, route: '/tables', eligible: () => true },
   { id: 'correct', counter: 'correct', target: 15, xp: 30, route: '/drills/strategy', eligible: () => true },
+  {
+    id: 'review',
+    counter: 'reviewed',
+    target: REVIEW_SESSION,
+    xp: 40,
+    route: '/drills/review',
+    // Offered once Your Leaks is open, on days some missed spots are due for review.
+    eligible: (s, day) => !!day && isUnlocked('leaks', s) && dueSpots(s.leaks, s.leakReview, day).length > 0,
+  },
   {
     id: 'lesson',
     counter: 'lessons',
@@ -209,6 +225,7 @@ const GOAL_TEXT = localized({
     trueCount: (n: number) => `Answer ${n} true count questions`,
     deckEstimates: (n: number) => `Make ${n} deck estimates`,
     devReviews: (n: number) => `Review ${n} count-play cards`,
+    review: (n: number) => `Review ${n} hands you missed`,
   } as Record<string, (n: number) => string>,
   es: {
     hands: (n: number) => `Juega ${n} manos`,
@@ -219,6 +236,7 @@ const GOAL_TEXT = localized({
     trueCount: (n: number) => `Responde ${n} preguntas de conteo real`,
     deckEstimates: (n: number) => `Haz ${n} estimaciones de barajas`,
     devReviews: (n: number) => `Repasa ${n} tarjetas de jugadas por conteo`,
+    review: (n: number) => `Repasa ${n} manos que fallaste`,
   },
 });
 
@@ -246,7 +264,7 @@ function seeded(seed: number): () => number {
 /** The day's goals: picked deterministically from the goals that suit your progress, seeded by the date. */
 export function pickGoals(s: ProgressStats, day: string): GoalDef[] {
   const rng = seeded(hash(day));
-  const pool = GOAL_POOL.filter((g) => g.eligible(s));
+  const pool = GOAL_POOL.filter((g) => g.eligible(s, day));
   // Fisher-Yates shuffle, then keep the pool order for display.
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
