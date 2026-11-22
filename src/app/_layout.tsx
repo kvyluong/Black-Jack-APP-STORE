@@ -8,6 +8,7 @@ import { RemoveAdsProvider } from '../purchases/RemoveAds';
 import { useDailySnapshot, useReminders } from '../components/goals';
 import { localized } from '../i18n/lang';
 import { SettingsProvider, usePrefs } from '../state/settings';
+import { AppHeader } from '../components/AppHeader';
 import { colors } from '../theme';
 
 const T = localized({
@@ -88,9 +89,7 @@ function AppStack() {
     () => (
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.feltDark },
-          headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: '700' },
+          header: (props) => <AppHeader {...props} />,
           contentStyle: { backgroundColor: colors.felt },
           // Screens underneath the one you're on stop re-rendering until you come back to them.
           freezeOnBlur: true,
