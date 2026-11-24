@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.3
+
+**App Store "What's New" (English):**
+
+```
+• A cleaner top bar with a felt back button that matches the table
+• Small polish and fixes
+```
+
+**App Store "Novedades" (Spanish, Mexico):**
+
+```
+• Una barra superior más limpia, con un botón de volver a juego con la mesa
+• Pequeñas mejoras y correcciones
+```
+
+### Developer notes
+- Own top bar: round felt back button with a gold edge (1f492a2)
+- Listing (ASO audit, docs/ASO_AUDIT_2026-11.md): subtitle `Basic Strategy & Card Counting`; new keywords without casino, vegas or odds. Spanish keywords drop casino and simulador; Spanish promo text drops "examen de casino".
+
 ## 1.0.2
 
 **App Store "What's New" (English):**

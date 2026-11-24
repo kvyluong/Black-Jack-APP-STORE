@@ -3,7 +3,7 @@
     "name": "ShoeSharp",
     "slug": "shoesharp",
     "scheme": "shoesharp",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
